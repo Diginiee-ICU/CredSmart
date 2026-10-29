@@ -7,8 +7,6 @@ describe("Milestone 3 Challenger 1: Dashboard, Parties & CRM HR Empiric Verifica
   const rootDir = path.resolve(__dirname, "../..");
   const dashboardPath = path.join(rootDir, "src/pages/Dashboard.tsx");
   const partiesPath = path.join(rootDir, "src/pages/Parties.tsx");
-  const salaryPath = path.join(rootDir, "src/pages/crm/SalaryManagement.tsx");
-  const attendancePath = path.join(rootDir, "src/pages/crm/Attendance.tsx");
 
   const quarantineFiles = [
     "src/components/invoices/mobile/MobileCreateInvoice.tsx",
@@ -107,90 +105,6 @@ describe("Milestone 3 Challenger 1: Dashboard, Parties & CRM HR Empiric Verifica
       expect(content).toContain(
         '<div className="hidden md:block flex-1 min-h-0 overflow-y-auto overflow-x-auto w-full scrollbar-thin">'
       );
-    });
-  });
-
-  describe("SalaryManagement.tsx Architecture & Anti-Pattern Elimination", () => {
-    const content = fs.readFileSync(salaryPath, "utf8");
-
-    it("verifies Tab 1 (Salary Profiles) uses divide-y container and flat rows", () => {
-      expect(content).toContain(
-        '<div className="block sm:hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">'
-      );
-      expect(content).toContain(
-        '<div key={p.id} className="p-3.5 space-y-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">'
-      );
-    });
-
-    it("verifies Tab 1 mobile button meets >= 44px touch target", () => {
-      expect(content).toContain(
-        'className="w-full min-h-[44px] h-11 text-xs font-semibold rounded-lg border-slate-200 dark:border-slate-700"'
-      );
-    });
-
-    it("verifies Tab 2 (Payroll Run) uses divide-y container and flat rows", () => {
-      expect(content).toContain(
-        '<div key={item.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">'
-      );
-    });
-
-    it("verifies Tab 3 (Advances & Deductions) uses divide-y container and flat rows", () => {
-      expect(content).toContain(
-        '<div key={a.id} className="p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">'
-      );
-    });
-
-    it("verifies Tab 3 action buttons meet >= 44px touch targets", () => {
-      expect(content).toContain(
-        'className="min-h-[44px] h-11 px-3 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 rounded-lg"'
-      );
-      expect(content).toContain(
-        'className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 rounded-lg"'
-      );
-    });
-
-    it("verifies no typography below 11px", () => {
-      const sub11Matches = content.match(/text-\[(?:[0-9]|10)px\]/g);
-      expect(sub11Matches).toBeNull();
-    });
-
-    it("verifies desktop CRMDataTable views are preserved", () => {
-      expect(content).toContain('<div className="hidden sm:block">');
-      expect(content).toContain('<CRMDataTable<CrmSalaryProfile>');
-      expect(content).toContain('<CRMDataTable<PayslipComputedData>');
-      expect(content).toContain('<CRMDataTable<CrmSalaryAdjustment>');
-    });
-  });
-
-  describe("Attendance.tsx Architecture & Anti-Pattern Elimination", () => {
-    const content = fs.readFileSync(attendancePath, "utf8");
-
-    it("verifies Tab 4 (Regularisation Requests) uses divide-y container and flat rows", () => {
-      expect(content).toContain(
-        '<div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60 mt-2">'
-      );
-      expect(content).toContain(
-        'className="px-3.5 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"'
-      );
-    });
-
-    it("verifies Tab 4 action buttons meet >= 44px touch targets", () => {
-      expect(content).toContain(
-        'className="min-h-[44px] h-11 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1 rounded-lg"'
-      );
-      expect(content).toContain(
-        'className="min-h-[44px] h-11 px-3 text-xs text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 gap-1 rounded-lg"'
-      );
-    });
-
-    it("verifies no typography below 11px", () => {
-      const sub11Matches = content.match(/text-\[(?:[0-9]|10)px\]/g);
-      expect(sub11Matches).toBeNull();
-    });
-
-    it("verifies desktop and core shift card views are preserved", () => {
-      expect(content).toContain("Shift Completed for Today");
-      expect(content).toContain("<CRMDataTable");
     });
   });
 });

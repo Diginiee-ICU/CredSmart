@@ -314,7 +314,7 @@ describe("downloadExactInvoice Engine Suite", () => {
       };
 
       await downloadExactInvoicePdf(payload);
-      expect(mockSave).toHaveBeenCalledWith("Invoice-EST-2026-001.pdf");
+      expect(mockSave).toHaveBeenCalledWith("Estimate-EST-2026-001.pdf");
     });
 
     it("splits total tax evenly into CGST and SGST for intrastate transactions", () => {

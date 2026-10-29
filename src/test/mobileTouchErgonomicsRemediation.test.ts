@@ -104,13 +104,5 @@ describe("Mobile Touch Target Ergonomics Remediation", () => {
     });
   });
 
-  describe("6. Tasks.tsx Kanban Status Advance Buttons", () => {
-    it("verifies Start Job, Submit Proof, and Approve action buttons have min-h-[44px] h-11 px-3", () => {
-      const content = fs.readFileSync(path.join(SRC_DIR, "pages/crm/Tasks.tsx"), "utf-8");
-
-      expect(content).toMatch(/min-h-\[44px\]\s+h-11\s+px-3\s+flex\s+items-center[\s\S]*?Start Job →/);
-      expect(content).toMatch(/min-h-\[44px\]\s+h-11\s+px-3\s+flex\s+items-center[\s\S]*?Submit Proof/);
-      expect(content).toMatch(/min-h-\[44px\]\s+h-11\s+px-3\s+flex\s+items-center[\s\S]*?Approve ✓/);
-    });
-  });
 });
+

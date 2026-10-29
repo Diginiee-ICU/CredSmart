@@ -151,22 +151,26 @@ export const nativeHaptics = {
   },
 };
 
+// Declared at module scope to persist across successive back-press events
+let lastBackPressTime = 0;
+
 /**
- * Sets up Hardware Back Button navigation for Android
+ * Sets up 4-Tier Hardware Back Button navigation for Android:
+ * Priority 1: Topmost modal/dialog/drawer dismissal
+ * Priority 2: Deep route navigation (with /billing/pos excluded from portal roots)
+ * Priority 2A: CRM Internal Tab History back (if CRM active tab != 'command')
+ * Priority 3: Root of sub-portal -> Return to Cold Launch Selection Hub via SPA navigation
+ * Priority 4: Selection Hub ("/") -> Double-tap within 2000ms to exit app
  */
 export const setupHardwareBackButton = () => {
   if (!isNativePlatform()) return () => {};
 
-  let lastBackPressTime = 0;
-
   const backListener = CapApp.addListener("backButton", ({ canGoBack }) => {
-    // 1. If an open modal/dialog/sheet/alert exists, close the topmost one
+    // Priority 1: Topmost modal/dialog/drawer dismissal
     const openModals = document.querySelectorAll(
       '[data-state="open"], [role="dialog"], [role="alertdialog"], .bill-editor-shell'
     );
-
     if (openModals.length > 0) {
-      // Find top close button or fire Escape
       const topModal = openModals[openModals.length - 1];
       const closeBtn = topModal.querySelector<HTMLElement>(
         'button[aria-label="Close"], [data-radix-collection-item], button.close, [data-modal-close]'
@@ -175,30 +179,54 @@ export const setupHardwareBackButton = () => {
         closeBtn.click();
         return;
       }
-
-      // Dispatch Escape key event to trigger Radix dialog dismissal
-      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27 }));
+      // Fallback synthetic escape event for drawers without close buttons
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", keyCode: 27, bubbles: true }));
       return;
     }
 
-    // 2. If in browser history, navigate back
     const currentPath = window.location.pathname;
-    const isRootPage = currentPath === "/" || currentPath === "/dashboard";
 
-    if (canGoBack && !isRootPage) {
+    // Priority 2: Deep route navigation (go back in history)
+    // NOTE: /billing/pos is explicitly REMOVED from portal root so users can back out to Dashboard or Sales
+    const isPortalRoot = currentPath === "/billing/dashboard" || currentPath === "/billing";
+
+    // Priority 2A: CRM Internal Tab History back (if CRM has active tab != 'command')
+    if (currentPath === "/crm") {
+      const activeCrmTab = document.querySelector("[data-crm-active-tab]")?.getAttribute("data-crm-active-tab");
+      if (activeCrmTab && activeCrmTab !== "command") {
+        const commandTabBtn = document.querySelector<HTMLElement>('[data-crm-tab="command"]');
+        if (commandTabBtn) {
+          commandTabBtn.click();
+          return;
+        }
+      }
+    }
+
+    if (canGoBack && !isPortalRoot && currentPath !== "/" && currentPath !== "/crm") {
       window.history.back();
       return;
     }
 
-    // 3. Double-tap back on root dashboard to exit app
-    const now = Date.now();
-    if (now - lastBackPressTime < 2000) {
-      CapApp.exitApp();
-    } else {
-      lastBackPressTime = now;
-      toast("Press back again to exit CredSmart", {
-        duration: 2000,
-      });
+    // Priority 3: Root of sub-portal -> Return to Cold Launch Selection Hub via SPA navigation
+    if (isPortalRoot || currentPath === "/crm") {
+      sessionStorage.removeItem("credsmart_launch_portal_active");
+      // SPA navigation avoids destructive WebView hard reloads
+      window.history.pushState(null, "", "/");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+      return;
+    }
+
+    // Priority 4: Selection Hub ("/") -> Double-tap within 2000ms to exit app
+    if (currentPath === "/") {
+      const now = Date.now();
+      if (now - lastBackPressTime < 2000) {
+        CapApp.exitApp();
+      } else {
+        lastBackPressTime = now;
+        toast("Press back again to exit CredSmart", {
+          duration: 2000,
+        });
+      }
     }
   });
 

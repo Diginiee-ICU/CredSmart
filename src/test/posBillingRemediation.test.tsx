@@ -106,11 +106,11 @@ describe("POS & Billing Critical Remediation Test Suite", () => {
       );
 
       // The Left Pod (FROM / SELLER) must display the SUPPLIER
-      const supplierHeader = screen.getByText(/FROM \(SUPPLIER \/ VENDOR\)/i);
+      const supplierHeader = screen.getByText(/FROM.*SUPPLIER/i);
       expect(supplierHeader).toBeDefined();
 
       // The Right Pod (BILL TO / BUYER) must display MY COMPANY
-      const purchaserHeader = screen.getByText(/BILL TO \(BUYER \/ PURCHASER\)/i);
+      const purchaserHeader = screen.getByText(/BILL TO.*BUYER/i);
       expect(purchaserHeader).toBeDefined();
 
       // Document title must be Purchase Invoice
@@ -146,8 +146,8 @@ describe("POS & Billing Critical Remediation Test Suite", () => {
       );
 
       // For sales invoice, FROM is my Store, and BILL TO is Customer
-      expect(screen.getByText(/^FROM$/i)).toBeDefined();
-      expect(screen.getByText(/^BILL TO$/i)).toBeDefined();
+      expect(screen.getByText(/FROM \(SELLER\)/i)).toBeDefined();
+      expect(screen.getByText(/BILL TO \(CUSTOMER\)/i)).toBeDefined();
     });
   });
 

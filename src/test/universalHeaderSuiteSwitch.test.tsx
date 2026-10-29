@@ -104,7 +104,7 @@ describe("Universal Header Suite Switcher Verification", () => {
     });
   });
 
-  it("renders Suite Switcher with Billing and CRM buttons in the universal header", () => {
+  it("renders Workspace Switcher in the universal header", () => {
     mockUseActiveSuite.mockReturnValue({
       activeSuite: "billing",
       isCrm: false,
@@ -117,21 +117,15 @@ describe("Universal Header Suite Switcher Verification", () => {
       </MemoryRouter>
     );
 
-    const billingBtn = screen.getByTestId("suite-btn-billing");
-    const crmBtn = screen.getByTestId("suite-btn-crm");
-
-    expect(billingBtn).toBeInTheDocument();
-    expect(crmBtn).toBeInTheDocument();
-    expect(billingBtn).toHaveAttribute("aria-checked", "true");
-    expect(crmBtn).toHaveAttribute("aria-checked", "false");
+    const triggerBtn = screen.getByTestId("workspace-switcher-trigger");
+    expect(triggerBtn).toBeInTheDocument();
   });
 
-  it("switches to CRM suite and navigates to /crm when CRM button is clicked", () => {
-    const switchSuiteMock = vi.fn();
+  it("switches to CRM workspace and navigates to /crm when CRM option is clicked", () => {
     mockUseActiveSuite.mockReturnValue({
       activeSuite: "billing",
       isCrm: false,
-      switchSuite: switchSuiteMock,
+      switchSuite: vi.fn(),
     });
 
     render(
@@ -140,39 +134,46 @@ describe("Universal Header Suite Switcher Verification", () => {
       </MemoryRouter>
     );
 
-    const crmBtn = screen.getByTestId("suite-btn-crm");
+    const triggerBtn = screen.getByTestId("workspace-switcher-trigger");
+    act(() => {
+      fireEvent.click(triggerBtn);
+    });
+
+    const crmBtn = screen.getByTestId("switch-to-crm-btn");
     act(() => {
       fireEvent.click(crmBtn);
     });
 
-    expect(switchSuiteMock).toHaveBeenCalledWith("crm");
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTE_PATHS.crm);
+    expect(mockNavigate).toHaveBeenCalledWith("/crm");
   });
 
-  it("switches to Billing suite and navigates to /billing/dashboard when Billing button is clicked", () => {
-    const switchSuiteMock = vi.fn();
+  it("switches to Billing suite and navigates to /billing/dashboard when Billing option is clicked", () => {
     mockUseActiveSuite.mockReturnValue({
       activeSuite: "crm",
       isCrm: true,
-      switchSuite: switchSuiteMock,
+      switchSuite: vi.fn(),
     });
 
     render(
-      <MemoryRouter initialEntries={["/crm/attendance"]}>
+      <MemoryRouter initialEntries={["/billing/dashboard"]}>
         <AppLayout />
       </MemoryRouter>
     );
 
-    const billingBtn = screen.getByTestId("suite-btn-billing");
+    const triggerBtn = screen.getByTestId("workspace-switcher-trigger");
+    act(() => {
+      fireEvent.click(triggerBtn);
+    });
+
+    const billingBtn = screen.getByTestId("switch-to-billing-btn");
     act(() => {
       fireEvent.click(billingBtn);
     });
 
-    expect(switchSuiteMock).toHaveBeenCalledWith("billing");
-    expect(mockNavigate).toHaveBeenCalledWith(ROUTE_PATHS.dashboard);
+    expect(mockNavigate).toHaveBeenCalledWith("/billing/dashboard");
   });
 
-  it("strictly hides Suite Switcher from header when userRole is cashier", () => {
+  it("strictly hides Workspace Switcher from header when userRole is cashier", () => {
     mockUseOrganization.mockReturnValue({
       org: { id: "org-1", name: "CredSmart Store" },
       orgId: "org-1",
@@ -194,7 +195,6 @@ describe("Universal Header Suite Switcher Verification", () => {
       </MemoryRouter>
     );
 
-    expect(screen.queryByTestId("suite-btn-billing")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("suite-btn-crm")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("workspace-switcher-trigger")).not.toBeInTheDocument();
   });
 });

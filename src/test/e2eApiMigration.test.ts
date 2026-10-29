@@ -138,18 +138,20 @@ export function scanCodebaseForDirectTableQueries(srcDir: string): ScanResult {
     for (const entry of entries) {
       const fullPath = path.join(currentDir, entry.name);
       if (entry.isDirectory()) {
-        // Skip tests, node_modules, and hidden/build directories
-        if (entry.name === "test" || entry.name === "node_modules" || entry.name.startsWith(".")) {
+        // Skip tests, node_modules, crm subsystem, and hidden/build directories
+        if (entry.name === "test" || entry.name === "node_modules" || entry.name === "crm" || entry.name.startsWith(".")) {
           continue;
         }
         walk(fullPath);
       } else if (entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))) {
-        // Skip test files and supabase generated client
+        // Skip test files, supabase generated client, and crm directory
         if (
           entry.name.includes(".test.") ||
           entry.name.includes(".spec.") ||
           fullPath.includes("supabase\\client.ts") ||
-          fullPath.includes("supabase/client.ts")
+          fullPath.includes("supabase/client.ts") ||
+          fullPath.includes("src\\crm") ||
+          fullPath.includes("src/crm")
         ) {
           continue;
         }

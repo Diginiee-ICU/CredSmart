@@ -26,21 +26,14 @@ import Items from "@/pages/Items";
 import Sales from "@/pages/Sales";
 import Auth from "@/pages/Auth";
 import NotFound from "@/pages/NotFound";
-import CRMDashboard from "@/pages/crm/CRMDashboard";
+import { CrmApp } from "@/crm";
+import { ColdLaunchHub } from "@/components/portal/ColdLaunchHub";
 
 // Lazy-loaded secondary operations & sub-systems (drastically reduces initial JS bundle & parse time)
-const RoleManagement = React.lazy(() => import("@/pages/crm/RoleManagement"));
-const Attendance = React.lazy(() => import("@/pages/crm/Attendance"));
 const Analytics = React.lazy(() => import("@/pages/Analytics"));
 const Purchases = React.lazy(() => import("@/pages/Purchases"));
 const Suppliers = React.lazy(() => import("@/pages/Suppliers"));
 const Customers = React.lazy(() => import("@/pages/Customers"));
-const SalaryManagement = React.lazy(() => import("@/pages/crm/SalaryManagement"));
-const Tasks = React.lazy(() => import("@/pages/crm/Tasks"));
-const Broadcasts = React.lazy(() => import("@/pages/crm/Broadcasts"));
-const Meet = React.lazy(() => import("@/pages/crm/Meet"));
-const AIAssistant = React.lazy(() => import("@/pages/crm/AIAssistant"));
-const Support = React.lazy(() => import("@/pages/crm/Support"));
 
 // Lazy-loaded secondary pages & public marketing routes (drastically reduces initial JS bundle & parse time)
 const BusinessSettings = React.lazy(() => import("@/pages/BusinessSettings"));
@@ -188,23 +181,33 @@ function AuthRoute() {
 
 function HomeRoute() {
   const { user, loading } = useAuth();
-  const { userRole } = useOrganization();
+  const portalActive = typeof window !== "undefined" ? sessionStorage.getItem("credsmart_launch_portal_active") : null;
 
   if (loading) {
     return <SleekRouteLoader />;
   }
 
+  // Priority 1: Cold launch for Native Mobile (Capacitor) or Standalone PWA
+  const isMobileApp = isNativePlatform() || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches);
+  if (isMobileApp && !portalActive) {
+    return <ColdLaunchHub />;
+  }
+
+  // Priority 2: Active portal routing if portalActive is explicitly set
+  if (portalActive === "crm") {
+    return <Navigate to="/crm" replace />;
+  }
+  if (portalActive === "billing") {
+    if (user) return <Navigate to="/billing/dashboard" replace />;
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Priority 3: Desktop Web / Browser Mode
   if (user) {
-    const dest = resolvePostLoginRoute(userRole);
-    return <Navigate to={dest} replace />;
+    return <Navigate to="/billing/dashboard" replace />;
   }
 
-  // Inside Native Mobile App (Capacitor/Android APK/AAB) or mobile app mode:
-  // Render Mobile App Starting Cards onboarding tour directly
-  if (isNativePlatform() || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches)) {
-    return <MobileAppStartingCards />;
-  }
-
+  // Default for unauthenticated web visitors: SEO Marketing Landing Page
   return <Landing />;
 }
 
@@ -259,24 +262,13 @@ const App = () => (
                     <Route path={ROUTE_PATHS.publicCatalogue} element={<PublicStorefront />} />
                     <Route path={ROUTE_PATHS.publicCatalogueShort} element={<PublicStorefront />} />
 
-                    {/* Protected Shell */}
-                    <Route element={<ProtectedRoutes />}>
-                      <Route element={<AppLayout />}>
-                        {/* CRM Command Center & Sub-Systems (Mounted first to satisfy AST index-ordering in crmAttendanceRouteWiringChallenge test) */}
-                        <Route path={ROUTE_PATHS.crm} element={<CRMDashboard />} />
-                        <Route path="/crm/dashboard" element={<Navigate to={ROUTE_PATHS.crm} replace />} />
-                        <Route path={ROUTE_PATHS.crmRoles} element={<RoleManagement />} />
-                        <Route path={ROUTE_PATHS.crmAttendance} element={<Attendance />} />
-                        <Route path={ROUTE_PATHS.crmSalary} element={<SalaryManagement />} />
-                        <Route path={ROUTE_PATHS.crmTasks} element={<Tasks />} />
-                        <Route path={ROUTE_PATHS.crmMeet} element={<Meet />} />
-                        <Route path={ROUTE_PATHS.crmBroadcasts} element={<Broadcasts />} />
-                        <Route path={ROUTE_PATHS.crmAiAssistant} element={<AIAssistant />} />
-                        <Route path="/crm/ai" element={<AIAssistant />} />
-                        <Route path={ROUTE_PATHS.crmSupport} element={<Support />} />
+                    {/* Dedicated Standalone Lovable CRM Subsystem */}
+                    <Route path="/crm/*" element={<CrmApp />} />
 
-                        {/* Dedicated POS & Billing Portal protected by BillingLockdownGuard */}
-                        <Route element={<BillingLockdownGuard />}>
+                    {/* Dedicated POS & Billing Portal protected by BillingLockdownGuard and AppLayout */}
+                    <Route element={<ProtectedRoutes />}>
+                      <Route element={<BillingLockdownGuard />}>
+                        <Route element={<AppLayout />}>
                           <Route path="/billing" element={<BillingIndexRedirect />} />
                           <Route path={ROUTE_PATHS.checkout} element={<POSBilling />} />
                           <Route path={ROUTE_PATHS.pos} element={<POSBilling />} />

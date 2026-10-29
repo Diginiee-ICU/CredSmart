@@ -9,7 +9,6 @@ const inventoryRoutes = require('./routes/inventory');
 const partiesRoutes = require('./routes/parties');
 const invoicesRoutes = require('./routes/invoices');
 const settingsRoutes = require('./routes/settings');
-const crmRoutes = require('./routes/crm');
 const uploadRoutes = require('./routes/upload');
 const rpcRoutes = require('./routes/rpc');
 
@@ -148,7 +147,6 @@ app.use('/api', inventoryRoutes); // For product-batches and adjust-stock
 app.use('/api', partiesRoutes);   // For customers, suppliers, parties, credit-transactions, bank-accounts
 app.use('/api', invoicesRoutes);  // For sales, purchases, purchase-invoices, expenses, returns
 app.use('/api', settingsRoutes);  // For organizations, memberships, storefront-settings, locations
-app.use('/api/crm', crmRoutes);
 app.use('/', uploadRoutes);       // For /api/upload/:bucket and storage
 app.use('/', rpcRoutes);          // For /rpc/:fn and /rest/v1/:table
 

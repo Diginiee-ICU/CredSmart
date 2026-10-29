@@ -363,8 +363,8 @@ describe("Universal Header Adversarial Empirical Stress Tests", () => {
     });
 
     it("verifies desktop-only widgets are suppressed on mobile views (< 768px)", () => {
-      // SuiteSwitcher is universally accessible with responsive interactive controls
-      expect(appLayoutSource).toMatch(/<SuiteSwitcher[\s\S]*?onSuiteChange/);
+      // WorkspaceSwitcher is universally accessible with responsive interactive controls
+      expect(appLayoutSource).toMatch(/<WorkspaceSwitcher\s*\/>/);
       // Sidebar toggle button is accessible with standard w-8.5 h-8.5 sizing
       expect(appLayoutSource).toMatch(/flex\s+items-center\s+justify-center\s+w-8\.5\s+h-8\.5[\s\S]*?sidebarOpen/);
       // Desktop search input is hidden on mobile (hidden md:flex)

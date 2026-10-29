@@ -42,6 +42,7 @@ import {
   Shield,
 } from "lucide-react";
 import { SuiteSwitcher } from "@/components/SuiteSwitcher";
+import { WorkspaceSwitcher } from "@/components/portal/WorkspaceSwitcher";
 import { useActiveSuite } from "@/hooks/useActiveSuite";
 import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
@@ -611,16 +612,10 @@ export default function AppLayout() {
                 </DropdownMenu>
               </div>
 
-              {/* Top-Level Interactive Suite Switcher */}
-              {userRole !== "cashier" && (
-                <div className="flex items-center shrink-0">
-                  <SuiteSwitcher
-                    onSuiteChange={(newSuite) => {
-                      navigate(newSuite === "crm" ? ROUTE_PATHS.crm : ROUTE_PATHS.dashboard);
-                    }}
-                  />
-                </div>
-              )}
+              {/* Universal Workspace Switcher */}
+              <div className="flex items-center shrink-0">
+                <WorkspaceSwitcher />
+              </div>
             </div>
 
             {/* CENTER: Command Palette Trigger (Available md: and above) */}
@@ -671,9 +666,7 @@ export default function AppLayout() {
               </div>
 
               {/* Action Split Button — Royal Blue Standard Action */}
-              {!isCrmSuite ? (
-                /* Billing Suite: New Invoice split button */
-                <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
+              <DropdownMenu open={newInvoiceMenuOpen} onOpenChange={setNewInvoiceMenuOpen}>
                   {/* On Mobile: Single compact plus button */}
                   <DropdownMenuTrigger asChild>
                     <button
@@ -736,112 +729,6 @@ export default function AppLayout() {
                   <DropdownMenuItem onClick={() => handleQuickAction("expense")} className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"><Receipt className="w-4 h-4 text-orange-500 dark:text-orange-400 shrink-0" /><span>Record Expense</span></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              /* CRM Suite: CRM Quick Action split button */
-              <DropdownMenu open={crmActionMenuOpen} onOpenChange={setCrmActionMenuOpen}>
-                {/* On Mobile: Single compact quick action button */}
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex sm:hidden items-center justify-center w-8.5 h-8.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 cursor-pointer active:scale-95 transition-all"
-                    title="CRM Quick Actions"
-                    aria-label="CRM Quick Actions"
-                  >
-                    <Plus className="w-5 h-5 stroke-[2.5]" />
-                  </button>
-                </DropdownMenuTrigger>
-                {/* On Desktop: Royal Blue split button */}
-                <div className="hidden sm:flex items-center h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden transition-colors">
-                  <button
-                    type="button"
-                    onClick={() => navigate(ROUTE_PATHS.crmTasks)}
-                    className="flex items-center gap-1.5 h-full px-3.5 text-white text-xs sm:text-sm font-semibold active:scale-[0.98] transition-transform cursor-pointer"
-                    title="Create New CRM Task"
-                  >
-                    <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>Quick Action</span>
-                  </button>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex items-center justify-center h-full px-2 border-l border-blue-500 hover:bg-blue-800 text-white transition-colors cursor-pointer"
-                      aria-label="More CRM actions"
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </button>
-                  </DropdownMenuTrigger>
-                </div>
-                <DropdownMenuContent align="end" sideOffset={6} className="w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 p-2 shadow-xl rounded-xl z-dropdown animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] overflow-y-auto">
-                  <DropdownMenuLabel className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 pt-2 pb-1">
-                    WORKFORCE & OPERATIONS
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAttendance); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <CalendarCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Clock In / Attendance</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmTasks); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg cursor-pointer font-semibold"
-                  >
-                    <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
-                    <span>+ Create Staff Task</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSalary); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <Wallet className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>Run Payroll / Payslips</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                  <DropdownMenuLabel className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
-                    COMMUNICATIONS
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmMeet); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <Video className="w-4 h-4 text-indigo-500 shrink-0" />
-                    <span>Start Video Meet</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmBroadcasts); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <Radio className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>Post Broadcast Alert</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmAiAssistant); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <Bot className="w-4 h-4 text-purple-500 shrink-0" />
-                    <span>CRM AI Assistant</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-slate-100 dark:bg-slate-800 my-1" />
-                  <DropdownMenuLabel className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 py-1">
-                    GOVERNANCE
-                  </DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmRoles); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Staff Roles &amp; Permissions</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => { setCrmActionMenuOpen(false); navigate(ROUTE_PATHS.crmSupport); }}
-                    className="flex items-center gap-2.5 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer"
-                  >
-                    <LifeBuoy className="w-4 h-4 text-cyan-500 shrink-0" />
-                    <span>Support &amp; Helpdesk</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
 
               {/* Bell (Desktop & Tablet) */}
               <button

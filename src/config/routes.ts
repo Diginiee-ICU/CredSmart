@@ -98,14 +98,14 @@ export const ROUTE_PATHS = {
   // CRM Command Center & Submodules (strictly /crm/*)
   crm: "/crm",
   crmDashboard: "/crm",
-  crmAttendance: "/crm/attendance",
-  crmSalary: "/crm/salary",
-  crmTasks: "/crm/tasks",
-  crmMeet: "/crm/meet",
-  crmBroadcasts: "/crm/broadcasts",
-  crmAiAssistant: "/crm/ai-assistant",
-  crmSupport: "/crm/support",
-  crmRoles: "/crm/roles",
+  crmAttendance: "/crm",
+  crmSalary: "/crm",
+  crmTasks: "/crm",
+  crmMeet: "/crm",
+  crmBroadcasts: "/crm",
+  crmAiAssistant: "/crm",
+  crmSupport: "/crm",
+  crmRoles: "/crm",
 
   // Settings & Help (mapped under /billing/*)
   settings: "/billing/settings",
@@ -791,81 +791,10 @@ export const BILLING_NAV_ROUTES: NavRouteGroup[] = [
 ];
 
 /**
- * Dedicated CRM navigation groups containing strictly workforce management,
- * biometric attendance, salary/payroll, enterprise tasks, custom roles, and
- * omnichannel communication tools (Zero POS/billing clutter).
+ * Dedicated CRM navigation groups (Lovable CRM uses internal standalone layout navigation).
+ * Kept as empty array for backwards compatibility.
  */
-export const CRM_NAV_ROUTES: NavRouteGroup[] = [
-  {
-    label: "WORKFORCE & OPERATIONS",
-    items: [
-      {
-        title: "Command Center",
-        url: ROUTE_PATHS.crm,
-        icon: LayoutDashboard,
-        mobilePrimary: true,
-        shortcut: "Alt+C",
-      },
-      {
-        title: "Attendance Tracker",
-        url: ROUTE_PATHS.crmAttendance,
-        icon: CalendarCheck,
-        mobilePrimary: true,
-        shortcut: "Alt+A",
-      },
-      {
-        title: "Salary & Payroll",
-        url: ROUTE_PATHS.crmSalary,
-        icon: Wallet,
-        mobilePrimary: true,
-        shortcut: "Alt+Y",
-      },
-      {
-        title: "Tasks & Projects",
-        url: ROUTE_PATHS.crmTasks,
-        icon: CheckSquare,
-        mobilePrimary: true,
-        shortcut: "Alt+T",
-      },
-      {
-        title: "Role Management",
-        url: ROUTE_PATHS.crmRoles,
-        icon: Shield,
-        shortcut: "Alt+R",
-      },
-    ],
-  },
-  {
-    label: "COMMUNICATION & TOOLS",
-    items: [
-      {
-        title: "Meetings",
-        url: ROUTE_PATHS.crmMeet,
-        icon: Video,
-        shortcut: "Alt+M",
-      },
-      {
-        title: "Broadcasts",
-        url: ROUTE_PATHS.crmBroadcasts,
-        icon: Radio,
-        shortcut: "Alt+B",
-      },
-      {
-        title: "AI Assistant",
-        url: ROUTE_PATHS.crmAiAssistant,
-        icon: Bot,
-        badge: "AI",
-        shortcut: "Alt+X",
-      },
-      {
-        title: "Support Tickets",
-        url: ROUTE_PATHS.crmSupport,
-        icon: LifeBuoy,
-        shortcut: "Alt+H",
-      },
-    ],
-  },
-];
+export const CRM_NAV_ROUTES: NavRouteGroup[] = [];
 
 export interface LegacyRouteRedirect {
   from: string;

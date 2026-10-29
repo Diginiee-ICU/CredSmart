@@ -174,8 +174,6 @@ const authMiddleware = require("../../backend-api/src/middleware/auth");
 const authRouter = require("../../backend-api/src/routes/auth");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const settingsRouter = require("../../backend-api/src/routes/settings");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const crmRouter = require("../../backend-api/src/routes/crm");
 
 // Helper to dispatch requests to Express routers
 function dispatchRouter(router: any, options: {
@@ -437,86 +435,11 @@ describe("Adversarial Multi-Tenant Isolation & Auth Fallback Challenge (Mileston
   // ============================================================================
   // CHALLENGE 3: /api/crm/staff Cross-Tenant Isolation
   // ============================================================================
-  describe("Challenge 3: GET /api/crm/staff Strict Cross-Tenant Isolation", () => {
-    it("3.1 Querying /api/crm/staff with Organization A never returns users from Organization B", async () => {
-      mockPoolQuery.mockImplementation((sql: string, params: any[]) => {
-        const orgIdParam = params[0];
-        if (orgIdParam === "org-tenant-A") {
-          return {
-            rows: [
-              {
-                id: "user-alice",
-                user_id: "user-alice",
-                email: "alice@tenanta.com",
-                full_name: "Alice Tenant A",
-                store_role: "owner",
-                role_name: "Super Admin",
-              },
-            ],
-          };
-        }
-        if (orgIdParam === "org-tenant-B") {
-          return {
-            rows: [
-              {
-                id: "user-bob",
-                user_id: "user-bob",
-                email: "bob@tenantb.com",
-                full_name: "Bob Tenant B",
-                store_role: "staff",
-                role_name: "Sales Associate",
-              },
-            ],
-          };
-        }
-        return { rows: [] };
-      });
-
-      // Request for Org A
-      const resA = await dispatchRouter(crmRouter, {
-        method: "GET",
-        url: "/staff",
-        headers: {
-          "x-organization-id": "org-tenant-A",
-          authorization: "Bearer token-org-a",
-        },
-        user: { id: "user-alice", orgId: "org-tenant-A" },
-      });
-
-      expect(resA.status).toBe(200);
-      expect(resA.body).toHaveLength(1);
-      expect(resA.body[0].email).toBe("alice@tenanta.com");
-      expect(resA.body.some((u: any) => u.email === "bob@tenantb.com")).toBe(false);
-
-      // Request for Org B
-      const resB = await dispatchRouter(crmRouter, {
-        method: "GET",
-        url: "/staff",
-        headers: {
-          "x-organization-id": "org-tenant-B",
-          authorization: "Bearer token-org-a",
-        },
-        user: { id: "user-bob", orgId: "org-tenant-B" },
-      });
-
-      expect(resB.status).toBe(200);
-      expect(resB.body).toHaveLength(1);
-      expect(resB.body[0].email).toBe("bob@tenantb.com");
-      expect(resB.body.some((u: any) => u.email === "alice@tenanta.com")).toBe(false);
-    });
-
-    it("3.2 Querying /api/crm/staff with no organization context fails with 400", async () => {
-      const res = await dispatchRouter(crmRouter, {
-        method: "GET",
-        url: "/staff",
-        headers: {
-          authorization: "Bearer token-without-org",
-        },
-        user: { id: "user-no-org" }, // No orgId anywhere
-      });
-
-      expect(res.status).toBe(400);
-      expect(res.body.error).toBe("Organization context is required");
+  describe("Challenge 3: Decommissioning of Legacy /api/crm", () => {
+    it("3.1 confirms /api/crm is decommissioned and unmounted from backend", () => {
+      const serverSource = fs.readFileSync(path.resolve(process.cwd(), "backend-api/src/index.js"), "utf-8");
+      expect(serverSource).not.toContain("require('./routes/crm')");
+      expect(serverSource).not.toContain("app.use('/api/crm'");
     });
   });
 

@@ -402,13 +402,13 @@ describe("Empirical Challenger M1: Adversarial Route Stress Testing", () => {
     });
 
     it("verifies CRM routes are mounted before RoleProtectedRoute to satisfy route priority", () => {
-      const crmAttendanceIndex = appTsxContent.indexOf("ROUTE_PATHS.crmAttendance");
+      const crmRouteIndex = appTsxContent.indexOf('<Route path="/crm/*" element={<CrmApp />} />');
       const roleProtectedIndex = appTsxContent.indexOf("<Route element={<RoleProtectedRoute");
 
-      expect(crmAttendanceIndex).toBeGreaterThan(-1);
+      expect(crmRouteIndex).toBeGreaterThan(-1);
       expect(roleProtectedIndex).toBeGreaterThan(-1);
-      // crmAttendanceIndex must appear before roleProtectedIndex in App.tsx
-      expect(crmAttendanceIndex).toBeLessThan(roleProtectedIndex);
+      // crmRouteIndex must appear before roleProtectedIndex in App.tsx
+      expect(crmRouteIndex).toBeLessThan(roleProtectedIndex);
     });
 
     it("verifies exact unauthenticated redirect syntax in ProtectedRoutes", () => {

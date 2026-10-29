@@ -202,18 +202,16 @@ describe("Challenger M1.2 Adversarial Route & RBAC Verification Suite", () => {
       );
     });
 
-    it("verifies strict route ordering: ProtectedRoutes < CRM Attendance < RoleProtectedRoute", () => {
+    it("verifies strict route ordering: Lovable CRM is mounted and ProtectedRoutes wraps RoleProtectedRoute", () => {
+      const crmIndex = appSource.indexOf('<Route path="/crm/*" element={<CrmApp />} />');
       const protectedIndex = appSource.indexOf("<Route element={<ProtectedRoutes />}>");
-      const crmAttendanceIndex = appSource.indexOf(
-        "<Route path={ROUTE_PATHS.crmAttendance} element={<Attendance />} />"
-      );
       const roleProtectedIndex = appSource.indexOf(
         "<Route element={<RoleProtectedRoute allowedRoles={MANAGER_ROLES} />}>"
       );
 
+      expect(crmIndex).toBeGreaterThan(-1);
       expect(protectedIndex).toBeGreaterThan(-1);
-      expect(crmAttendanceIndex).toBeGreaterThan(protectedIndex);
-      expect(crmAttendanceIndex).toBeLessThan(roleProtectedIndex);
+      expect(roleProtectedIndex).toBeGreaterThan(protectedIndex);
     });
 
     it("verifies LegacyRedirect is imported and used for legacy route declarations", () => {

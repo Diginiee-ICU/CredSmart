@@ -482,8 +482,12 @@ CREATE TABLE IF NOT EXISTS expenses (
 );
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS org_id UUID;
 ALTER TABLE expenses ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS expense_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS date DATE DEFAULT CURRENT_DATE;
 UPDATE expenses SET org_id = organization_id WHERE org_id IS NULL AND organization_id IS NOT NULL;
 UPDATE expenses SET organization_id = org_id WHERE organization_id IS NULL AND org_id IS NOT NULL;
+UPDATE expenses SET expense_date = date WHERE expense_date IS NULL AND date IS NOT NULL;
+UPDATE expenses SET date = expense_date WHERE date IS NULL AND expense_date IS NOT NULL;
 
 DROP TRIGGER IF EXISTS trg_sync_org_ids ON expenses;
 CREATE TRIGGER trg_sync_org_ids BEFORE INSERT OR UPDATE ON expenses FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();

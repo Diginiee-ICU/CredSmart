@@ -2,13 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
-import { useCRMPermission } from "@/hooks/useCRMPermission";
 import { ROUTE_PATHS } from "@/config/routes";
 import { toast } from "@/hooks/use-toast";
 
-/**
- * SleekRouteLoader component displayed during route evaluation
- */
 export function SleekRouteLoader() {
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
@@ -32,22 +28,11 @@ export function SleekRouteLoader() {
   );
 }
 
-/**
- * BillingLockdownGuard
- * Route guard preventing CRM staff without POS/billing roles from accessing /billing/*, /pos, /checkout.
- * Preserves access for store owners, cashiers, salesmen, stock managers, delivery boys, accountants,
- * super admins, and users explicitly granted POS billing access permissions.
- *
- * If access is denied:
- * - Dispatches a destructive alert toast
- * - Redirects to ROUTE_PATHS.crm (/crm)
- */
 export function BillingLockdownGuard(): React.ReactElement {
   const { user, loading: authLoading } = useAuth();
   const { userRole, userPermissions, loading: orgLoading } = useOrganization();
-  const { isSuperAdmin, hasPermission, loading: permLoading } = useCRMPermission();
 
-  const isLoading = authLoading || orgLoading || permLoading;
+  const isLoading = authLoading || orgLoading;
 
   const allowedStoreRoles = [
     "store_owner",
@@ -65,21 +50,23 @@ export function BillingLockdownGuard(): React.ReactElement {
 
   const effectiveRole = userRole || (user as any)?.role || "";
 
+  // Pure Store Role / POS Permission check (Zero CRM hook dependency)
   const isAllowed =
-    isSuperAdmin ||
+    effectiveRole === "super_admin" ||
     allowedStoreRoles.includes(effectiveRole) ||
     Boolean(
       userPermissions?.pos ||
       userPermissions?.sales ||
       userPermissions?.checkout ||
       userPermissions?.billing
-    ) ||
-    (typeof hasPermission === "function" && (
-      hasPermission("pos", "access") ||
-      hasPermission("billing", "access") ||
-      hasPermission("sales", "access") ||
-      hasPermission("checkout", "access")
-    ));
+    );
+
+  // Self-Healing: Prevent infinite redirect loops on WebView process restore
+  useEffect(() => {
+    if (user && typeof window !== "undefined" && !sessionStorage.getItem("credsmart_launch_portal_active")) {
+      sessionStorage.setItem("credsmart_launch_portal_active", "billing");
+    }
+  }, [user]);
 
   const toastFiredRef = useRef(false);
 

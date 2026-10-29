@@ -88,9 +88,6 @@ describe("Challenger 1 — Milestone 2 Desktop Shell & Productivity Layouts Empi
       // New Invoice action in Billing suite
       expect(appLayoutSource).toMatch(/New Invoice<\/span>/);
 
-      // Quick Action in CRM suite
-      expect(appLayoutSource).toMatch(/Quick Action<\/span>/);
-
       // Chevron dropdown trigger with border-l border-blue-500
       expect(appLayoutSource).toMatch(/border-l\s+border-blue-500/);
     });

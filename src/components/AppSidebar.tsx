@@ -36,7 +36,6 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   BILLING_NAV_ROUTES,
-  CRM_NAV_ROUTES,
   NAV_ROUTES,
   ROUTE_PATHS,
   isRouteAllowedForRole,
@@ -120,8 +119,8 @@ export function AppSidebar({
     return () => window.removeEventListener("credsmart:suite_changed", handleSuiteChanged);
   }, []);
 
-  const isCrmSuite = suiteState === "crm";
-  const activeNavRoutes = isCrmSuite ? CRM_NAV_ROUTES : BILLING_NAV_ROUTES;
+  const isCrmSuite = false;
+  const activeNavRoutes = BILLING_NAV_ROUTES;
 
   const isRouteActive = useMemo(
     () => (url: string) =>
@@ -246,13 +245,6 @@ export function AppSidebar({
   const isItemsActive = isRouteActive(ROUTE_PATHS.items) || isRouteActive(ROUTE_PATHS.inventory);
   const isPartiesActive = isRouteActive(ROUTE_PATHS.parties) || isRouteActive(ROUTE_PATHS.customers);
 
-  // CRM Active States
-  const isCrmCommandActive = isRouteActive(ROUTE_PATHS.crm) && (location.pathname === "/crm" || location.pathname === "/crm/dashboard");
-  const isCrmAttendanceActive = isRouteActive(ROUTE_PATHS.crmAttendance);
-  const isCrmTasksActive = isRouteActive(ROUTE_PATHS.crmTasks);
-  const isCrmSalaryActive = isRouteActive(ROUTE_PATHS.crmSalary);
-  const isCrmRolesActive = isRouteActive(ROUTE_PATHS.crmRoles);
-
   return (
     <>
       {isMobile && (
@@ -260,247 +252,123 @@ export function AppSidebar({
           className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800/90 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 pt-1.5 pb-[max(0.65rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around text-slate-500 select-none"
           aria-label="Mobile Bottom Navigation"
         >
-          {isCrmSuite ? (
-            <>
-              {/* CRM Tab 1: Command */}
-              <NavLink
-                to={ROUTE_PATHS.crm}
-                end
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isCrmCommandActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isCrmCommandActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <LayoutGrid className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Command</span>
-              </NavLink>
+          {/* POS & Billing Tab 1: Home */}
+          <NavLink
+            to={ROUTE_PATHS.dashboard}
+            end
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isDashboardActive
+                ? "text-blue-600 dark:text-blue-400 font-bold"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            )}
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl border transition-all duration-200",
+                isDashboardActive
+                  ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
+                  : "bg-transparent border-transparent"
+              )}
+            >
+              <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[11px] font-medium tracking-tight">Home</span>
+          </NavLink>
 
-              {/* CRM Tab 2: Attendance */}
-              <NavLink
-                to={ROUTE_PATHS.crmAttendance}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isCrmAttendanceActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isCrmAttendanceActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Calendar className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Attendance</span>
-              </NavLink>
+          {/* POS & Billing Tab 2: Sales */}
+          <NavLink
+            to={ROUTE_PATHS.sales}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isSalesActive
+                ? "text-blue-600 dark:text-blue-400 font-bold"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            )}
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl border transition-all duration-200",
+                isSalesActive
+                  ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
+                  : "bg-transparent border-transparent"
+              )}
+            >
+              <Receipt className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[11px] font-medium tracking-tight">Sales</span>
+          </NavLink>
 
-              {/* CRM Tab 3: Center Elevated Punch / Task Button */}
-              <NavLink
-                to={ROUTE_PATHS.crmTasks}
-                className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
-              >
-                <div
-                  className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-[0_4px_16px_rgba(37,99,235,0.35)] transition-all duration-200 bg-gradient-to-tr from-[#0F172A] via-[#1E293B] to-[#2563EB] text-white active:scale-95",
-                    isCrmTasksActive ? "scale-105 shadow-blue-500/40" : "hover:scale-105"
-                  )}
-                >
-                  <CheckSquare className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span
-                  className={cn(
-                    "text-[11px] mt-0.5 font-bold tracking-tight",
-                    isCrmTasksActive
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-slate-600 dark:text-slate-300"
-                  )}
-                >
-                  Tasks
-                </span>
-              </NavLink>
+          {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
+          <NavLink
+            to={ROUTE_PATHS.checkout}
+            className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
+          >
+            <div
+              className={cn(
+                "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
+                isPosActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
+              )}
+            >
+              <ShoppingCart className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span
+              className={cn(
+                "text-[11px] mt-0.5 font-bold tracking-tight",
+                isPosActive
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-slate-600 dark:text-slate-300"
+              )}
+            >
+              POS Billing
+            </span>
+          </NavLink>
 
-              {/* CRM Tab 4: Salary & Payroll */}
-              <NavLink
-                to={ROUTE_PATHS.crmSalary}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isCrmSalaryActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isCrmSalaryActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Wallet className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Payroll</span>
-              </NavLink>
+          {/* POS & Billing Tab 4: Items */}
+          <NavLink
+            to={ROUTE_PATHS.items}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isItemsActive
+                ? "text-blue-600 dark:text-blue-400 font-bold"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            )}
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl border transition-all duration-200",
+                isItemsActive
+                  ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
+                  : "bg-transparent border-transparent"
+              )}
+            >
+              <Package className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[11px] font-medium tracking-tight">Items</span>
+          </NavLink>
 
-              {/* CRM Tab 5: Roles & RBAC */}
-              <NavLink
-                to={ROUTE_PATHS.crmRoles}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isCrmRolesActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isCrmRolesActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Shield className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Roles</span>
-              </NavLink>
-            </>
-          ) : (
-            <>
-              {/* POS & Billing Tab 1: Home */}
-              <NavLink
-                to={ROUTE_PATHS.dashboard}
-                end
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isDashboardActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isDashboardActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Home</span>
-              </NavLink>
-
-              {/* POS & Billing Tab 2: Sales */}
-              <NavLink
-                to={ROUTE_PATHS.sales}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isSalesActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isSalesActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Receipt className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Sales</span>
-              </NavLink>
-
-              {/* POS & Billing Tab 3: Center Elevated POS Billing Button */}
-              <NavLink
-                to={ROUTE_PATHS.checkout}
-                className="flex flex-col items-center justify-center -mt-4 px-1.5 z-10 active:scale-95 transition-transform duration-150 cursor-pointer group"
-              >
-                <div
-                  className={cn(
-                    "w-[46px] h-[46px] rounded-xl flex items-center justify-center font-bold ring-4 ring-white dark:ring-slate-900 shadow-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 text-white active:scale-95",
-                    isPosActive ? "scale-105 shadow-blue-500/30" : "hover:scale-105"
-                  )}
-                >
-                  <ShoppingCart className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span
-                  className={cn(
-                    "text-[11px] mt-0.5 font-bold tracking-tight",
-                    isPosActive
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-slate-600 dark:text-slate-300"
-                  )}
-                >
-                  POS Billing
-                </span>
-              </NavLink>
-
-              {/* POS & Billing Tab 4: Items */}
-              <NavLink
-                to={ROUTE_PATHS.items}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isItemsActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isItemsActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Package className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Items</span>
-              </NavLink>
-
-              {/* POS & Billing Tab 5: Parties */}
-              <NavLink
-                to={ROUTE_PATHS.parties}
-                className={cn(
-                  "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
-                  isPartiesActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-1.5 rounded-xl border transition-all duration-200",
-                    isPartiesActive
-                      ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
-                      : "bg-transparent border-transparent"
-                  )}
-                >
-                  <Users2 className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <span className="text-[11px] font-medium tracking-tight">Parties</span>
-              </NavLink>
-            </>
-          )}
+          {/* POS & Billing Tab 5: Parties */}
+          <NavLink
+            to={ROUTE_PATHS.parties}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 min-h-[44px] py-1 rounded-2xl transition-all duration-200 min-w-[50px] active:scale-95 cursor-pointer",
+              isPartiesActive
+                ? "text-blue-600 dark:text-blue-400 font-bold"
+                : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            )}
+          >
+            <div
+              className={cn(
+                "p-1.5 rounded-xl border transition-all duration-200",
+                isPartiesActive
+                  ? "bg-blue-50/60 dark:bg-blue-500/15 border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shadow-2xs scale-105"
+                  : "bg-transparent border-transparent"
+              )}
+            >
+              <Users2 className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <span className="text-[11px] font-medium tracking-tight">Parties</span>
+          </NavLink>
         </nav>
       )}
 
