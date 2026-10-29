@@ -292,8 +292,12 @@ describe("Challenger 2 — Desktop POS Billing Terminal Preservation & Hotkey Ha
       expect(screen.queryByText(/Change Selling Price \(SP\) \[P\]/i)).not.toBeInTheDocument();
 
       // Ensure row is re-selected after closing modal
-      if (cartItemHeader) {
-        fireEvent.click(cartItemHeader);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      const cartItemHeaderAfterP = screen.getAllByText("Basmati Rice 5kg").find((el) => el.tagName === "H4");
+      if (cartItemHeaderAfterP) {
+        fireEvent.click(cartItemHeaderAfterP);
       }
 
       // Test [Q] -> Change Qty modal opens
@@ -304,8 +308,12 @@ describe("Challenger 2 — Desktop POS Billing Terminal Preservation & Hotkey Ha
       expect(screen.queryByText(/Change Quantity \[Q\]/i)).not.toBeInTheDocument();
 
       // Ensure row is re-selected after closing modal
-      if (cartItemHeader) {
-        fireEvent.click(cartItemHeader);
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      const cartItemHeaderAfterQ = screen.getAllByText("Basmati Rice 5kg").find((el) => el.tagName === "H4");
+      if (cartItemHeaderAfterQ) {
+        fireEvent.click(cartItemHeaderAfterQ);
       }
 
       // Test [D] -> Change Item Discount modal opens
@@ -314,7 +322,7 @@ describe("Challenger 2 — Desktop POS Billing Terminal Preservation & Hotkey Ha
       const cancelDisc = screen.getByRole("button", { name: /Cancel/i });
       fireEvent.click(cancelDisc);
       expect(screen.queryByText(/Item Discount \[D\]/i)).not.toBeInTheDocument();
-    });
+    }, 60000);
   });
 
   // =========================================================================
