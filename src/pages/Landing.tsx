@@ -167,12 +167,26 @@ export default function Landing() {
   const [downloadPlatform, setDownloadPlatform] = useState<"android" | "desktop">("android");
   const [searchGstin, setSearchGstin] = useState("");
   const [activeModuleTab, setActiveModuleTab] = useState<
-    "pos" | "gst" | "barcode" | "inventory" | "khata" | "reports"
+    "pos" | "crm" | "gst" | "barcode" | "inventory" | "khata" | "reports"
   >("pos");
   const [faqSearch, setFaqSearch] = useState("");
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   const targetAppRoute = userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard;
+
+  const handleLaunchPos = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("credsmart_launch_portal_active", "billing");
+    }
+    navigate("/billing/dashboard");
+  };
+
+  const handleLaunchCrm = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("credsmart_launch_portal_active", "crm");
+    }
+    navigate("/crm");
+  };
 
   const handleStartFree = () => {
     if (user) {

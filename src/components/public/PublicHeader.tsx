@@ -38,6 +38,8 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
 
   const navLinks = [
     { label: "Home", href: "/" },
+    { label: "POS Billing", href: "/#suites" },
+    { label: "Workforce CRM", href: "/#suites" },
     { label: "Features", href: "/features" },
     { label: "Pricing", href: "/pricing" },
     { label: "Ecosystem", href: "/#ecosystem" },
