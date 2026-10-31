@@ -1,18 +1,28 @@
-## 2026-10-27T03:20:16Z
-You are Challenger 1 for Milestone 1 (Universal Header Dual Lockup).
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (last section ## 2026-10-27T02:39:33Z).
-Read PROJECT.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md.
-Read Worker M1's handoff report in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md.
+## 2026-10-31T11:22:22Z
+You are M1 Challenger 1 (Navigation & Button Challenger).
+Your identity: teamwork_challenger
+Your assigned working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
 
-TASK:
-1. Empirically verify the Universal Header lockup across screen viewports:
-   - 320px, 360px, 375px, 412px, 768px, 1024px.
-   - Test extreme edge cases: extremely long organization names (e.g. 100 characters), missing organization names, null logo_url, special characters.
-   - Verify that the layout does not wrap into multiple lines or cause horizontal scrollbars.
-2. Run test suites and verify:
-   - cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx
-   - cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx
-3. Write your findings and verdict (APPROVE or REQUEST_CHANGES) in:
-   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1\handoff.md
-4. Send completion message via send_message to orchestrator (conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987).
+MANDATORY FIRST STEP:
+Read the authoritative user request at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the project master document at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+
+INPUT WORKER REPORT:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
+
+OBJECTIVE:
+Empirically challenge and stress-test the Milestone 1 changes (`PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, `PublicLayout.tsx`).
+
+CHALLENGE TARGETS:
+1. Double-slash bug challenge: Write or execute an adversarial test checking route transitions from various subpages (`/features`, `/pricing`, `/about`, `/contact`, `/security`) with anchor fragments (`/#suites`, `/#ecosystem`, `/#download`). Ensure zero URLs have double slashes (`//`).
+2. Button bloat challenge: Inspect rendered DOM elements or class strings across `PublicHeader.tsx`, `PublicFooter.tsx`, and `PublicConversionBanner.tsx` to assert that zero elements contain prohibited classes: `h-10`, `h-12`, `h-13`, `px-8`, `rounded-3xl` (unless strictly scoped to mobile elevated CTA or header bar height).
+3. Hash scroll listener challenge: Verify that navigating to `/#suites` from a subpage triggers the hash-aware scroll listener without error.
+4. Run:
+   - `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx`
+   - `node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx`
+
+DELIVERABLE:
+Write `handoff.md` in your working directory stating your explicit verdict: `APPROVE` or `REQUEST_CHANGES` with empirical evidence, and send message back to orchestrator.

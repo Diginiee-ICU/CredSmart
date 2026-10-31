@@ -1,51 +1,57 @@
-# BRIEFING — 2026-10-27T03:28:30Z
+# BRIEFING — 2026-10-31T11:33:00Z
 
 ## Mission
-Adversarial empirical stress-testing and verification of Milestone 1 Universal Header Dual Lockup across viewports and edge cases.
+Empirically challenge and stress-test Milestone 1 public shell changes (PublicHeader, PublicFooter, PublicConversionBanner, PublicLayout) focusing on navigation, double-slash URLs, button bloat, hash scroll behavior, and test suite execution.
 
 ## 🔒 My Identity
-- Archetype: challenger
+- Archetype: challenger (critic, specialist)
 - Roles: critic, specialist
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\challenger_m1_1
-- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
-- Milestone: Milestone 1 (Universal Header Dual Lockup)
-- Instance: 1 of 1
+- Original parent: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Milestone: M1
+- Instance: 1 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code
-- Must run verification code directly (empirical evidence required)
-- Never trust unverified claims
+- Review-only — do NOT modify implementation code.
+- Write only to my folder: .agents/teamwork/challenger_m1_1
+- Empirical proof required: run tests, oracles, and stress harnesses directly; reproduce or disprove.
+- Deliver explicit verdict: APPROVE or REQUEST_CHANGES.
 
 ## Current Parent
-- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
-- Updated: 2026-10-27T03:20:16Z
+- Conversation ID: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Updated: not yet
 
 ## Review Scope
-- **Files reviewed**: src/components/AppLayout.tsx, src/test/universalHeaderDualLockup.test.tsx, src/test/desktopShellMilestone2.challenger.test.tsx, src/test/universalHeaderAdversarialStress.test.tsx
-- **Interface contracts**: PROJECT.md, minimal-design-system.md
-- **Review criteria**: Dual lockup visual hierarchy, truncate/overflow safety, responsiveness (320px-1024px), edge cases (100+ char org name, null/missing logo, special chars)
+- **Files to review**:
+  - `src/components/public/PublicHeader.tsx`
+  - `src/components/public/PublicFooter.tsx`
+  - `src/components/public/PublicConversionBanner.tsx`
+  - `src/components/public/PublicLayout.tsx`
+  - `src/test/publicShellComponents.test.tsx`
+  - `src/test/e2e/publicPages.e2e.test.tsx`
+- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md`, `RULE[minimal-design-system.md]`
+- **Review criteria**:
+  1. Double-slash bug in route transitions with anchor fragments (`/#suites`, `/#ecosystem`, `/#download`).
+  2. Button bloat: prohibited classes (`h-10`, `h-12`, `h-13`, `px-8`, `rounded-3xl` on buttons).
+  3. Hash scroll listener in `PublicLayout.tsx`: navigating to `/#suites` from subpages.
+  4. Test suite passes: `publicShellComponents.test.tsx` and `publicPages.e2e.test.tsx`.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  1. Extremely long org name (100+ W's) causes flex container to wrap or blow out on 320px screen -> Disproven (handled via `max-w-[100px]`, `truncate`, and `overflow-hidden`).
-  2. Malicious XSS strings in org name compromise DOM -> Disproven (safely escaped by React).
-  3. Missing / null org or logo crashes component -> Disproven (handled via `org?.name || "My Business"` and Building2 SVG fallback).
-  4. 320px screen overflows horizontal bounds -> Disproven (max mobile occupied width is 279px, leaving 21px cushion in 300px net container).
-- **Vulnerabilities found**: None in Milestone 1 implementation. (Note: `title={org?.name}` is duplicated on both store pill and profile button, which is valid and expected behavior).
-- **Untested angles**: None within Milestone 1 scope.
-
-## Loaded Skills
-- None specified in dispatch
+  - Route transitions from 14 subpages to `/#suites`, `/#ecosystem`, `/#download` tested for `//` generation — 0 double slashes found.
+  - Buttons across `PublicHeader.tsx`, `PublicFooter.tsx`, and `PublicConversionBanner.tsx` inspected for `h-10`, `h-12`, `h-13`, `px-8`, `rounded-3xl` — 0 violations found.
+  - Hash scroll listener in `PublicLayout.tsx` tested with valid anchors, missing anchors, reduced-motion preferences, and edge case hashes — 100% resilient.
+  - Vitest test suites executed: `publicShellComponents.test.tsx` (16/16 pass), `publicPages.e2e.test.tsx` (59/59 pass), `challengerM1NavigationButtonsAdversarial.test.tsx` (53/53 pass).
+- **Vulnerabilities found**: None.
+- **Untested angles**: None within M1 scope.
 
 ## Key Decisions Made
-- Authored adversarial stress test suite `src/test/universalHeaderAdversarialStress.test.tsx` (18 tests).
-- Verified 49/49 passing tests across all Milestone 1 suites.
-- TypeScript compiler passes with 0 errors.
-- Issue verdict: APPROVE.
+- Created and executed automated adversarial stress suite (`src/test/challengerM1NavigationButtonsAdversarial.test.tsx`) covering 53 discrete test cases.
+- Confirmed verdict: APPROVE.
 
 ## Artifact Index
-- DISPATCH.md — incoming dispatch instructions
-- BRIEFING.md — persistent state and identity
-- progress.md — liveness heartbeat
-- handoff.md — final 5-component report
-- src/test/universalHeaderAdversarialStress.test.tsx — empirical adversarial stress harness
+- `DISPATCH.md` — Ingested dispatch instruction
+- `BRIEFING.md` — Situational awareness
+- `progress.md` — Execution progress heartbeat
+- `handoff.md` — 5-component handoff report with explicit verdict
+- `src/test/challengerM1NavigationButtonsAdversarial.test.tsx` — Executable adversarial test harness

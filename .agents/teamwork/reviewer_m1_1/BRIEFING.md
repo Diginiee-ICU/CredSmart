@@ -1,70 +1,69 @@
-# BRIEFING — 2026-10-27T03:25:30Z
+# BRIEFING — 2026-10-31T11:26:00Z
 
 ## Mission
-Objective and adversarial review of Milestone 1 (Universal Header Dual Lockup) in AppLayout.tsx and associated test suites.
+Perform an objective, rigorous code review and adversarial challenge of Milestone 1 changes across the public shell components, design tokens, and tests.
 
 ## 🔒 My Identity
-- Archetype: reviewer & critic
+- Archetype: teamwork_reviewer
 - Roles: reviewer, critic
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_1
-- Original parent: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
-- Milestone: Milestone 1 (Universal Header Dual Lockup)
-- Instance: 1 of 1
+- Original parent: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Milestone: M1
+- Instance: 1 of 2
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Check for integrity violations (hardcoding, facades, shortcuts, fake logs)
-- Verify strictly:
-  - Far Left platform mark unconditionally renders /favicon.png in styled container paired with styled 'CredSmart' wordmark (hidden sm:inline)
-  - Tenant store branding decoupled & placed in adjacent Store Switcher trigger pill separated by 1px hairline divider
-  - Mobile height strictly 48px (h-12) and desktop height strictly 52px (md:h-13)
-  - Zero horizontal overflow on 360px-430px screens
-  - Test suites pass and tsc compiles cleanly
+- Check for integrity violations: hardcoded test results, facade implementations, shortcuts, fake attestation
+- Design system compliance: minimal-design-system.md button sizing, zero bloated buttons, clean neutral canvas
+- Dual-suite parity: POS & Billing ERP and Workforce CRM
+- Verification: Independently verify all claims using tools and commands
 
 ## Current Parent
-- Conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987
-- Updated: 2026-10-27T03:20:15Z
+- Conversation ID: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Updated: not yet
 
 ## Review Scope
 - **Files to review**:
-  - `src/components/AppLayout.tsx`
-  - `src/test/universalHeaderDualLockup.test.tsx`
-  - `src/test/desktopShellMilestone2.challenger.test.tsx`
-  - `.agents/teamwork/worker_m1/handoff.md`
-- **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md` (section ## 2026-10-27T02:39:33Z)
-- **Review criteria**: correctness, styling fidelity, responsiveness, adversarial stress tests, integrity check
-
-## Key Decisions Made
-- Confirmed unconditional rendering of platform shield `/favicon.png` with 28x28px mobile container and `hidden sm:inline` styled `CredSmart` wordmark.
-- Confirmed decoupling of tenant branding into adjacent Store Switcher trigger pill separated by a 1px hairline divider (`h-4 w-px bg-slate-200 dark:bg-slate-800`).
-- Confirmed strict viewport heights: mobile 48px (`h-[calc(3rem+env(safe-area-inset-top,0px))]`) and desktop 52px (`md:h-13`).
-- Confirmed zero horizontal overflow on 360px screens with ~60px margin cushion.
-- Ran all verification commands independently: 12 tests in `universalHeaderDualLockup.test.tsx` passed, 19 tests in `desktopShellMilestone2.challenger.test.tsx` passed, `tsc --noEmit` exited with code 0.
-- Integrity assessment passed: no hardcoding, facade mocks, or shortcuts detected.
-- Final Verdict: APPROVE.
-
-## Artifact Index
-- `.agents/teamwork/reviewer_m1_1/DISPATCH.md` — Recorded dispatch message
-- `.agents/teamwork/reviewer_m1_1/BRIEFING.md` — Persistent state and checklist
-- `.agents/teamwork/reviewer_m1_1/progress.md` — Heartbeat liveness
-- `.agents/teamwork/reviewer_m1_1/handoff.md` — Final review and challenge report
+  - `tailwind.config.ts`
+  - `src/components/public/PublicHeader.tsx`
+  - `src/components/public/PublicFooter.tsx`
+  - `src/components/public/PublicConversionBanner.tsx`
+  - `src/components/public/PublicLayout.tsx`
+  - `src/test/publicShellComponents.test.tsx`
+- **Interface contracts**: PROJECT.md, ORIGINAL_REQUEST.md, minimal-design-system.md
+- **Review criteria**: Correctness, Minimal Design System conformance, Dual-suite articulation, adversarial stress testing
 
 ## Review Checklist
 - **Items reviewed**:
-  - `src/components/AppLayout.tsx` (lines 480–630) — Verified
-  - `src/test/universalHeaderDualLockup.test.tsx` — Verified (12 tests pass)
-  - `src/test/desktopShellMilestone2.challenger.test.tsx` — Verified (19 tests pass)
-  - `public/favicon.png` asset presence — Verified
-  - Tailwind spacing tokens in `tailwind.config.ts` — Verified (h-13 = 52px, h-8.5 = 34px, h-7.5 = 30px)
+  - `tailwind.config.ts`: Spacing extensions "4.5" (1.125rem) and "9.5" (2.375rem) verified.
+  - `PublicHeader.tsx`: Double-slash fix verified; button tokens (h-8.5 px-3) verified; dual-suite links verified; fixed height (h-12 sm:h-13) verified.
+  - `PublicFooter.tsx`: 6-column grid verified; dedicated Workforce CRM column (7 features) verified; download chips verified; 11px micro-typography badges verified.
+  - `PublicConversionBanner.tsx`: CTA standardized to h-9.5 px-4.5 rounded-lg text-sm shadow-xs active:scale-[0.98]; bloated h-13 px-8 eliminated; dual-suite copy verified.
+  - `PublicLayout.tsx`: Hash-aware scroll listener verified; overflow-x-hidden relative min-h-0 container verified.
+  - `src/test/publicShellComponents.test.tsx`: 16 comprehensive automated tests verified passing.
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All claims independently verified.
+- **Unverified claims**: None (all 4 commands independently verified).
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Null organization data / empty logo: handled gracefully by fallbacks (`Building2` and "My Business").
-  - Ultra-long organization names: bounded by responsive `max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]` and `truncate`.
-  - Mobile horizontal budget (360px): left side max ~140px + right side 138px = ~278px vs 340px available (>60px buffer).
-  - Safe-area insets on notched devices: `pt-[env(safe-area-inset-top,0px)]` and `h-[calc(3rem+env(safe-area-inset-top,0px))]` preserve 48px visible header area without content clipping.
-  - POS / Cashier route isolation: preserved intact via `!isPosRoute` and role-specific NavLink targets.
-- **Vulnerabilities found**: None.
-- **Untested angles**: Full physical touchscreen hardware testing (emulated in Vitest DOM tests).
+  1. Spacing token resolution in Tailwind theme: Passed.
+  2. Double slash navigation (`navigate('/#suites')` vs `navigate('//#suites')`): Passed.
+  3. Quarantined file immutability: 19/19 files 0-diff verified.
+  4. Full regression on E2E public pages: 59/59 passed.
+  5. Mobile drawer layout inside `flex items-center h-12` header: Identified Major finding regarding `absolute` positioning.
+- **Vulnerabilities found**:
+  - [Major]: Mobile drawer `<div>` in `PublicHeader.tsx:217` lacks `absolute top-full left-0 right-0 w-full` styling, meaning when opened inside `<header className="... flex items-center h-12">` on mobile, it participates in flexbox layout instead of overlaying as an absolute drawer.
+  - [Minor]: Redundant scroll trigger between `PublicHeader` (80ms) and `PublicLayout` (60ms).
+  - [Minor]: Mobile drawer lacks keyboard `Escape` dismissal listener.
+- **Untested angles**: Hardware-accelerated transitions on low-end Android mobile browsers.
+
+## Key Decisions Made
+- Confirmed zero integrity violations in worker_m1 implementation.
+- Verified 100% build, TypeScript, unit tests, and E2E public page passes.
+- Issued APPROVE with 1 Major and 2 Minor non-blocking findings for Milestone 2 polish.
+
+## Artifact Index
+- `.agents/teamwork/reviewer_m1_1/DISPATCH.md` — Initial dispatch message
+- `.agents/teamwork/reviewer_m1_1/BRIEFING.md` — Persistent working memory
+- `.agents/teamwork/reviewer_m1_1/progress.md` — Liveness heartbeat
+- `.agents/teamwork/reviewer_m1_1/handoff.md` — Formal review report and verdict

@@ -1,0 +1,103 @@
+diff --git a/src/components/public/PublicHeader.tsx b/src/components/public/PublicHeader.tsx
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -82,7 +82,7 @@
+         const element = findTargetElement(targetId);
+         if (element) {
+           element.scrollIntoView({ behavior: "smooth" });
+-          window.history.pushState(null, "", `/${targetHash}`);
+         }
++        navigate(`/${targetHash}`);
+       }
+     } else {
+       navigate(href);
+@@ -214,7 +214,10 @@
+ 
+       {/* Mobile Drawer Menu */}
+       {mobileMenuOpen && (
+-        <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">
++        <div
++          data-testid="mobile-drawer"
++          className="lg:hidden absolute top-full left-0 right-0 w-full max-h-[calc(100vh-3rem)] overflow-y-auto border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200"
++        >
+           <div className="flex flex-col gap-1">
+             {navLinks.map((link) => {
+               const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");
+diff --git a/src/test/publicShellComponents.test.tsx b/src/test/publicShellComponents.test.tsx
+--- a/src/test/publicShellComponents.test.tsx
++++ b/src/test/publicShellComponents.test.tsx
+@@ -165,6 +165,37 @@
+     });
+ 
++    it("renders mobile drawer as an absolute dropdown beneath the header with scroll containment", () => {
++      render(
++        <MemoryRouter initialEntries={["/"]}>
++          <PublicHeader />
++        </MemoryRouter>
++      );
++
++      const hamburgerButton = screen.getByLabelText("Toggle navigation menu");
++      fireEvent.click(hamburgerButton);
++
++      const drawer = screen.getByTestId("mobile-drawer");
++      expect(drawer).toBeInTheDocument();
++      expect(drawer).toHaveClass("absolute");
++      expect(drawer).toHaveClass("top-full");
++      expect(drawer).toHaveClass("left-0");
++      expect(drawer).toHaveClass("right-0");
++      expect(drawer).toHaveClass("w-full");
++      expect(drawer).toHaveClass("max-h-[calc(100vh-3rem)]");
++      expect(drawer).toHaveClass("overflow-y-auto");
++    });
++
++    it("synchronizes React Router location state via navigate when clicking same-page anchor links", () => {
++      const suitesElem = document.createElement("div");
++      suitesElem.id = "suites";
++      document.body.appendChild(suitesElem);
++
++      render(
++        <MemoryRouter initialEntries={["/"]}>
++          <PublicHeader />
++        </MemoryRouter>
++      );
++
++      const posLink = screen.getByRole("link", { name: /POS & Billing ERP|POS Billing/i });
++      fireEvent.click(posLink);
++
++      expect(mockNavigate).toHaveBeenCalledWith("/#suites");
++      expect(suitesElem.scrollIntoView).toHaveBeenCalled();
++
++      suitesElem.remove();
++    });
++
+     it("navigates cleanly without double-slashes when clicking an anchor from subpage", () => {
+diff --git a/src/test/challengerM1NavigationButtonsAdversarial.test.tsx b/src/test/challengerM1NavigationButtonsAdversarial.test.tsx
+--- a/src/test/challengerM1NavigationButtonsAdversarial.test.tsx
++++ b/src/test/challengerM1NavigationButtonsAdversarial.test.tsx
+@@ -152,10 +152,8 @@
+-    it("PublicHeader: on root path '/', clicking an anchor does NOT call navigate, but scrolls into view and updates history", () => {
++    it("PublicHeader: on root path '/', clicking an anchor calls navigate to synchronize router state and scrolls into view", () => {
+       const suitesElem = document.createElement("div");
+       suitesElem.id = "suites";
+       document.body.appendChild(suitesElem);
+ 
+-      const pushStateSpy = vi.spyOn(window.history, "pushState");
+-
+       render(
+         <MemoryRouter initialEntries={["/"]}>
+           <PublicHeader />
+@@ -166,13 +164,11 @@
+       fireEvent.click(posLink);
+ 
+-      // Should not call router navigate when on root
+-      expect(mockNavigate).not.toHaveBeenCalled();
++      // Should call router navigate on root to synchronize location state without double-slash
++      expect(mockNavigate).toHaveBeenCalledWith("/#suites");
+       // Should scroll into view
+       expect(suitesElem.scrollIntoView).toHaveBeenCalled();
+-      // Should update history without double-slash
+-      expect(pushStateSpy).toHaveBeenCalledWith(null, "", "/#suites");
+ 
+-      pushStateSpy.mockRestore();
+       suitesElem.remove();
+     });

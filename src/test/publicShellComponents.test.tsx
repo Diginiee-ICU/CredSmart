@@ -164,6 +164,47 @@ describe("Milestone 1 Public Shell Components Test Suite", () => {
       expect(screen.queryByText("Download Native Apps")).not.toBeInTheDocument();
     });
 
+    it("renders mobile drawer as an absolute dropdown beneath the header with scroll containment", () => {
+      render(
+        <MemoryRouter initialEntries={["/"]}>
+          <PublicHeader />
+        </MemoryRouter>
+      );
+
+      const hamburgerButton = screen.getByLabelText("Toggle navigation menu");
+      fireEvent.click(hamburgerButton);
+
+      const drawer = screen.getByTestId("mobile-drawer");
+      expect(drawer).toBeInTheDocument();
+      expect(drawer).toHaveClass("absolute");
+      expect(drawer).toHaveClass("top-full");
+      expect(drawer).toHaveClass("left-0");
+      expect(drawer).toHaveClass("right-0");
+      expect(drawer).toHaveClass("w-full");
+      expect(drawer).toHaveClass("max-h-[calc(100vh-3rem)]");
+      expect(drawer).toHaveClass("overflow-y-auto");
+    });
+
+    it("synchronizes React Router location state via navigate when clicking same-page anchor links", () => {
+      const suitesElem = document.createElement("div");
+      suitesElem.id = "suites";
+      document.body.appendChild(suitesElem);
+
+      render(
+        <MemoryRouter initialEntries={["/"]}>
+          <PublicHeader />
+        </MemoryRouter>
+      );
+
+      const posLink = screen.getByRole("link", { name: /POS & Billing ERP|POS Billing/i });
+      fireEvent.click(posLink);
+
+      expect(mockNavigate).toHaveBeenCalledWith("/#suites");
+      expect(suitesElem.scrollIntoView).toHaveBeenCalled();
+
+      suitesElem.remove();
+    });
+
     it("navigates cleanly without double-slashes when clicking an anchor from subpage", () => {
       render(
         <MemoryRouter initialEntries={["/features"]}>

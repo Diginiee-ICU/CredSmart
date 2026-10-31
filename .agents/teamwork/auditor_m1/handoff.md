@@ -1,167 +1,180 @@
-# Handoff Report — Forensic Integrity Audit: Milestone M1
+# Milestone 1 Forensic Integrity Audit Report
 
-**Agent**: `auditor_m1` (Forensic Integrity Auditor)  
-**Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1`  
-**Target**: Milestone M1: Backend Multi-Tenant Isolation & Staff Provisioning  
-**Authoritative Request**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md` (Section `## 2026-10-26T19:54:47Z`)  
-**Verdict**: **CLEAN**  
-**Report Type**: Hard Handoff  
+**Auditor**: M1 Forensic Auditor (`teamwork_auditor`)  
+**Assigned Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1`  
+**Target Milestone**: Milestone 1 (Public Shared Shell & Design System Foundations)  
+**Parent Agent**: `4ca3c226-daa7-4621-95f6-7c629c003e5f`  
+**Date**: 2026-10-31  
+
+---
+
+## Forensic Audit Report
+
+**Work Product**: Milestone 1 (Public Shared Shell & Design System Foundations)  
+**Profile**: General Project (Integrity Forensics)  
+**Verdict**: **CLEAN**
+
+### Phase Results
+- **Check 1: Anti-Cheat & Authenticity**: PASS — Code inspection across all 6 modified/created files confirms genuine React/Tailwind implementation with zero test-runner branching, zero hardcoded pass returns, and zero facade mocks.
+- **Check 2: 19 Quarantined Protected Files Check**: PASS — `verify_protected.cjs` executed with 19/19 files having 0 diff against HEAD.
+- **Check 3: Boundary & Scope Isolation**: PASS — Changes strictly isolated to Milestone 1 public navigation shell; zero modifications to authenticated ERP/CRM shells, business logic, or Supabase subscriptions.
+- **Check 4: Independent Execution Validation**: PASS — Independent execution of `tsc --noEmit` (0 diagnostics), `publicShellComponents.test.tsx` (16/16 passed), and `publicPages.e2e.test.tsx` (59/59 passed) completed with exit code 0.
 
 ---
 
 ## 1. Observation
 
-Direct forensic observations of all files modified by Worker M1:
+### 1.1 Modified Files & Source Inspection
+Inspected git diff between base commit `1789421` and `HEAD` (`521b2b9`). The worker modified or introduced only the following files within its milestone scope:
+1. `tailwind.config.ts` (lines 17, 20):
+   - Added `"4.5": "1.125rem"` (18px) and `"9.5": "2.375rem"` (38px) to `theme.extend.spacing`.
+2. `src/components/public/PublicConversionBanner.tsx`:
+   - Line 67: CTA button standardized from `h-13 px-8 rounded-xl ... shadow-2xl` to `h-9.5 px-4.5 rounded-lg bg-white hover:bg-slate-50 text-blue-700 font-semibold text-sm shadow-xs active:scale-[0.98]`.
+   - Card padding reduced from `p-8 sm:p-12` to `p-6 sm:p-8` to fit desktop viewports and prevent scroll sprawl.
+   - Genuine React markup; no test-specific conditionals or mocked returns.
+3. `src/components/public/PublicLayout.tsx`:
+   - Lines 11–34: Integrated hash-aware scroll listener with reduced-motion support (`element.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth" })`).
+   - Line 39: `<main>` styled with `overflow-x-hidden relative min-h-0`.
+4. `src/components/public/PublicHeader.tsx`:
+   - Line 56: Fixed command bar height locked to `h-12 sm:h-13` (48px mobile, 52px desktop).
+   - Lines 75–89: Normalized anchor navigation avoiding double slashes (`targetHash = href.startsWith("/#") ? href.slice(1) : href; navigate(/${targetHash})`).
+   - Lines 46–58: Smooth scroll listener for `#suites` and hash targets.
+   - Lines 134, 142, 172: Standardized desktop action buttons to `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`.
+   - Lines 150–156: Standardized hamburger button to `w-11 h-11` (44x44px ergonomic touch target).
+   - Lines 231–245: Converted mobile drawer links to client-side `<Link>` tags with auto-close on selection.
+5. `src/components/public/PublicFooter.tsx`:
+   - Lines 20: Rebalanced grid to `grid-cols-2 md:grid-cols-4 lg:grid-cols-6`.
+   - Lines 32–40: Standardized trust badges to `text-[11px] font-semibold`.
+   - Lines 43–64: Added official download chips with links to `APP_DOWNLOAD_LINKS`.
+   - Lines 117–162: Added dedicated Workforce CRM column alongside POS & Billing ERP with 7 functional public links.
+   - Lines 255–263: Updated statutory footer note to ₹0 Community Lifetime Free platform.
+6. `src/test/publicShellComponents.test.tsx`:
+   - 16 tests mounting actual components via `@testing-library/react` and `MemoryRouter`.
+   - Assertions verify real DOM output (roles, classes, attributes, user clicks). No hardcoded mock results.
 
-1. **`fix_db.sql` & `backend-api/fix_db.sql`**:
-   - Both files are 100% byte-for-byte identical (verified via PowerShell `Compare-Object (Get-Content fix_db.sql) (Get-Content backend-api/fix_db.sql)` yielding empty diff).
-   - Confirmed eradication of rogue `CROSS JOIN` statements (grep search for `CROSS JOIN` returned 0 matches).
-   - In `backend-api/fix_db.sql` line 116, memberships are synchronized with:
-     ```sql
-     INSERT INTO org_memberships (id, user_id, org_id, organization_id, role, created_at)
-     SELECT gen_random_uuid(), om.user_id, COALESCE(om.org_id, om.organization_id), COALESCE(om.organization_id, om.org_id), om.role::text, om.created_at
-     FROM organization_memberships om
-     WHERE COALESCE(om.org_id, om.organization_id) IS NOT NULL
-     ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role;
-     ```
-   - Confirmed dual-column contract (`org_id`, `organization_id`) and trigger `trg_sync_org_ids` attached across all 42 tenant-scoped tables.
+### 1.2 Quarantined Files Verification Tool Output
+Executed: `node .agents/teamwork/auditor_m3/verify_protected.cjs`
+```
+=== STARTING FORENSIC AUDIT: 19 QUARANTINED PROTECTED FILES ===
+[PASS - 0 DIFF] src/components/invoices/mobile/MobileCreateInvoice.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/AddItemModal.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/SelectPartyModal.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/EditItemModal.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/MobileInvoiceSuccessView.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/MobileBillPreviewModal.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/MobileInvoiceFitViewer.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/CreatePartyModal.tsx
+[PASS - 0 DIFF] src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx
+[PASS - 0 DIFF] src/components/items/mobile/CreateNewItemModal.tsx
+[PASS - 0 DIFF] src/components/SalesInvoiceModal.tsx
+[PASS - 0 DIFF] src/components/PurchaseInvoiceModal.tsx
+[PASS - 0 DIFF] src/components/invoices/AddItemsToBillModal.tsx
+[PASS - 0 DIFF] src/components/invoices/InvoiceFitView.tsx
+[PASS - 0 DIFF] src/components/invoices/UnifiedInvoiceRenderer.tsx
+[PASS - 0 DIFF] src/utils/downloadExactInvoice.ts
+[PASS - 0 DIFF] src/utils/whatsappPdfShare.ts
+[PASS - 0 DIFF] src/utils/invoiceThemeLoader.ts
+[PASS - 0 DIFF] src/services/documentsService.ts
+===============================================================
+Summary: 19 / 19 protected files untouched.
+VERDICT: ZERO LINES MODIFIED IN ALL 19 QUARANTINED FILES.
+```
+Exit code: `0`.
 
-2. **`backend-api/add_indexes.sql`**:
-   - Contains genuine PostgreSQL DDL wrapped inside a `BEGIN; ... COMMIT;` transaction block followed by table `ANALYZE` commands.
-   - Includes all composite B-Tree indexes:
-     ```sql
-     CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_org_user ON crm_staff_assignments(org_id, user_id);
-     CREATE INDEX IF NOT EXISTS idx_crm_staff_assignments_organization_user ON crm_staff_assignments(organization_id, user_id);
-     CREATE INDEX IF NOT EXISTS idx_staff_tasks_org_status ON staff_tasks(org_id, status);
-     CREATE INDEX IF NOT EXISTS idx_staff_tasks_organization_status ON staff_tasks(organization_id, status);
-     CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_org_staff ON crm_salary_profiles(org_id, staff_id);
-     CREATE INDEX IF NOT EXISTS idx_crm_roles_org_id ON crm_roles(org_id);
-     CREATE INDEX IF NOT EXISTS idx_crm_attendance_org_date ON crm_attendance(org_id, date);
-     ```
+Independent verification via git command:
+`git diff HEAD -- src/components/invoices/ src/components/items/mobile/ src/utils/downloadExactInvoice.ts src/utils/whatsappPdfShare.ts src/utils/invoiceThemeLoader.ts src/services/documentsService.ts`
+Returned empty output with exit code `0`.
 
-3. **`backend-api/src/routes/auth.js`**:
-   - In `getUserPrimaryOrgId(userId)` (lines 16–50), the catalog-biased sort `ORDER BY (SELECT COUNT(*) FROM products ...)` was removed. Query uses:
-     ```javascript
-     SELECT COALESCE(m.org_id, m.organization_id) AS org_id FROM (
-        SELECT org_id, organization_id, user_id, created_at, 1 AS priority FROM org_memberships WHERE user_id = $1
-        UNION
-        SELECT organization_id AS org_id, organization_id, user_id, created_at, 1 AS priority FROM organization_memberships WHERE user_id = $1
-        UNION
-        SELECT org_id, organization_id, COALESCE(user_id, staff_id) AS user_id, created_at, 2 AS priority FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1)
-     ) m
-     WHERE COALESCE(m.org_id, m.organization_id) IS NOT NULL
-     ORDER BY m.priority ASC, m.created_at ASC
-     LIMIT 1
-     ```
-   - If user has no valid organization, `getUserPrimaryOrgId` cleanly returns `null` (line 49) without auto-inserting user into a foreign organization.
-   - Genuine `bcrypt.hash(password, 10)` in `/signup` (line 70) and `bcrypt.compare(password, user.password_hash)` in `/login` (line 166).
+### 1.3 TypeScript Diagnostic Output
+Executed: `node ./node_modules/typescript/bin/tsc --noEmit`
+Output: Empty (zero diagnostic errors or warnings).
+Exit code: `0`.
 
-4. **`backend-api/src/middleware/auth.js`**:
-   - In `authenticate` middleware (lines 25–46), catch block at line 43 is sanitized (`catch (e) { /* Do not fall back to foreign organizations! */ }`).
-   - Token authentication strictly verified via `jwt.verify(token, JWT_SECRET)` (line 14).
+### 1.4 Test Suite Execution Output
+1. Unit & Integration Suite:
+   Executed: `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx`
+   Output:
+   ```
+    ✓ src/test/publicShellComponents.test.tsx (16 tests) 7513ms
+    Test Files  1 passed (1)
+         Tests  16 passed (16)
+   ```
+   Exit code: `0`.
 
-5. **`backend-api/src/routes/settings.js`**:
-   - In `getMembershipsHandler` (lines 134–136):
-     ```javascript
-     if (!targetOrg) {
-       return res.json([]);
-     }
-     ```
-   - In `GET /api/profiles` (lines 309–311):
-     ```javascript
-     if (!targetOrg && !ids) {
-       return res.json([]);
-     }
-     ```
-   - Scoped query at lines 327–334 strictly filters user IDs against `org_memberships`, `organization_memberships`, and `crm_staff_assignments`.
-   - Human display name prioritizes `full_name` via `COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(u.name), ''), split_part(u.email, '@', 1))`.
-
-6. **`backend-api/src/routes/crm.js`**:
-   - `verifyUserInOrg(userId, orgId)` (lines 34–91) authoritatively verifies membership in active organization across all three membership tables before mutations.
-   - `verifyRoleInOrg(roleId, orgId)` (lines 97–108) verifies custom roles belong to the caller's organization.
-   - `POST /api/crm/staff/provision` (lines 411–687):
-     - Derives default password as `{firstName}123` (lines 430–437) with 6-char padding if omitted.
-     - Preserves existing cross-tenant user password hashes without overwriting (lines 529–530).
-     - Returns HTTP 409 if staff member already belongs to the organization (line 513).
-     - Explicitly persists tenant binding in `org_memberships`, `organization_memberships`, and `crm_staff_assignments`.
-
-7. **`backend-api/src/index.js`**:
-   - In-memory cache instantiated as `const apiCache = new Map();` with `CACHE_TTL_MS = 10000` (10s TTL).
-   - Cache candidate gate expanded to `req.method === 'GET' && (req.path.startsWith('/api/') || req.path.startsWith('/rest/v1/'))` (line 103).
-   - Domain segregation via `isCrmPath(urlPath)` (lines 69–79) purges only CRM cache keys on CRM mutations and only POS keys on POS mutations (lines 83–99).
-
-8. **Automated Verification Command Execution**:
-   - `cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`
-     - `src/test/fixDbSchema.test.ts`: **398 passed**
-     - `src/test/crmTenantIsolation.test.ts`: **45 passed**
-     - `src/test/crmBackendApiM1.test.ts`: **10 passed**
-     - Total: **453 / 453 passed (100%)**
-   - `cmd /c npx vitest run src/test/crmCacheAndProvisioningChallenger.test.ts`
-     - **26 passed** (100%)
-   - `cmd /c npx tsc --noEmit`
-     - Exited with code **0** (Zero TypeScript compilation errors).
+2. E2E Master Suite:
+   Executed: `node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx`
+   Output:
+   ```
+    ✓ src/test/e2e/publicPages.e2e.test.tsx (59 tests) 21743ms
+    Test Files  1 passed (1)
+         Tests  59 passed (59)
+   ```
+   Exit code: `0`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Rogue Ownership Elimination**:
-   - Observation 1 demonstrates the complete removal of the `CROSS JOIN` insert in both `fix_db.sql` files.
-   - Therefore, future database syncs will not cross-link every registered user to every tenant organization in PostgreSQL.
+1. **Empirical Code Analysis Refutes Anti-Cheat Violations**:
+   - Examination of git diffs in `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, and `PublicLayout.tsx` reveals authentic implementation of navigation and layout logic.
+   - Grep searches for `process.env.NODE_ENV === "test"`, `vitest`, `jest`, `TODO`, `FIXME`, or dummy stubs yielded zero matches in the modified public components.
+   - The test suite `src/test/publicShellComponents.test.tsx` tests real rendered DOM tree nodes using `@testing-library/react` rather than mocked component instances.
 
-2. **Tenant Scoping Guarantee**:
-   - Observation 5 confirms that `/api/profiles` and `/api/organization-memberships` explicitly check `if (!targetOrg) return res.json([]);`.
-   - Therefore, unscoped calls cannot dump cross-tenant users.
+2. **Quarantine Invariance Confirmed**:
+   - Both the automated script `verify_protected.cjs` and raw `git diff HEAD` verify that all 19 quarantined core invoice files have exactly zero modified lines.
 
-3. **Authentication Boundary Integrity**:
-   - Observation 3 confirms `getUserPrimaryOrgId` no longer sorts by product count and returns `null` when no membership exists.
-   - Observation 4 confirms middleware no longer falls back to the largest catalog organization.
-   - Therefore, users without memberships are never hijacked into foreign tenant organizations.
+3. **Strict Scope & Boundary Isolation**:
+   - The worker strictly touched files within its assigned scope: `tailwind.config.ts`, public components under `src/components/public/`, and the unit test suite `src/test/publicShellComponents.test.tsx`.
+   - No authenticated ERP/CRM application wrappers, Supabase subscriptions, or business logic were touched.
 
-4. **Cryptographic & Logic Fidelity**:
-   - Observation 3 and 6 confirm `bcrypt.hash` and `bcrypt.compare` are genuinely used.
-   - Observation 6 confirms default password generation `{firstName}123` works as specified, and existing user credentials are protected against overwrite.
-   - Observation 7 confirms in-memory Map caching is real with domain segregation preventing POS billing mutations from flushing CRM cached records.
-
-5. **Empirical Verification**:
-   - Observation 8 verifies that 479 total automated tests across all test suites pass with 100% success rate, and TypeScript compilation passes cleanly.
-   - Observation 1-7 show zero hardcoded bypass values or fake mocks in implementation code.
-   - Conclusion: All Milestone M1 requirements are genuinely satisfied.
+4. **Execution Integrity**:
+   - TypeScript compiler executed without a single diagnostic error.
+   - 16 unit/integration tests and 59 E2E tests executed independently and passed 100% without test skipping or suppressed assertions.
 
 ---
 
 ## 3. Caveats
 
-- **No Caveats**: All 7 target files have been forensically inspected and empirically verified against ground-truth requirements in `ORIGINAL_REQUEST.md` (section `## 2026-10-26T19:54:47Z`). No files were modified during the audit.
+- Milestone 1 implements the navigation links and scroll handler targeting `#suites`. The target anchor `id="suites"` on `Landing.tsx` is scheduled for delivery in Milestone 2. Resilient fallback logic in `PublicHeader.tsx` ensures no runtime crashes occur prior to Milestone 2 landing deployment.
+- No other caveats.
 
 ---
 
 ## 4. Conclusion
 
-**FINAL VERDICT: CLEAN**
+**Verdict: CLEAN**
 
-Milestone M1 (Backend Multi-Tenant Isolation & Staff Provisioning) contains zero integrity violations, zero hardcoded test bypasses, zero facade mocks, and genuine production-grade implementations. The work product is fully accepted.
+Milestone 1 satisfies all forensic integrity criteria:
+- Genuine and authentic code implementation.
+- Zero anti-cheat or facade violations.
+- 100% compliance with quarantine rules across all 19 protected files.
+- Perfect scope containment with zero unintended regressions.
+- All independent test and compilation checks passed with exit code 0.
+
+The Milestone 1 work product is APPROVED from a forensic integrity perspective.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce the forensic verification:
+To independently verify this audit, execute the following commands in order:
 
-1. **Verify Database Schema Parity & Removal of Cross-Join**:
-   ```powershell
-   powershell -Command "Compare-Object (Get-Content fix_db.sql) (Get-Content backend-api/fix_db.sql)"
-   ```
-   *Expected*: Zero differences returned.
+```powershell
+# 1. Verify 19 quarantined files have zero diff
+node .agents/teamwork/auditor_m3/verify_protected.cjs
 
-2. **Execute Full Vitest M1 Verification Suite**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts src/test/crmCacheAndProvisioningChallenger.test.ts
-   ```
-   *Expected*: 4 test files, 479/479 tests passed (100%).
+# 2. Verify TypeScript compilation
+node ./node_modules/typescript/bin/tsc --noEmit
 
-3. **Execute TypeScript Static Type Check**:
-   ```powershell
-   cmd /c npx tsc --noEmit
-   ```
-   *Expected*: Exits with code 0.
+# 3. Verify Milestone 1 component test suite
+node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx
+
+# 4. Verify Public Pages E2E test suite
+node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx
+```
+
+**Invalidation Conditions**:
+- Any non-zero exit code from `verify_protected.cjs`.
+- Any modification to any of the 19 quarantined files.
+- Any TypeScript diagnostic error from `tsc --noEmit`.
+- Any test failure in `publicShellComponents.test.tsx` or `publicPages.e2e.test.tsx`.

@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-31T10:55:00Z
+# BRIEFING — 2026-10-31T11:20:00Z
 
 ## Mission
 Execute Milestone 1 (M1 Navigation & Shell) implementing Features F1 through F5 across tailwind.config.ts, PublicHeader, PublicFooter, PublicConversionBanner, PublicLayout, and publicShellComponents.test.tsx.
@@ -27,29 +27,35 @@ Execute Milestone 1 (M1 Navigation & Shell) implementing Features F1 through F5 
 - Updated: 2026-10-31T10:52:24Z
 
 ## Task Summary
-- **What to build**:
-  - Extend Tailwind spacing tokens with "4.5" (1.125rem = 18px) and "9.5" (2.375rem = 38px).
-  - PublicHeader: Fix double slash navigation bug, smooth hash scroll, dual suite links to `/#suites`, standardized button dimensions (34px/38px), fixed 48px/52px height, touch-accessible mobile drawer.
-  - PublicFooter: Dual-suite balance with dedicated 7-link Workforce CRM column, rebalanced 6-col responsive grid, text-[11px] badges, download chips.
-  - PublicConversionBanner: Button bloat removal (h-9.5 px-4.5 text-sm), viewport optimization, dual-suite messaging.
-  - PublicLayout: Hash-aware scroll to avoid overriding anchor jumps, overflow containment.
-  - publicShellComponents.test.tsx: Comprehensive tests verifying M1 deliverables.
+- **What was built**:
+  - Extended Tailwind spacing tokens with "4.5" (1.125rem = 18px) and "9.5" (2.375rem = 38px).
+  - PublicHeader: Fixed double-slash navigation bug, implemented resilient hash scroll listener, dual-suite links to `/#suites`, standardized button dimensions (34px h-8.5 px-3), fixed 48px/52px height (h-12 sm:h-13), 44x44px touch-accessible mobile drawer with SPA routing.
+  - PublicFooter: Balanced dual-suite presentation with dedicated 7-link Workforce CRM column alongside POS & Billing ERP, rebalanced 6-col responsive grid, text-[11px] badges, native app download chips.
+  - PublicConversionBanner: Button bloat removed (h-9.5 px-4.5 text-sm), viewport optimization, dual-suite platform messaging.
+  - PublicLayout: Hash-aware scroll to avoid overriding anchor jumps, overflow containment on `<main>`.
+  - publicShellComponents.test.tsx: 16 automated tests verifying all M1 components and token contracts.
 - **Success criteria**:
-  - node .agents/teamwork/auditor_m3/verify_protected.cjs: 19/19 clean
-  - node ./node_modules/typescript/bin/tsc --noEmit: 0 errors
-  - node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx: 100% pass
-  - node ./node_modules/vitest/vitest.mjs run src/crm/test/ src/test/e2e/: 100% pass
-- **Interface contracts**: PROJECT.md and explorer handoff reports.
+  - node .agents/teamwork/auditor_m3/verify_protected.cjs: 19/19 clean, 0 diff (PASSED)
+  - node ./node_modules/typescript/bin/tsc --noEmit: 0 diagnostics (PASSED)
+  - node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx: 16/16 passed 100% (PASSED)
+  - node ./node_modules/vitest/vitest.mjs run src/crm/test/ src/test/e2e/: 12/12 files, 405/405 tests passed 100% (PASSED)
+  - node ./node_modules/vite/bin/vite.js build: Built in 1m 41s, exit code 0 (PASSED)
 
 ## Change Tracker
-- **Files modified**: None yet
-- **Build status**: Pending
-- **Pending issues**: None
+- **Files modified**:
+  - `tailwind.config.ts`: Extended spacing scale with "4.5" and "9.5".
+  - `src/components/public/PublicHeader.tsx`: Fixed double-slash routing, added hash scroll, standardized 34px buttons, 52px command bar height, 44px mobile drawer.
+  - `src/components/public/PublicFooter.tsx`: Rebalanced 6-col grid, dedicated Workforce CRM column, download chips, 11px badges.
+  - `src/components/public/PublicConversionBanner.tsx`: Standardized CTA button to h-9.5 px-4.5 text-sm, refined dimensions, dual-suite copy.
+  - `src/components/public/PublicLayout.tsx`: Hash-aware scroll behavior, overflow-x-hidden relative on `<main>`.
+  - `src/test/publicShellComponents.test.tsx`: 16 comprehensive unit and integration tests for M1 components.
+- **Build status**: All checks passed (tsc: 0 errors, vitest: 100% pass, vite build: success).
+- **Pending issues**: None.
 
 ## Quality Status
-- **Build/test result**: Pending initial run
-- **Lint status**: Clean
-- **Tests added/modified**: Pending src/test/publicShellComponents.test.tsx
+- **Build/test result**: All passing (16/16 M1 tests, 405/405 regression tests, 20/20 token challenger tests).
+- **Lint status**: Clean.
+- **Tests added/modified**: `src/test/publicShellComponents.test.tsx` (16 test cases).
 
 ## Loaded Skills
 - Source: Minimal Design System (.agents/rules/minimal-design-system.md)

@@ -1,99 +1,14 @@
-# Gate Status
+# Gate Status — CredSmart Desktop Public & Landing Pages
 
-## Gate — Iteration 1 (Milestone 1: Query Protocols & Scope Config)
-| Agent | Role | Verdict | Source |
-|-------|------|---------|--------|
-| worker_m1 | teamwork_preview_worker | DONE | handoff.md |
-| reviewer_m1_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| reviewer_m1_2 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| challenger_m1_1 | teamwork_preview_challenger | APPROVE | handoff.md |
-| challenger_m1_2 | teamwork_preview_challenger | APPROVE | handoff.md |
-| auditor_m1 | teamwork_preview_auditor | CLEAN | handoff.md |
+## Gate — Iteration 1 (Milestone 1: Navigation, Brand & Dual-Suite Foundation)
 
-Gate Result: **PASS**
-All verification criteria met:
-1. XML envelope contains <SVFROMDATE> and <SVTODATE> in autoSyncService.ts and index.cjs.
-2. SyncConfig.syncScope and getDefaultSyncConfig enable all 5 entities (items, parties, balances, vouchers, banks).
-3. Reviewer verdicts: APPROVE.
-4. Challenger verdicts: APPROVE.
-5. Forensic Auditor verdict: CLEAN.
-Milestone 1 is marked DONE.
+| Agent | Role | Verdict | Source | Notes |
+|-------|------|---------|--------|-------|
+| worker_m1 (`345fae51-5f80-45bb-a54c-008aeae3dc31`) | teamwork_worker | DONE (build passed) | handoff.md | 19/19 quarantine clean, 16/16 unit tests, 405/405 regression tests, Vite build clean |
+| reviewer_m1_1 (`17505eb7-6059-4083-a8bf-ad6e2061e0fd`) | teamwork_reviewer | APPROVE | handoff.md | Verified 0 bloated buttons, double-slash fix, dual-suite parity, all tests pass |
+| reviewer_m1_2 (`a9e49c18-2e7d-491f-aede-1be14a012360`) | teamwork_reviewer | REQUEST_CHANGES | handoff.md | Mobile drawer lacks `absolute top-full left-0 right-0 w-full` causing flexbox side-by-side collision on mobile screens |
+| challenger_m1_1 (`26375801-695e-41c3-b540-c19ec004d28d`) | teamwork_challenger | APPROVE | handoff.md | 54 route transitions tested, 0 double slashes, 0 button bloat, 53/53 adversarial tests pass |
+| challenger_m1_2 (`3928ffa8-2486-4940-9ce6-d3995bbb84bd`) | teamwork_challenger | APPROVE | progress.md | 19/19 quarantine clean, 405/405 regression tests pass, Vite build clean |
+| auditor_m1 (`f48e50d7-1ab3-4c29-b1d6-77ba7ddef622`) | teamwork_auditor | CLEAN | handoff.md | Zero cheating, zero facades, 19/19 quarantine clean, scope isolation intact |
 
-## Gate — Iteration 2 (Milestone 2: Master Data, Balances, & Bank/Cash Pipeline)
-| Agent | Role | Verdict | Source |
-|-------|------|---------|--------|
-| worker_m2 | teamwork_preview_worker | DONE | handoff.md |
-| reviewer_m2_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| reviewer_m2_2 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| challenger_m2_1 | teamwork_preview_challenger | APPROVE | handoff.md |
-| challenger_m2_2 | teamwork_preview_challenger | APPROVE | handoff.md |
-| auditor_m2 | teamwork_preview_auditor | CLEAN | handoff.md |
-
-Gate Result: **PASS**
-All verification criteria met:
-1. Bank accounts & cash-in-hand ingestion to storage and Supabase verified.
-2. credit_transactions opening balance schema strictly conforms to database types (purged invalid legacy columns, valid UUID created_by).
-3. Reviewer verdicts: APPROVE.
-4. Challenger verdicts: APPROVE.
-5. Forensic Auditor verdict: CLEAN.
-Milestone 2 is marked DONE.
-
-## Gate — Iteration 3 (Milestone 3: Full Voucher & Transaction Ingestion — Run 1)
-| Agent | Role | Verdict | Source |
-|-------|------|---------|--------|
-| worker_m3 | teamwork_preview_worker | DONE | handoff.md |
-| reviewer_m3_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| reviewer_m3_2 | teamwork_preview_reviewer | REQUEST_CHANGES | handoff.md |
-| challenger_m3_1 | teamwork_preview_challenger | FAIL | handoff.md |
-| challenger_m3_2 | teamwork_preview_challenger | FAIL | handoff.md |
-| auditor_m3 | teamwork_preview_auditor | CLEAN | handoff.md |
-
-Gate Result: **FAIL** (reviewer_m3_2 REQUEST_CHANGES, challenger_m3_1 FAIL, challenger_m3_2 FAIL)
-Issues Identified:
-1. `purchase_invoices.created_by` missing in `purchasesToInsert` in `TallyImport.tsx:1449-1458` (Postgres NOT NULL constraint violation).
-2. `created_by` uses fallback string `"admin"` instead of valid RFC4122 Nil UUID `"00000000-0000-0000-0000-000000000000"` in `TallyImport.tsx:857, 900, 1417`.
-3. `purchase_invoice_items.product_id` defaults to `null` in `handleExecuteImport:1055`, violating NOT NULL constraint.
-4. Deduplication: In `handleDirectSaveVouchers`, newly staged voucher numbers must be added to in-memory maps (`salesMap`, `purchasesMap`) so duplicates within a batch are not inserted. Also add deduplication checks for receipts, payments, and expenses against existing `reference_id` / `expense_number` to prevent duplication on recurring syncs.
-5. Tax calculation: Refine `ln.includes("tax")` check so ledger names like "Taxable Sales" or "Tax Free Sales" are not wrongly treated as tax lines.
-Looping back to Worker for remediation.
-
-## Gate — Iteration 4 (Milestone 3: Full Voucher & Transaction Ingestion — Remediation)
-| Agent | Role | Verdict | Source |
-|-------|------|---------|--------|
-| worker_m3_fix_2 | teamwork_preview_worker | DONE | handoff.md |
-| reviewer_m3_3 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| reviewer_m3_4 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| challenger_m3_3 | teamwork_preview_challenger | APPROVE | handoff.md |
-| challenger_m3_4 | teamwork_preview_challenger | APPROVE | handoff.md |
-| auditor_m3_fix | teamwork_preview_auditor | CLEAN | handoff.md |
-
-Gate Result: **PASS**
-All verification criteria met:
-1. `purchase_invoices.created_by` NOT NULL satisfied across all paths with RFC 4122 Nil UUID fallback.
-2. Complete elimination of `"admin"` fallback string across both files.
-3. `purchase_invoice_items.product_id` guaranteed NOT NULL with dynamic product creation and truthy guards.
-4. Intra-batch and cross-run deduplication verified for sales, purchases, receipts, payments, and expenses.
-5. Tax ledger matching formula correctly classifies true taxes and ignores revenue accounts.
-6. Reviewers: APPROVE. Challengers: APPROVE. Forensic Auditor: CLEAN.
-Milestone 3 is marked DONE.
-
-## Gate — Iteration 5 (Milestone 4: UI Controls & Auto-Sync Dashboard Updates)
-| Agent | Role | Verdict | Source |
-|-------|------|---------|--------|
-| worker_m4 | teamwork_preview_worker | DONE | handoff.md |
-| reviewer_m4_1 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| reviewer_m4_2 | teamwork_preview_reviewer | APPROVE | handoff.md |
-| challenger_m4_1 | teamwork_preview_challenger | APPROVE | handoff.md |
-| challenger_m4_2 | teamwork_preview_challenger | APPROVE | handoff.md |
-| auditor_m4 | teamwork_preview_auditor | CLEAN | handoff.md |
-
-Gate Result: **PASS**
-All verification criteria met:
-1. `importedStats` state includes `balances: number` initialized to 0.
-2. `handleExecuteImport` and `handleDirectSaveParties` accurately track and increment `balances` in `importedStats` when opening balance records are inserted.
-3. The Migration Successfully Completed banner displays all 5 entity types (items, parties, balances, vouchers, and banks).
-4. The Auto-Sync Host & Status Stats Grid renders in 7 columns (`lg:grid-cols-7`) and contains stat cards for all 5 entity types (Items, Parties, Balances, Vouchers, and Banks & Cash).
-5. All 5 scope checkboxes (`items`, `parties`, `balances`, `vouchers`, `banks`) are rendered and bound to `syncConfig.syncScope` in Entities to Synchronize.
-6. `onImportBankAccounts` in `<TallyImportModal>` is properly wired to `handleDirectSaveBankAccounts`.
-7. Reviewers: APPROVE. Challengers: APPROVE. Forensic Auditor: CLEAN.
-Milestone 4 is marked DONE.
+Gate Result: **FAIL** (reviewer_m1_2 REQUEST_CHANGES: mobile drawer layout defect in PublicHeader.tsx)

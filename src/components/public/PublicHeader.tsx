@@ -82,8 +82,8 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
         const element = findTargetElement(targetId);
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });
-          window.history.pushState(null, "", `/${targetHash}`);
         }
+        navigate(`/${targetHash}`);
       }
     } else {
       navigate(href);
@@ -214,7 +214,10 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">
+        <div
+          data-testid="mobile-drawer"
+          className="lg:hidden absolute top-full left-0 right-0 w-full max-h-[calc(100vh-3rem)] overflow-y-auto border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200"
+        >
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => {
               const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");

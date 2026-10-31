@@ -1,34 +1,42 @@
-## 2026-10-26T20:33:31Z
+## 2026-10-31T11:22:46Z
 
-You are the Forensic Integrity Auditor for Milestone M1 of CredSmart CRM Defects Elimination.
+You are M1 Forensic Auditor (Forensic Integrity Auditor).
+Your identity: teamwork_auditor
+Your assigned working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
 
-Working Directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1
-Authoritative Request: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (MUST read section ## 2026-10-26T19:54:47Z before starting work!)
-Project Scope: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_defects\PROJECT.md
-Worker Handoff: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1_backend\handoff.md
+MANDATORY FIRST STEP:
+Read the authoritative user request at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the project master document at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
 
-Integrity Audit Objective:
-Perform rigorous forensic static and code-level integrity analysis of all changes made by Worker M1:
-- `backend-api/fix_db.sql` & root `fix_db.sql`
-- `backend-api/src/routes/auth.js`
-- `backend-api/src/middleware/auth.js`
-- `backend-api/src/routes/settings.js`
-- `backend-api/src/routes/crm.js`
-- `backend-api/src/index.js`
-- `backend-api/add_indexes.sql`
+INPUT WORKER REPORT:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
 
-Check for:
-1. Zero hardcoded test values, mock return strings, or artificial bypasses.
-2. Genuine PostgreSQL SQL syntax and index statements.
-3. Genuine bcrypt password hashing and real database queries.
-4. Genuine in-memory Map micro-cache and path segregation logic.
-5. Genuine error handling (returning `[]` or `null` rather than dummy data).
+OBJECTIVE:
+Perform a deep forensic integrity audit of Milestone 1 changes. Verify that all implementations are genuine, authentic, and free of cheating, dummy facades, test result hardcoding, or quarantine violations.
 
-Run integrity verification commands:
-`cmd /c npx vitest run src/test/crmTenantIsolation.test.ts src/test/fixDbSchema.test.ts src/test/crmBackendApiM1.test.ts`
-`cmd /c npx tsc --noEmit`
+FORENSIC AUDIT CHECKS:
+1. Anti-Cheat & Authenticity:
+   - Inspect git diff across all modified files:
+     `tailwind.config.ts`, `src/components/public/PublicHeader.tsx`, `src/components/public/PublicFooter.tsx`, `src/components/public/PublicConversionBanner.tsx`, `src/components/public/PublicLayout.tsx`, `src/test/publicShellComponents.test.tsx`.
+   - Verify that logic is genuine: no hardcoded mock test returns, no dummy mocks in production code, no conditional branching tailored to test runners.
+2. 19 Quarantined Core Invoice Files Check:
+   - Run `node .agents/teamwork/auditor_m3/verify_protected.cjs`.
+   - Verify every single one of the 19 files has 0 diff against HEAD.
+3. Boundary & Scope Isolation:
+   - Ensure the worker strictly modified ONLY its exclusively owned files.
+   - Ensure no changes were made to protected business logic, authenticated shells, or Supabase subscriptions.
+4. Independent Execution Validation:
+   - Independently run:
+     `node ./node_modules/typescript/bin/tsc --noEmit`
+     `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx`
+     `node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx`
 
-Output Requirements:
-- Write full audit evidence report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\audit.md`.
-- Write handoff report in `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\auditor_m1\handoff.md` with explicit Verdict: CLEAN or INTEGRITY VIOLATION.
-- Send completion message to orchestrator. Do not edit source files.
+VERDICT STANDARD:
+- Output binary verdict: `CLEAN` or `INTEGRITY VIOLATION` (with full evidence chain).
+- A verdict of `INTEGRITY VIOLATION` is a non-negotiable hard veto.
+
+DELIVERABLE:
+Write `handoff.md` in your working directory and notify the orchestrator via send_message.

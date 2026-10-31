@@ -1,24 +1,18 @@
-# Progress — Challenger 1 (Milestone 1)
+# Progress - M1 Challenger 1 (Navigation & Button Challenger)
 
-Last visited: 2026-10-27T03:28:00Z
+- Last visited: 2026-10-31T11:33:30Z
+- Status: Completed all empirical challenges and verification runs. Verdict: APPROVE.
 
-## Status
-Empirical adversarial testing complete. All 49 tests passing. Verdict: APPROVE.
-
-## Completed Steps
-- [x] Received dispatch and recorded in DISPATCH.md
-- [x] Created BRIEFING.md
-- [x] Initialized progress.md
-- [x] Read ORIGINAL_REQUEST.md, PROJECT.md, and Worker M1 handoff.md
-- [x] Inspected src/components/AppLayout.tsx header implementation
-- [x] Executed vitest test suites:
-  - universalHeaderDualLockup.test.tsx (12 tests passed)
-  - desktopShellMilestone2.challenger.test.tsx (19 tests passed)
-- [x] Developed and executed adversarial empirical stress test harness:
-  - src/test/universalHeaderAdversarialStress.test.tsx (18 tests passed)
-- [x] Validated viewports (320px, 360px, 375px, 412px, 768px, 1024px)
-- [x] Validated extreme edge cases (100+ chars, 250+ chars, null org, empty string, XSS, unicode, null logo)
-- [x] Validated layout containment (no flex-wrap, min-w-0, shrink-0, root overflow-hidden)
-- [x] Ran tsc --noEmit (0 errors)
-- [ ] Write handoff.md with APPROVE verdict
-- [ ] Send completion message via send_message to orchestrator
+## Tasks
+- [x] Read ORIGINAL_REQUEST.md, PROJECT.md, and worker_m1/handoff.md
+- [x] Inspect implementation files (`PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, `PublicLayout.tsx`)
+- [x] Run existing tests via vitest (`publicShellComponents.test.tsx` - 16/16 passed)
+- [x] Run E2E test suite (`publicPages.e2e.test.tsx` - 59/59 passed)
+- [x] Challenge 1: Double-slash URL testing across 14 subpages and fragments (0 double-slashes found)
+- [x] Challenge 2: Prohibited button classes and sizing inspection (0 button bloat violations found)
+- [x] Challenge 3: Hash scroll listener behavior and edge cases (100% passed with reduced-motion and fallback support)
+- [x] Execute adversarial test suite `challengerM1NavigationButtonsAdversarial.test.tsx` (53/53 passed)
+- [x] Verify TypeScript compilation (`tsc --noEmit` - 0 errors)
+- [x] Verify 19 quarantine files integrity (`verify_protected.cjs` - 19/19 clean, 0 diff)
+- [x] Synthesize findings into handoff.md with verdict (APPROVE)
+- [ ] Message orchestrator with findings

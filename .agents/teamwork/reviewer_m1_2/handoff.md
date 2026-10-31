@@ -1,137 +1,150 @@
-# Handoff Report: Reviewer 2 — Milestone 1 (Universal Header Dual Lockup)
+# Milestone 1 Reviewer 2 Handoff Report: Layout, Mobile Ergonomics & Invariance Review
 
-**Agent**: Reviewer 2 (`reviewer_m1_2`)  
-**Parent / Recipient**: Orchestrator (`d2d7b35b-d1d5-45b5-9a65-d7a02d968987`)  
-**Date**: 2026-10-27  
-**Verdict**: **APPROVE**  
-**Type**: Hard Handoff (Review & Verification Complete)  
+**Reviewer**: M1 Reviewer 2 (Layout & Invariance Reviewer / Adversarial Critic)  
+**Assigned Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\reviewer_m1_2`  
+**Parent Agent (Orchestrator)**: `4ca3c226-daa7-4621-95f6-7c629c003e5f`  
+**Date**: 2026-10-31  
+**Verdict**: **`REQUEST_CHANGES`**  
 
 ---
 
 ## 1. Observation
 
-1. **Dual Lockup Architecture in `src/components/AppLayout.tsx` (Lines 482–537)**:
-   - **Far Left Permanent Platform Mark (Lines 492–509)**:
-     - Container: `w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105`
-     - Asset: `<img src="/favicon.png" alt="CredSmart Shield" className="w-full h-full object-contain select-none" loading="eager" />`
-     - Wordmark: `<span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">CredSmart</span>`
-     - Target Route: Navigates contextually to `ROUTE_PATHS.crm` when `isCrmSuite` is active, `ROUTE_PATHS.checkout` for cashier, or `ROUTE_PATHS.dashboard` for store owner.
-   - **1px Hairline Divider (Line 512)**:
-     - Rendered unconditionally between platform shield and store pill:
-       `<div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" aria-hidden="true" />`
-   - **Adjacent Tenant Store Switcher Trigger (Lines 516–536)**:
-     - Container: `flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]`
-     - Store Branding: Renders `{org?.logo_url ? <img src={org.logo_url} ... /> : <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 shrink-0" />}`
-     - Store Name: `<span className="truncate text-[11px] sm:text-xs font-semibold">{org?.name || "My Business"}</span>`
+### 1.1 Direct Source Code Observations
+1. **`src/components/public/PublicHeader.tsx:94-101` and `216-218` (Mobile Drawer in Horizontal Flex Container)**:
+   ```tsx
+   94:  return (
+   95:    <header
+   96:      className={cn(
+   97:        "sticky top-0 z-50 w-full h-12 sm:h-13 transition-colors duration-150 bg-white/95 backdrop-blur-md border-b flex items-center select-none",
+   98:        scrolled
+   99:          ? "border-slate-200/80 shadow-2xs"
+   100:         : "border-slate-200/40"
+   101:     )}
+   102:   >
+   103:     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full">
+   ...
+   213:     </div>
+   214:
+   215:     {/* Mobile Drawer Menu */}
+   216:     {mobileMenuOpen && (
+   217:       <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">
+   ...
+   317:       </div>
+   318:     )}
+   319:   </header>
+   ```
+   - `<header>` is declared with `h-12 sm:h-13 ... flex items-center`.
+   - In CSS, `flex` defaults to `flex-direction: row`.
+   - Direct Child 1 (`<div className="max-w-7xl ... w-full">`) and Direct Child 2 (`<div className="lg:hidden ... w-full">`) are both direct children of `<header>`.
+   - Direct Child 2 (the mobile drawer) lacks `position: absolute` (`absolute top-full left-0 right-0 w-full`).
+   - Consequently, when `mobileMenuOpen === true`, Child 1 and Child 2 are laid out **side-by-side horizontally** within a 48px high flex line (`h-12`).
+   - Because neither child has `flex-shrink: 0`, both children are squeezed horizontally to ~50% width on mobile screens, squashing the header logo and hamburger button to the left 180px and squashing the mobile menu into the right 180px.
+   - Child 2 content height is >540px (10 nav links + 2 app download chips + 2 auth buttons). Because the parent container has `items-center` and `h-12` (48px), Child 2 is vertically centered at y = 24px, causing ~250px of the menu to project upwards beyond the top of the browser viewport (offscreen and unclickable) and the remaining items to protrude downwards.
+   - Combined minimum width of Child 1 (~190px) + Child 2 (~220px) = 410px, exceeding 360px viewport width and causing horizontal overflow.
 
-2. **100% Desktop Layout Preservation (>= 768px)**:
-   - **Header Dimensions (Line 485)**:
-     `md:h-13` (strict 52px command bar height).
-   - **Centered Command Palette Trigger (Lines 629–641)**:
-     Visible on desktop via `hidden md:flex flex-1 max-w-md mx-2` with `Search` icon, "Search or ⌘K...", and `<kbd className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-500 dark:text-slate-400 shadow-2xs">⌘K</kbd>`.
-     Global keyboard shortcut `Ctrl+K` / `Cmd+K` listener verified in `useEffect` (lines 430–438).
-   - **Desktop Suite Switcher (Lines 618–625)**:
-     Positioned adjacent to the left lockup group, displayed via `hidden sm:inline-flex` with `<SuiteSwitcher />` handling tab transitions between POS & Billing and CRM.
-   - **Split Action Button (Lines 676–845)**:
-     Preserved Royal Blue split button `hidden sm:flex items-center h-8.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-2xs select-none shrink-0 overflow-hidden` with primary action button and border-separated dropdown trigger (`border-l border-blue-500 hover:bg-blue-800`).
-   - **Notification Center Trigger (Lines 849–865)**:
-     Desktop button: `w-8.5 h-8.5 rounded-lg transition-colors relative hidden sm:flex items-center justify-center border border-slate-200/80 dark:border-slate-800`.
-   - **Profile Dropdown (Lines 894–970)**:
-     Desktop avatar button: `w-7.5 h-7.5 sm:w-8.5 sm:h-8.5 rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold` triggering full store switcher and account settings dropdown.
+2. **`src/components/public/PublicHeader.tsx:217` (Missing Viewport Height Bound on Drawer)**:
+   - `<div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">` lacks `max-h-[calc(100vh-3rem)] overflow-y-auto`.
+   - On short mobile screens (e.g. 568px or 667px iPhone SE or landscape), the bottom CTAs ("Login" and "Start Free Now") extend beyond the screen edge and cannot be scrolled into view.
 
-3. **Mobile Ergonomics & Viewport Containment (< 768px)**:
-   - **Header Height (Line 485)**:
-     `pt-[env(safe-area-inset-top,0px)] h-[calc(3rem+env(safe-area-inset-top,0px))] md:h-13` (strict 48px slim height accounting for device notches).
-   - **Store Switcher Mobile Accessibility**:
-     Previously hidden behind `hidden sm:flex`; now uses `flex` and is fully visible and touch-accessible on mobile screens with bounded max-width (`max-w-[100px] xs:max-w-[130px]`).
-   - **Mobile Right Controls**:
-     Compact 30x30px (`w-7.5 h-7.5`) action triggers for Search, Quick Action (+), Notification Bell, and Profile.
-   - **Horizontal Overflow Suppression**:
-     Sidebar arrow toggle (`hidden sm:flex`), Suite Switcher (`hidden sm:inline-flex`), and ⌘K search bar (`hidden md:flex`) are suppressed on mobile.
+3. **`src/components/public/PublicHeader.tsx:85` (React Router Location Desync on Same-Page Anchors)**:
+   - Line 85: `window.history.pushState(null, "", `/${targetHash}`);` does not trigger a React Router `location` update in v6.
+   - Line 114: `isExactActive` relies on `location.hash === targetHash`. Because `pushState` bypasses React Router's internal state, active link styling does not update upon click when already on `/`.
 
-4. **Integrity & Authenticity Inspection**:
-   - Zero hardcoded mock bypasses or facade implementations.
-   - All tests execute against the genuine production `AppLayout.tsx` and `SuiteSwitcher.tsx` components.
-   - Zero synthetic assertions or test falsifications.
+4. **`src/test/publicShellComponents.test.tsx:146-165` (JSDOM Layout Blindspot)**:
+   - Test verifies `expect(screen.getByText("Download Native Apps")).toBeInTheDocument()`.
+   - Because JSDOM does not compute CSS layout geometry, box models, or flexbox item positioning, this test passed despite the visual and ergonomic collapse in real browsers.
 
-5. **Automated Verification Command Execution & Outputs**:
-   - Command: `cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx`
-     Result: **12 tests passed (100% success)** in 1.48s.
-   - Command: `cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx`
-     Result: **19 tests passed (100% success)** in 860ms.
-   - Command: `cmd /c npx tsc --noEmit`
-     Result: **Exited with code 0 (zero compiler errors)**.
+### 1.2 Verification Commands Executed Verbatim
+1. **Quarantine Invariance Check**:
+   `node .agents/teamwork/auditor_m3/verify_protected.cjs`
+   - Output: `Summary: 19 / 19 protected files untouched. VERDICT: ZERO LINES MODIFIED IN ALL 19 QUARANTINED FILES.`
+   - Exit code: `0`.
+
+2. **TypeScript Compilation Check**:
+   `node ./node_modules/typescript/bin/tsc --noEmit`
+   - Output: `(0 diagnostics, clean)`
+   - Exit code: `0`.
+
+3. **Public Shell Components Unit Tests**:
+   `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx`
+   - Output: `✓ src/test/publicShellComponents.test.tsx (16 tests) passed`
+   - Exit code: `0`.
+
+4. **E2E Integration Test Suite**:
+   `node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx`
+   - Output: `✓ src/test/e2e/publicPages.e2e.test.tsx (59 tests) passed`
+   - Exit code: `0`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **From Observation 1**: The dual lockup architecture correctly places the permanent CredSmart shield mark (`/favicon.png`) on the far left and the tenant store switcher immediately adjacent, separated by a crisp 1px hairline divider. This completely resolves the previous brand dilution defect where tenant logos erased the CredSmart platform branding.
-2. **From Observation 2 & 5**: The test results from `desktopShellMilestone2.challenger.test.tsx` (19/19 passing) and manual code inspection of lines 482–970 prove that 100% of desktop workflows (⌘K palette, Royal Blue split action button, desktop suite switcher, notifications, profile dropdown, Live Sync dot, and 52px header height) are preserved without regression.
-3. **From Observation 3**: Mobile viewport arithmetic on the standard minimum 360px viewport confirms:
-   - Net available width: `360px - 20px (px-2.5 padding) = 340px`.
-   - Left lockup: `28px (logo) + 4px (gap) + 1px (divider) + 4px (gap) + 100px (store pill) = 137px max`.
-   - Right controls: `30px (search) + 6px (gap) + 30px (plus) + 6px (gap) + 30px (bell) + 6px (gap) + 30px (profile) = 138px`.
-   - Total width occupied: `137px + 138px = 275px`.
-   - Cushion remaining: `340px - 275px = 65px buffer`.
-   - Therefore, horizontal wrapping, clipping, and scrolling are 100% mathematically prevented on all mobile devices from 360px to 430px.
-4. **From Observation 4 & 5**: Independent execution of all test suites and `tsc --noEmit` verifies strict type safety, zero regressions, and full integrity compliance.
+1. **Criterion 1 (Mobile Ergonomics & 360px Overflow)**:
+   - The hamburger button correctly has `w-11 h-11` (44x44px touch target) and all mobile menu links call `setMobileMenuOpen(false)` on click.
+   - However, when the mobile menu is open, `<header>` is `display: flex; flex-direction: row; align-items: center; height: 3rem;`.
+   - The mobile menu drawer is an in-flow child of this flex container.
+   - Two `w-full` in-flow children in a row must flex-shrink, resulting in both the main navbar and the mobile menu being squashed into ~50% width columns.
+   - The combined min-content width exceeds 360px, causing horizontal overflow and layout deformation on 360px mobile viewports.
+   - Therefore, Criterion 1 fails on 360px horizontal overflow and mobile layout integrity.
+
+2. **Criterion 2 (Layout Shift & Fixed Height)**:
+   - On desktop, `<header>` is fixed to `h-12 sm:h-13` and `PublicLayout.tsx` has `overflow-x-hidden relative min-h-0`.
+   - However, on mobile viewports (<768px), opening the mobile menu centers a 540px+ menu vertically inside the 48px header line, clipping upper links and distorting header ergonomics.
+   - Therefore, Criterion 2 fails when the mobile drawer is toggled.
+
+3. **Criterion 3 (Quarantine Invariance R4)**:
+   - `verify_protected.cjs` confirmed 19/19 quarantined invoice files have 0 diff.
+   - Criterion 3 fully passes.
+
+4. **Criterion 4 (Test Execution)**:
+   - All 4 test commands exited with code 0.
+   - Criterion 4 passes syntactically, but reveals that JSDOM component tests require layout-aware regression assertions for mobile drawer positioning.
 
 ---
 
 ## 3. Caveats
 
-- **POS Terminal Route Isolation**: POS routes (`/pos`, `/checkout`) bypass `AppLayout`'s universal command bar via `!isPosRoute` and render their dedicated terminal command bar in `POSBilling.tsx`. This is intentional and preserved.
-- **Pre-existing Console Warning**: In `universalHeaderDualLockup.test.tsx`, a pre-existing React key warning is logged by `command.tsx:94:72` (within `CommandGroup`), which does not affect header lockup functionality and does not fail tests.
+1. **Desktop Viewport (> 768px)**:
+   Desktop layout is completely unaffected by this bug because `mobileMenuOpen` is false on desktop, and the drawer has `lg:hidden`.
+2. **Landing Page Anchor `#suites`**:
+   `id="suites"` on `Landing.tsx` is an expected Milestone 2 dependency (Feature F8). The fallback handler in `PublicHeader.tsx` safely avoids crashes when the anchor is not yet present.
 
 ---
 
 ## 4. Conclusion
 
-**Verdict: APPROVE**
+**Verdict: `REQUEST_CHANGES`**
 
-Milestone 1 satisfies all functional, architectural, responsive, and ergonomic requirements:
-- Permanent CredSmart platform mark and tenant store switcher dual lockup is cleanly decoupled and responsive.
-- Desktop layout is 100% preserved (52px header height, ⌘K command palette, suite switcher, split action button, notifications, profile).
-- Mobile ergonomics are touch-optimized (48px header height, accessible store switcher trigger, 30x30px compact controls, guaranteed zero horizontal overflow on 360px–430px screens).
-- All 31 tests across both suites pass cleanly.
-- TypeScript compiler passes with 0 errors.
+While Milestone 1 delivers excellent desktop button standardization, dual-suite footer parity, and 100% quarantine invariance, it introduces a **Critical mobile layout defect** in `src/components/public/PublicHeader.tsx`:
+The mobile drawer lacks absolute positioning (`absolute top-full left-0 right-0 w-full`) and viewport height bounds (`max-h-[calc(100vh-3rem)] overflow-y-auto`), causing it to render as an in-flow horizontal flex item side-by-side with the main navbar inside a 48px header row.
+
+### Required Changes for Worker M1:
+1. **Fix Mobile Drawer Positioning in `src/components/public/PublicHeader.tsx`**:
+   Update line 217 from:
+   ```tsx
+   <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">
+   ```
+   to:
+   ```tsx
+   <div className="lg:hidden absolute top-full left-0 right-0 w-full max-h-[calc(100vh-3rem)] overflow-y-auto border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200">
+   ```
+2. **Synchronize Same-Page Anchor Navigation**:
+   In `PublicHeader.tsx:85`, ensure same-page anchor clicks synchronize React Router's location state (e.g. `navigate(`/${targetHash}`, { replace: true })`) so that `isExactActive` highlights the clicked link.
+3. **Add Layout Regression Assertion in `src/test/publicShellComponents.test.tsx`**:
+   Add an explicit test assertion confirming the mobile drawer has `absolute`, `top-full`, `left-0`, `right-0`, and `overflow-y-auto` classes so that flexbox row collision cannot regress.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce this verification:
-1. Run Universal Header dual lockup test suite:
-   ```bash
-   cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx
-   ```
-2. Run Desktop Shell challenger test suite:
-   ```bash
-   cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx
-   ```
-3. Run TypeScript static analysis:
-   ```bash
-   cmd /c npx tsc --noEmit
-   ```
-4. Code inspection checkpoints:
-   - `src/components/AppLayout.tsx`: lines 482–536 (dual lockup), 628–641 (command palette), 675–710 (split button).
-   - `src/test/universalHeaderDualLockup.test.tsx`: all 12 test assertions.
+### 5.1 Verification Commands to Confirm Resolution
+1. `node .agents/teamwork/auditor_m3/verify_protected.cjs` (must remain 19/19 clean, 0 diff).
+2. `node ./node_modules/typescript/bin/tsc --noEmit` (must exit 0).
+3. `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx` (must exit 0 with drawer class assertions).
+4. `node ./node_modules/vitest/vitest.mjs run src/test/e2e/publicPages.e2e.test.tsx` (must exit 0).
 
----
-
-## 6. Review & Adversarial Stress-Test Summary
-
-### Review Summary
-- **Verdict**: **APPROVE**
-- **Integrity Violations**: None found. Real implementation, live routing, authentic test assertions.
-- **Desktop Preservation**: 100% verified across all desktop controls.
-- **Mobile Ergonomics**: Verified on 360px–430px viewports with 65px buffer.
-
-### Stress Test & Edge Case Results
-1. **Ultra-long store name**: Truncated cleanly via `truncate` + `max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]` -> **PASS**
-2. **Missing/broken store logo**: Graceful fallback to `<Building2 />` SVG icon -> **PASS**
-3. **Null organization**: Graceful fallback to `"My Business"` label -> **PASS**
-4. **Smallest mobile viewport (360px)**: 275px total width occupied on 340px net container (65px cushion) -> **PASS**
-5. **Contextual Suite switching**: Navigation link and quick actions switch between POS & Billing and CRM seamlessly -> **PASS**
-6. **Regression to Desktop Shell**: All 19 desktop challenger tests pass -> **PASS**
+### 5.2 Invalidation Conditions
+- Any mobile drawer rendering where the drawer is an in-flow sibling of the navbar inside a `flex` row.
+- Any mobile drawer lacking `absolute`, `left-0`, `right-0`, or `max-h-[calc(100vh-3rem)] overflow-y-auto`.
+- Any modification to the 19 quarantined protected files.
