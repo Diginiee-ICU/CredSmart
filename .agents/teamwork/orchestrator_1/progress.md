@@ -1,7 +1,7 @@
 # Progress Tracker
 
 ## Current Status
-Last visited: 2026-10-31T12:00:45Z
+Last visited: 2026-10-31T12:09:15Z
 
 - [x] Initial dispatch received and logged to DISPATCH.md
 - [x] Initialized BRIEFING.md and plan.md
@@ -15,7 +15,7 @@ Last visited: 2026-10-31T12:00:45Z
     - [/] Iteration 2 (Remediation):
       - [x] Explorer M1 R2 (4f7f03bb-c257-4acd-8797-0900c10225b3): Mobile drawer flexbox remediation blueprint [COMPLETED]
       - [x] Worker M1 R2 (3a310f26-bb9a-4436-a2e6-c89bbbfc557f): Implement PublicHeader fixes & test assertions [COMPLETED - 138/138 pass]
-      - [/] Verifiers M1 R2: 2 Reviewers, 2 Challengers, 1 Auditor dispatched [IN_PROGRESS]
+      - [/] Verifiers M1 R2: Reviewer 1 (APPROVE), Reviewer 2 (APPROVE), Challenger 1 (APPROVE), Auditor (CLEAN) [Challenger 2 in-progress]
       - [ ] Iteration 2 Gate Evaluation
 - [ ] Milestone 2: Desktop Landing Page Dual-Suite Redesign
 - [ ] Milestone 3: Core Public Pages Redesign
