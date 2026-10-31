@@ -121,11 +121,13 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                 : "font-medium text-slate-600 hover:text-slate-900"
             );
 
-            const content = (
+            const content = link.shortLabel ? (
               <>
                 <span className="hidden xl:inline">{link.label}</span>
-                <span className={cn(link.shortLabel ? "xl:hidden" : "")}>{link.shortLabel || link.label}</span>
+                <span className="xl:hidden">{link.shortLabel}</span>
               </>
+            ) : (
+              <span>{link.label}</span>
             );
 
             return isAnchor ? (
