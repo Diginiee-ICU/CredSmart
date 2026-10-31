@@ -17,10 +17,10 @@ Last visited: 2026-10-31T12:38:30Z
       - [x] Worker M1 R2 (3a310f26-bb9a-4436-a2e6-c89bbbfc557f): Implement PublicHeader fixes & test assertions [COMPLETED - 138/138 pass]
       - [x] Verifiers M1 R2: Reviewer 1 (APPROVE), Reviewer 2 (APPROVE), Challenger 1 (APPROVE), Challenger 2 (APPROVE), Auditor (CLEAN) [ALL VERIFIED]
       - [x] Iteration 2 Gate Evaluation: PASS (Unanimous Approvals + Clean Forensic Audit)
-- [/] Milestone 2: Desktop Landing Page Dual-Suite Redesign [IN_PROGRESS - Phase 2B.b Implementation]
+- [/] Milestone 2: Desktop Landing Page Dual-Suite Redesign [IN_PROGRESS - Phase 2B.c-e Verification]
   - [x] Explorers M2: All 3 Explorers completed blueprints (`Landing.tsx`, `HeroDashboardCard.tsx`, Module Explorer)
-  - [/] Worker M2 (ec5a8772-cebc-4d99-897a-83daa9439c28): Landing.tsx & HeroDashboardCard.tsx completed; authoring landingMilestone2.test.tsx and running verifications [ACTIVE]
-  - [ ] Verifiers M2 (Reviewers, Challengers, Auditor)
+  - [x] Worker M2 (ec5a8772-cebc-4d99-897a-83daa9439c28): Landing.tsx & HeroDashboardCard.tsx completed; 82/82 tests pass [COMPLETED]
+  - [/] Verifiers M2: Dispatching 2 Reviewers, 2 Challengers, 1 Auditor [ACTIVE]
   - [ ] Gate Evaluation M2
 - [ ] Milestone 3: Core Public Pages Redesign
 - [ ] Milestone 4: Trust, Security & Knowledge Pages
