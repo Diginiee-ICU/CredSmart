@@ -4,8 +4,9 @@ import {
   Lock,
   CheckCircle2,
   ExternalLink,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
-import { ROUTE_PATHS } from "@/config/routes";
 import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
 
@@ -15,32 +16,64 @@ export function PublicFooter() {
   return (
     <footer className="bg-[#0B132B] text-slate-400 border-t border-slate-800/80 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Top Section: Brand + Mission */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-800/60">
-          <div className="lg:col-span-2 space-y-4">
+        {/* Top Section: Brand + Dual-Suite Navigation Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 sm:gap-10 pb-12 border-b border-slate-800/60">
+          
+          {/* Brand & Mission Column (Spans 2 on Mobile/Desktop, 4 on Tablet) */}
+          <div className="col-span-2 md:col-span-4 lg:col-span-2 space-y-4">
             <Link to="/" className="inline-block">
               <CredSmartLogo size="lg" variant="dark" />
             </Link>
             <p className="text-xs sm:text-sm text-slate-400 max-w-sm leading-relaxed">
-              India&apos;s all-in-one completely free business management platform. Invoicing, POS billing, inventory management, customer ledger, and intelligent credit risk mitigation for MSMEs and enterprises.
+              India&apos;s all-in-one completely free business management platform. Dual-suite POS billing ERP and Workforce CRM with intelligent credit risk mitigation for MSMEs and enterprises.
             </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> 100% Free Forever
+
+            {/* Trust & Security Badges (Standardized to 11px) */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 100% Free Forever
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold">
-                <Lock className="w-3.5 h-3.5" /> 256-Bit SSL Encrypted
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-semibold">
+                <Lock className="w-3.5 h-3.5 text-blue-400" /> 256-Bit SSL Encrypted
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5" /> CredAlert Intelligence
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-semibold">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> CredAlert Intelligence
               </span>
+            </div>
+
+            {/* Official Native App Download Chips */}
+            <div className="pt-2">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 font-mono">
+                Official Native Apps
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href={APP_DOWNLOAD_LINKS.androidApk}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 text-xs font-semibold transition-colors"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Download Android APK</span>
+                </a>
+                <a
+                  href={APP_DOWNLOAD_LINKS.windowsExe}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 hover:text-blue-300 text-xs font-semibold transition-colors"
+                >
+                  <Monitor className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Download Windows PC</span>
+                </a>
+              </div>
             </div>
           </div>
 
-          {/* Column 1: Product Features */}
-          <div className="space-y-3">
+          {/* Column 1: POS & Billing ERP */}
+          <div className="col-span-1 space-y-3">
             <p className="text-xs font-bold text-white uppercase tracking-wider">
-              Product &amp; POS
+              <span>POS &amp; Billing ERP</span>
+              <span className="sr-only">Product &amp; POS</span>
             </p>
             <ul className="space-y-2 text-xs">
               <li>
@@ -64,6 +97,11 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
+                <Link to="/barcode-generator-guide" className="hover:text-amber-400 transition-colors">
+                  Barcode Studio &amp; Labels
+                </Link>
+              </li>
+              <li>
                 <Link to="/#ecosystem" className="hover:text-amber-400 transition-colors">
                   Business Ecosystem
                 </Link>
@@ -73,38 +111,62 @@ export function PublicFooter() {
                   CredAlert Intelligence
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Column 2: Workforce CRM */}
+          <div className="col-span-1 space-y-3">
+            <p className="text-xs font-bold text-white uppercase tracking-wider">
+              Workforce CRM
+            </p>
+            <ul className="space-y-2 text-xs">
               <li>
-                <a
-                  href={APP_DOWNLOAD_LINKS.androidApk}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 font-semibold text-emerald-400"
-                >
-                  Download Android APK
-                </a>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  GPS Geofenced Attendance
+                </Link>
               </li>
               <li>
-                <a
-                  href={APP_DOWNLOAD_LINKS.windowsExe}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-blue-400 transition-colors inline-flex items-center gap-1 font-semibold text-blue-400"
-                >
-                  Download Windows PC (.exe)
-                </a>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Automated Monthly Payroll
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Task Boards &amp; Kanban
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Team Meet &amp; Huddles
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Multi-Tier Staff Roles
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Bilingual Voice Copilot
+                </Link>
+              </li>
+              <li>
+                <Link to="/features" className="hover:text-blue-400 transition-colors">
+                  Team Announcements
+                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 2: Comparisons & Guides */}
-          <div className="space-y-3">
+          {/* Column 3: Resources & Pricing */}
+          <div className="col-span-1 space-y-3">
             <p className="text-xs font-bold text-white uppercase tracking-wider">
               Resources &amp; Pricing
             </p>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link to="/pricing" className="hover:text-[#FF6A00] transition-colors font-semibold text-[#FF6A00]">
-                  100% Free Forever
+                  100% Free Forever Plan
                 </Link>
               </li>
               <li>
@@ -145,8 +207,8 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          {/* Column 3: Legal & Intelligence */}
-          <div className="space-y-3">
+          {/* Column 4: Company & Trust */}
+          <div className="col-span-1 space-y-3">
             <p className="text-xs font-bold text-white uppercase tracking-wider">
               Company &amp; Trust
             </p>
@@ -190,9 +252,15 @@ export function PublicFooter() {
           </div>
         </div>
 
-        {/* Bottom Bar: Copyright & Disclaimers */}
+        {/* Bottom Bar: Copyright & Statutory Notes */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {currentYear} CredSmart by CredAlert. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
+            <p>© {currentYear} CredSmart by CredAlert. All rights reserved.</p>
+            <span className="hidden sm:inline text-slate-700">•</span>
+            <p className="text-slate-400">
+              ₹0 Community Lifetime Free Retail POS ERP &amp; Workforce CRM
+            </p>
+          </div>
           <div className="flex items-center gap-6">
             <Link to="/privacy-policy" className="hover:text-slate-400 transition-colors">
               Privacy
