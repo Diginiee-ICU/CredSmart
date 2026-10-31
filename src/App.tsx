@@ -179,6 +179,12 @@ function AuthRoute() {
   return <Auth />;
 }
 
+export const isDesktopApp = typeof window !== "undefined" && (
+  Boolean((window as any).credsmartDesktop?.isDesktop) ||
+  window.location.protocol === "file:"
+);
+const AppRouter = isDesktopApp ? HashRouter : BrowserRouter;
+
 function HomeRoute() {
   const { user, loading } = useAuth();
   const portalActive = typeof window !== "undefined" ? sessionStorage.getItem("credsmart_launch_portal_active") : null;
@@ -187,9 +193,9 @@ function HomeRoute() {
     return <SleekRouteLoader />;
   }
 
-  // Priority 1: Cold launch for Native Mobile (Capacitor) or Standalone PWA
-  const isMobileApp = isNativePlatform() || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches);
-  if (isMobileApp && !portalActive) {
+  // Priority 1: Cold launch for Native Mobile (Capacitor), Desktop Standalone (Electron), or Standalone PWA
+  const isStandaloneApp = isNativePlatform() || isDesktopApp || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches);
+  if (isStandaloneApp && !portalActive) {
     return <ColdLaunchHub />;
   }
 
@@ -218,12 +224,6 @@ function PublicMarketingRoute({ element }: { element: React.ReactElement }) {
   }
   return element;
 }
-
-const isDesktopApp = typeof window !== "undefined" && (
-  Boolean((window as any).credsmartDesktop?.isDesktop) ||
-  window.location.protocol === "file:"
-);
-const AppRouter = isDesktopApp ? HashRouter : BrowserRouter;
 
 const App = () => (
   <ErrorBoundary>

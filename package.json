@@ -21,22 +21,32 @@
       "package.json"
     ],
     "win": {
+      "icon": "public/icon-512.png",
       "target": [
         {
           "target": "nsis",
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
-      ],
-      "artifactName": "CredSmart-Setup-${version}-${arch}.${ext}"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "CredSmart"
+      "shortcutName": "CredSmart",
+      "artifactName": "CredSmart-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "CredSmart-Portable-${version}-${arch}.${ext}"
     }
   },
   "scripts": {
@@ -53,8 +63,9 @@
     "test:watch": "vitest",
     "electron": "electron .",
     "desktop:dev": "npm run build && electron .",
-    "desktop:build": "npm run build && electron-builder --win nsis",
-    "desktop:dir": "npm run build && electron-builder --win dir",
+    "desktop:build": "node scripts/build-desktop.cjs",
+    "desktop:dir": "node scripts/build-desktop.cjs --dir",
+    "desktop:portable": "node scripts/build-desktop.cjs --portable",
     "tally:bridge": "node scripts/credsmart-sync-agent/index.cjs"
   },
   "dependencies": {

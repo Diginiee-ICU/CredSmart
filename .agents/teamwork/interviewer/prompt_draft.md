@@ -1,43 +1,38 @@
-Analyze the Lovable CRM at `C:\Users\bishn\OneDrive\Documents\GitHub\CRM` and the CredSmart codebase at `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart`, and produce a production-grade integration and migration plan to replace CredSmart's existing CRM with the Lovable CRM within a unified Capacitor mobile application.
+Design production-ready desktop public pages and landing pages for CredSmart, presenting the dual-suite platform (POS & Billing ERP + Workforce CRM) with full desktop viewport optimization and high visual fidelity for live deployment.
 
 Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
 Integrity mode: development
 
 ## Requirements
 
-### R1. Obsolete CRM File and Asset Identification
-Analyze the current CredSmart codebase and identify all files, components, state management stores, hooks, route declarations, and assets belonging to the existing CRM implementation that must be safely removed without affecting POS and billing functionality.
+### R1. Desktop Public and Landing Pages Design
+Redesign and implement production-ready desktop public pages and landing layouts for CredSmart, presenting both suites of the platform (POS & Billing ERP + Workforce CRM). The pages to deliver include `src/pages/Landing.tsx`, `src/components/public/PublicHeader.tsx`, `src/components/public/PublicFooter.tsx`, `src/pages/public/Features.tsx`, `src/pages/public/Pricing.tsx`, `src/pages/public/About.tsx`, `src/pages/public/Contact.tsx`, `src/pages/public/Security.tsx`, `src/pages/public/FaqPage.tsx`, and associated comparison and guide pages.
 
-### R2. Lovable CRM Architecture & Dependency Mapping
-Analyze the external Lovable CRM repository (`C:\Users\bishn\OneDrive\Documents\GitHub\CRM`), cataloging all UI components, pages, routing definitions, third-party dependencies, assets, and Supabase client configurations required for integration into CredSmart.
+### R2. Desktop Viewport Containment & Design System Compliance
+Ensure desktop layouts strictly adhere to the master standards in `.agents/rules/minimal-design-system.md`, `.agents/skills/credsmart-landing-design/SKILL.md`, and `.agents/skills/credsmart-minimal-design-system/SKILL.md`. Layouts must provide balanced whitespace, crisp 1px borders, typography hierarchy using standard sans and tabular monospace fonts, cohesive electric blue accents with semantic indicators, and screen-fitted desktop viewport optimization without long, tedious unconstrained vertical scrolling.
 
-### R3. Dual-Backend Isolation and Unified Capacitor Packaging
-Design the architecture for a single unified application built for Google Play Store using CredSmart's existing Capacitor configuration:
-- On cold launch, the application displays a selection hub giving the user the choice between 'POS & Billing' and 'CRM'.
-- 'POS & Billing' connects exclusively to its Ubuntu backend.
-- 'CRM' connects exclusively to its Supabase backend.
-- Strict isolation with zero shared runtime data, state, or storage between POS & Billing and CRM.
+### R3. Full-Stack Search Engine Optimization (SEO)
+Comply with `.agents/skills/ultra-master-seo/SKILL.md` across all public routes, ensuring comprehensive semantic metadata, OpenGraph/Twitter cards, structured JSON-LD schemas, and crawler privacy on protected business routes.
 
-### R4. Production-Grade Implementation Plan
-Deliver a comprehensive, production-grade migration plan (`CRM_INTEGRATION_PLAN.md` or equivalent) detailing:
-- The exact inventory of files to delete in CredSmart.
-- The directory structure and file placement for integrating the Lovable CRM.
-- Package dependency reconciliation (handling version conflicts, script updates).
-- Routing structure and the implementation specifications for the launch selection hub.
-- Step-by-step phased execution sequence with risk mitigation and rollback points.
+### R4. Core System Invariance and Non-Regression
+Preserve all 19 quarantine invoice files, core POS billing functionality, and store roles with zero regression. Desktop public page changes must not break existing mobile divergence, authenticated business workflows, or Supabase real-time integrations.
 
 ## Acceptance Criteria
 
-### Completeness of Codebase Analysis
-- [ ] Every existing CRM-specific route, page, and component in CredSmart is explicitly cataloged for deletion or retention with rationale.
-- [ ] Every external dependency, utility, and Supabase configuration in `C:\Users\bishn\OneDrive\Documents\GitHub\CRM` is mapped to its target location in CredSmart.
-- [ ] Conflicting dependencies or script mismatches between both projects are documented with concrete resolution strategies.
+### Build & Test Integrity
+- [ ] `npm run test` passes with zero test failures.
+- [ ] `npm run build` succeeds with zero TypeScript or bundling errors.
+- [ ] All 19 quarantine invoice files remain completely intact and unmodified.
 
-### Architecture and Isolation Specification
-- [ ] The launch selection screen specifications dictate display on every cold app launch.
-- [ ] The architectural design documents complete backend and data separation ensuring no state, cache, or authentication tokens are shared between POS (Ubuntu backend) and CRM (Supabase backend).
-- [ ] The unified Capacitor configuration and Google Play Store build workflow are preserved without breaking existing mobile packaging.
+### Page Delivery & Routing
+- [ ] All target public desktop routes render without runtime errors: `/`, `/features`, `/pricing`, `/about`, `/contact`, `/security`, `/faq`, and comparison/guide routes.
+- [ ] `PublicHeader.tsx` and `PublicFooter.tsx` provide unified, consistent desktop navigation across all public pages.
+- [ ] Both product suites (POS & Billing ERP and Workforce CRM) are clearly articulated and navigable on desktop.
 
-### Plan Actionability
-- [ ] The plan contains an ordered, phased implementation checklist that an engineering team can execute without ambiguous decisions.
-- [ ] Verification and smoke test procedures are documented for each phase (POS regression testing, CRM functionality, launch hub switching, and Capacitor build).
+### Design System & Viewport Conformance
+- [ ] Desktop layouts (>= 768px) respect viewport containment and design rules without bloated buttons or unconstrained overflowing containers.
+- [ ] Redundant micro-prose is eliminated and typography adheres to the Inter / tabular monospace font hierarchy.
+- [ ] Neutral surface color palette (`#F8FAFC` / `#FFFFFF` light, `#090D16` / `#111726` dark) with single electric blue accent is consistently applied.
+
+### SEO Verification
+- [ ] Valid Schema.org JSON-LD structured data and page meta tags are present on public routes according to `.agents/skills/ultra-master-seo/SKILL.md`.

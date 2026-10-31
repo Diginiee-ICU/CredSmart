@@ -428,6 +428,9 @@ function registerIpcHandlers() {
 // ─── Electron Window ─────────────────────────────────────────────────────────
 
 function createWindow() {
+  const iconPath = path.join(__dirname, '..', 'dist', 'favicon.ico');
+  const fallbackIcon = path.join(__dirname, '..', 'public', 'favicon.ico');
+
   const window = new BrowserWindow({
     width: 1440,
     height: 920,
@@ -435,6 +438,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: "#ffffff",
     title: "CredSmart ERP & POS",
+    icon: require("fs").existsSync(iconPath) ? iconPath : fallbackIcon,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -454,6 +458,35 @@ function createWindow() {
 // ─── App Lifecycle ───────────────────────────────────────────────────────────
 
 app.whenReady().then(() => {
+  try {
+    const { protocol } = require("electron");
+    const distDir = path.join(__dirname, "..", "dist");
+    if (protocol && typeof protocol.interceptFileProtocol === "function") {
+      protocol.interceptFileProtocol("file", (request, callback) => {
+        let url = request.url.replace(/^file:\/\//, "");
+        if (process.platform === "win32") {
+          if (url.startsWith("/assets/") || url.startsWith("\\assets\\")) {
+            return callback({ path: path.join(distDir, "assets", url.slice(8)) });
+          }
+          if (url.startsWith("/favicon") || url.startsWith("/IMG_9301") || url.startsWith("/manifest.json")) {
+            return callback({ path: path.join(distDir, url.slice(1)) });
+          }
+          const winDriveAssets = url.match(/^[a-zA-Z]:\/assets\/(.*)/);
+          if (winDriveAssets) {
+            return callback({ path: path.join(distDir, "assets", winDriveAssets[1]) });
+          }
+        }
+        try {
+          callback({ path: decodeURIComponent(url) });
+        } catch {
+          callback({ path: url });
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("Could not register file interceptor:", err.message);
+  }
+
   process.env.CREDSMART_SYNC_TOKEN = desktopPairingToken;
   startBridgeServer();
   registerIpcHandlers();
