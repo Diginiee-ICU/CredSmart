@@ -1,52 +1,49 @@
-# BRIEFING — 2026-10-18T09:47:00Z
+# BRIEFING — 2026-10-31T10:40:00Z
 
 ## Mission
-Investigate and design exact TypeScript types for the 4 Phase 3 salary tables (`crm_salary_profiles`, `crm_payroll_runs`, `crm_payslips`, `crm_salary_adjustments`) in `src/integrations/supabase/types.ts` and related CRM types, ensuring strict TypeScript compliance with zero `any`.
+Investigate `PublicFooter.tsx`, `PublicLayout.tsx`, and `PublicConversionBanner.tsx` to formulate a precise implementation specification and diff blueprints for Milestone 1.
 
 ## 🔒 My Identity
-- Archetype: explorer
-- Roles: investigation, synthesis
+- Archetype: teamwork_explorer
+- Roles: explorer, investigator, synthesizer
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_2
-- Original parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Milestone: M1-2
+- Original parent: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Milestone: Milestone 1 - Public Shell & Footer Enhancement
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement or modify source files or types.ts
-- Strict TypeScript compliance, zero `any`
-- Output 5-component handoff report to handoff.md
+- Read-only investigation — do NOT implement directly
+- Write only to own directory: .agents/teamwork/explorer_m1_2
+- Never modify underlying business logic, Supabase subscriptions, or routes
+- Strictly comply with minimal-design-system.md (Rule 1 button sizing, Rule 4 typography, Rule 5 colors)
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T09:47:00Z
+- Conversation ID: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Updated: not yet
 
 ## Investigation State
 - **Explored paths**:
-  - `ORIGINAL_REQUEST.md` (lines 417-604: M1 and M2 Phase 3 specifications)
-  - `orchestrator_crm_phase3_gen2/plan.md` & `DISPATCH.md`
-  - `.agents/skills/crm-attendance-skill/SKILL.md` & `crm-rbac-skill/SKILL.md`
-  - `src/integrations/supabase/types.ts` & `src/integrations/supabase/client.ts`
-  - `src/types/crmAttendance.ts` (Phase 2 domain types reference pattern)
-  - `src/test/crmAttendanceTypes.challenger.test.ts` & `crmAttendanceMigrationStress.test.ts`
+  - `src/components/public/PublicFooter.tsx`
+  - `src/components/public/PublicConversionBanner.tsx`
+  - `src/components/public/PublicLayout.tsx`
+  - `src/components/public/PublicHeader.tsx`
+  - `src/pages/Landing.tsx`
+  - `src/pages/public/Features.tsx`
+  - `src/config/routes.ts`
+  - `src/config/downloadLinks.ts`
 - **Key findings**:
-  - `src/integrations/supabase/client.ts` initializes `createClient<Database>()` where `Database` is imported from `./types`.
-  - All database queries across CRM components (`src/pages/crm/Attendance.tsx`, etc.) rely on `Database["public"]["Tables"]`.
-  - 4 new tables must be added to `Database["public"]["Tables"]` in alphabetical order:
-    - `crm_payroll_runs` (11 columns, after `crm_geolocations`)
-    - `crm_payslips` (24 columns, after `crm_payroll_runs`)
-    - `crm_salary_adjustments` (12 or 13 columns, after `crm_roles`)
-    - `crm_salary_profiles` (13 columns, after `crm_salary_adjustments`)
-  - All foreign key relationships must link within the `public` schema (`organizations`, `crm_payroll_runs`). References to `auth.users` are omitted in `Relationships` per Supabase conventions.
-  - Domain types file `src/types/crmPayroll.ts` should be introduced following the pattern of `src/types/crmAttendance.ts` to provide strict union types and UI-enriched models.
-- **Unexplored areas**: None. Complete schema and type contracts have been analyzed.
+  - `PublicFooter.tsx` has 5-column grid (`lg:grid-cols-5`) completely lacking Workforce CRM representation; needs restructuring to responsive 6-column grid (`grid-cols-2 md:grid-cols-4 lg:grid-cols-6`) with dedicated Workforce CRM column and elevated official app download chips in brand column.
+  - `PublicConversionBanner.tsx:68` violates Rule 1 button sizing with bloated `h-13 px-8 rounded-xl shadow-2xl`; needs standard hero CTA token `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs active:scale-[0.98]`. Propagates fix to 14 public marketing pages.
+  - `PublicLayout.tsx:13-15` unconditionally runs `window.scrollTo(0, 0)` on route change, breaking smooth scrolling to `/#suites` and other hash anchors; requires hash-aware scrolling listener with `prefers-reduced-motion` support and `overflow-x-hidden relative` containment.
+- **Unexplored areas**: None within Milestone 1 scope. Fully scoped for worker handoff.
 
 ## Key Decisions Made
-- Alphabetical key sorting within Row, Insert, and Update to match existing types.ts convention.
-- Foreign keys correctly modeled for public schema tables (`organizations` and `crm_payroll_runs`).
-- Documented both 12-column and 13-column variants for `crm_salary_adjustments` (with/without `updated_at`).
-- Complete domain types designed for `src/types/crmPayroll.ts`.
+- Established responsive grid mathematics for `PublicFooter.tsx` (`col-span-2 md:col-span-4 lg:col-span-2` for brand, `col-span-1` for each suite/resource column).
+- Standardized badge typography to `text-[11px] font-semibold` conforming to Rule 4.
+- Elevated Android APK and Windows PC download links into tactile action chips with `Smartphone` and `Monitor` icons.
+- Specified complete diff blueprints and dedicated automated unit test suite `src/test/publicShellComponents.test.tsx`.
 
 ## Artifact Index
-- DISPATCH.md — record of orchestrator instructions
-- BRIEFING.md — persistent state memory
-- progress.md — liveness heartbeat
-- handoff.md — final 5-component report
+- DISPATCH.md — Logged dispatch messages
+- BRIEFING.md — Situational awareness
+- progress.md — Liveness heartbeat
+- handoff.md — Comprehensive 5-component handoff report for worker with verbatim blueprints

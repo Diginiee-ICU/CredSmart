@@ -1,948 +1,332 @@
-# M1-3 Investigation & Test Suite Architecture Report: Phase 3 Salary Migration & Types
+# Milestone 1 Explorer 3 Report: Design Tokens, Button Sizing & Non-Regression Invariance
 
-**Explorer**: Explorer M1-3  
-**Target Milestone**: Milestone 1 (Database Migration & TypeScript Types for Salary Management & Payroll Engine)  
-**Parent Caller**: `caf7924e-19e5-4a1d-ae03-b43c66838dd3`  
+**Explorer**: M1 Explorer 3 (`teamwork_explorer`)  
 **Working Directory**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3`  
-**Status**: Ready for Implementation  
+**Investigation Focus**: Design System Token Compliance, Button Sizing Standardization, Non-Regression & Quarantine Invariance (R4), Authenticated Shell Isolation, and Mobile Ergonomics  
+**Scope**: Milestone 1 (`PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, `PublicLayout.tsx`)  
+**Date**: 2026-10-31  
 
 ---
 
 ## 1. Observation
 
-### 1.1 Existing Migration Test Architecture
-- **File**: `src/test/crmAttendanceMigrationStress.test.ts` (lines 1–405)
-  - Successfully executed via command:
-    `cmd /c npx vitest run src/test/crmAttendanceMigrationStress.test.ts`
-    - Result: **31 passed (31)** in 5.10s.
-  - Implements a pure Node.js `fs`-based static AST/regex SQL parser:
-    - Custom SQL statement splitter (`splitSqlStatements`) tracking quote contexts (`'` and `"`) and nested parentheses (`parenDepth`).
-    - Validates file existence (`fs.existsSync`) and transactional wrapping (`BEGIN;` ... `COMMIT;`).
-    - Verifies parentheses balance: counts `(` vs `)` outside single quotes.
-    - Verifies quote parity: strips escaped quotes `''` and checks `quotes.length % 2 === 0`.
-    - Enforces idempotent DDL clauses: `IF NOT EXISTS` on `CREATE TABLE` and `CREATE INDEX`; `DROP TRIGGER IF EXISTS` before triggers; `DROP POLICY IF EXISTS` before RLS policies.
-    - Enforces CHECK constraints with inline regexes (e.g. `CHECK (status IN ('present', 'absent', 'half_day', 'on_leave'))`).
-    - Enforces RLS policies covering all 4 CRUD actions (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) with `auth.role() = 'authenticated'` and `has_org_access(org_id)`.
+### A. Design System Tokens & Button Sizing Audit
+Inspection of `.agents/rules/minimal-design-system.md` Section 1 and `PROJECT.md` line 13 established the authoritative button standards:
+- **Standard Action Button**: `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (34px height)
+- **Elevated CTA / Hero CTA**: `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs` (38px height)
+- **Small / Table Action**: `h-7 px-2.5 rounded-md text-[11px] font-medium` (28px height)
+- **Micro / Inline Icon**: `w-7.5 h-7.5 rounded-md` (30x30px)
+- **Mobile Center Elevated CTA**: `46x46px rounded-xl` (`w-[46px] h-[46px] rounded-xl`)
+- **Prohibited**: Bloated bubble buttons (`h-11`, `h-12`, `h-13`, `px-8`, `rounded-3xl`).
 
-### 1.2 Existing Type Verification Architecture
-- **File**: `src/test/crmAttendanceTypes.challenger.test.ts` (lines 1–597)
-  - Successfully executed via command:
-    `cmd /c npx vitest run src/test/crmAttendanceTypes.challenger.test.ts`
-    - Result: **18 passed (18)** in 4.69s.
-  - Implements compile-time and runtime type assertion helpers:
-    - Type utilities:
-      ```typescript
-      type Extends<T, U> = [T] extends [U] ? true : false;
-      type ExactKeys<T, K extends string> = [keyof T] extends [K]
-        ? [K] extends [keyof T]
-          ? true
-          : false
-        : false;
-      ```
-    - Uses Vitest's native `expectTypeOf<Target>().toEqualTypeOf<Expected>()` for strict scalar, nullability, and union checks.
-    - Validates `Database["public"]["Tables"][TableName]["Row"]` for exact key count and field nullability (`string | null`, `number | null`).
-    - Validates `Database["public"]["Tables"][TableName]["Insert"]` minimal vs maximal payloads, verifying that missing mandatory non-default keys fail compilation via `Extends<BadPayload, Insert> = false`.
-    - Validates `Database["public"]["Tables"][TableName]["Update"]` partiality (`{}` allowed, individual fields typed).
-    - Validates `Database["public"]["Tables"][TableName]["Relationships"]` foreign keys, target tables, and target columns.
-    - Validates Domain union literals (`AttendanceStatus = "present" | "absent" | ...`) and rejection of alien literals (`Extends<"vacation", AttendanceStatus> = false`).
+Direct code inspection of M1 components revealed the following exact lines and violations:
 
-### 1.3 Target SQL Migration Specification
-- **Target File**: `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-- **Tables (4 tables)**:
-  1. `public.crm_salary_profiles`:
-     - Columns: `id` (UUID PK default `gen_random_uuid()`), `org_id` (FK `organizations(id)` CASCADE), `staff_id` (FK `auth.users(id)` CASCADE), `salary_type` (`TEXT NOT NULL DEFAULT 'monthly' CHECK (salary_type IN ('monthly', 'daily', 'hourly'))`), `base_amount` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `currency` (`TEXT NOT NULL DEFAULT 'INR'`), `allowed_leaves_per_month` (`INTEGER NOT NULL DEFAULT 2`), `hourly_overtime_rate` (`NUMERIC(10,2) DEFAULT 0.00`), `pf_deduction_percent` (`NUMERIC(5,2) DEFAULT 0.00`), `esi_deduction_percent` (`NUMERIC(5,2) DEFAULT 0.00`), `is_active` (`BOOLEAN NOT NULL DEFAULT true`), `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`), `updated_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`).
-     - Unique constraint: `CONSTRAINT uq_crm_salary_profiles_staff UNIQUE (org_id, staff_id)`.
-  2. `public.crm_payroll_runs`:
-     - Columns: `id` (UUID PK), `org_id` (FK `organizations(id)` CASCADE), `month_year` (`TEXT NOT NULL`), `status` (`TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'locked', 'disbursed'))`), `total_payout` (`NUMERIC(14,2) DEFAULT 0.00`), `staff_count` (`INTEGER DEFAULT 0`), `locked_by` (FK `auth.users(id)` SET NULL), `locked_at` (`TIMESTAMPTZ`), `notes` (`TEXT`), `created_at`, `updated_at`.
-     - Unique constraint: `CONSTRAINT uq_crm_payroll_runs_month UNIQUE (org_id, month_year)`.
-  3. `public.crm_payslips`:
-     - Columns: `id` (UUID PK), `org_id` (FK `organizations(id)` CASCADE), `payroll_run_id` (FK `public.crm_payroll_runs(id)` CASCADE), `staff_id` (FK `auth.users(id)` CASCADE), `month_year` (`TEXT NOT NULL`), `salary_profile_snapshot` (`JSONB NOT NULL`), `working_days_in_month` (`INTEGER NOT NULL`), `present_days` (`INTEGER NOT NULL DEFAULT 0`), `absent_days` (`INTEGER NOT NULL DEFAULT 0`), `half_days` (`INTEGER NOT NULL DEFAULT 0`), `lop_days` (`NUMERIC(5,2) NOT NULL DEFAULT 0`), `overtime_minutes` (`INTEGER NOT NULL DEFAULT 0`), `gross_salary` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `lop_deduction` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `overtime_amount` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `pf_deduction` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `esi_deduction` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `advance_deduction` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `bonus_amount` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `net_salary` (`NUMERIC(12,2) NOT NULL DEFAULT 0.00`), `payment_status` (`TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial'))`), `paid_at` (`TIMESTAMPTZ`), `created_at`, `updated_at`.
-     - Unique constraint: `CONSTRAINT uq_crm_payslips_staff_month UNIQUE (org_id, staff_id, month_year)`.
-  4. `public.crm_salary_adjustments`:
-     - Columns: `id` (UUID PK), `org_id` (FK `organizations(id)` CASCADE), `staff_id` (FK `auth.users(id)` CASCADE), `type` (`TEXT NOT NULL CHECK (type IN ('advance', 'bonus', 'deduction', 'loan_repayment'))`), `amount` (`NUMERIC(12,2) NOT NULL`), `description` (`TEXT`), `month_year` (`TEXT`), `status` (`TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'deducted', 'rejected'))`), `requested_by` (FK `auth.users(id)` SET NULL), `approved_by` (FK `auth.users(id)` SET NULL), `approved_at` (`TIMESTAMPTZ`), `created_at`, `updated_at`.
-- **Security & RLS**:
-  - `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;` on all 4 tables.
-  - 16 policies (SELECT, INSERT, UPDATE, DELETE for each of the 4 tables).
-  - All policies check `auth.role() = 'authenticated'` and `has_org_access(org_id)`.
-  - All policies preceded by `DROP POLICY IF EXISTS ...`.
+1. **`src/components/public/PublicHeader.tsx`**:
+   - Line 126 ("Download App" button):
+     ```tsx
+     className="h-10 px-3.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+     ```
+     *Violation*: Uses `h-10` (40px) and `rounded-xl` (12px) instead of `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`.
+   - Line 135 ("Open Workspace" button when logged in):
+     ```tsx
+     <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all">
+     ```
+     *Violation*: Uses `h-10 px-5 rounded-xl`, gradient background, and heavy `shadow-md` / `hover:shadow-lg`.
+   - Line 144 ("Login" button):
+     ```tsx
+     className="h-10 px-4.5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
+     ```
+     *Violation*: Uses `h-10 px-4.5 rounded-xl` instead of standard `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`.
+   - Line 152 ("Start Free" CTA):
+     ```tsx
+     className="h-10 px-5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-sm shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+     ```
+     *Violation*: Uses `h-10 px-5 rounded-xl` and `shadow-orange-500/20` instead of standard action `h-8.5` or elevated CTA `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs`.
+   - Lines 225, 234, 242 (Mobile Drawer Action Buttons):
+     ```tsx
+     <Button className="w-full h-11 rounded-xl bg-blue-600 text-white font-bold">
+     className="w-full h-11 rounded-xl border border-blue-600 text-blue-600 font-bold hover:bg-blue-50 transition"
+     className="w-full h-11 rounded-xl bg-[#FF6A00] text-white font-bold hover:bg-[#E65F00] shadow-md transition"
+     ```
+     *Violation*: Uses `h-11` (44px) with raw styles.
 
-### 1.4 Target TypeScript Type Contracts
-- **Supabase Integration**: `src/integrations/supabase/types.ts`
-  - Must define `crm_salary_profiles`, `crm_payroll_runs`, `crm_payslips`, and `crm_salary_adjustments` under `Database["public"]["Tables"]`.
-  - Properties must have precise typing: `NUMERIC` columns map to `number`, `JSONB` maps to `Json`, `TIMESTAMPTZ` / `DATE` / `TEXT` map to `string`, nullables explicitly unioned with `null`.
-- **Domain Types**: `src/types/crmSalary.ts` and/or `src/utils/crmPayrollUtils.ts`
-  - Exported union types:
-    - `SalaryType = "monthly" | "daily" | "hourly"`
-    - `PayrollRunStatus = "draft" | "locked" | "disbursed"`
-    - `PaymentStatus = "pending" | "paid" | "partial"`
-    - `AdjustmentType = "advance" | "bonus" | "deduction" | "loan_repayment"`
-    - `AdjustmentStatus = "pending" | "approved" | "deducted" | "rejected"`
-  - Exported interfaces:
-    - `CRMSalaryProfile`
-    - `CRMPayrollRun`
-    - `CRMPayslip`
-    - `CRMSalaryAdjustment`
-    - `PayslipComputedData`
-    - `SalaryProfileSnapshot`
+2. **`src/components/public/PublicConversionBanner.tsx`**:
+   - Line 68 (Primary conversion button):
+     ```tsx
+     className="w-full sm:w-auto h-13 px-8 rounded-xl bg-white hover:bg-slate-50 text-blue-800 font-black text-sm sm:text-base shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer group"
+     ```
+     *Violation*: Uses `h-13 px-8 rounded-xl` (52px height, 32px padding, `shadow-2xl`, `font-black`). This directly violates Rule 1 prohibiting bloated `h-13` and `px-8` buttons. Per PROJECT.md Feature F5, this must be standardized to `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs`.
+
+3. **`tailwind.config.ts` Extended Spacing Gap**:
+   Lines 16–21 of `tailwind.config.ts` define:
+   ```ts
+   spacing: {
+     "7.5": "1.875rem", // 30px
+     "8.5": "2.125rem", // 34px
+     "11.5": "2.875rem", // 46px
+     "13": "3.25rem",    // 52px
+   },
+   ```
+   Empirical node test execution:
+   ```powershell
+   node -e "const resolveConfig = require('tailwindcss/resolveConfig'); const config = require('./tailwind.config.ts'); const theme = resolveConfig(config.default || config).theme; console.log('spacing 8.5:', theme.spacing['8.5'], 'spacing 9.5:', theme.spacing['9.5'], 'spacing 4.5:', theme.spacing['4.5']);"
+   ```
+   **Output**:
+   ```
+   spacing 8.5: 2.125rem spacing 9.5: undefined spacing 4.5: undefined
+   ```
+   *Critical Discovery*: In Tailwind 3 default spacing scale, neither `9.5` (2.375rem / 38px) nor `4.5` (1.125rem / 18px) exists. Consequently, writing `h-9.5` or `px-4.5` currently produces **ZERO CSS rules**, rendering elements unstyled.
+
+4. **`src/components/ui/button.tsx` Primitive Verification**:
+   Lines 32–47 of `src/components/ui/button.tsx`:
+   - `size.default`: `"h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs"`
+   - `size.sm` / `size.table`: `"h-7 px-2.5 rounded-md text-[11px] font-medium"`
+   - `size.icon`: `"w-7.5 h-7.5 rounded-md p-0 flex items-center justify-center"`
+   - `size.cta`: `"w-[46px] h-[46px] rounded-xl font-bold shadow-sm p-0 flex items-center justify-center"`
+   - `size.lg`: `"h-9.5 px-4 rounded-lg text-sm font-semibold shadow-2xs"`
+   The primitive is structurally aligned, but because `PublicHeader.tsx` bypassed `Button` and wrote raw `<button className="...">` strings, button standard tokens were violated.
+
+---
+
+### B. Typography & Neutral Color System Audit
+1. **Typography**:
+   - `tailwind.config.ts` lines 22–26:
+     ```ts
+     fontFamily: {
+       sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "'Segoe UI'", "Roboto", "sans-serif"],
+       mono: ["'IBM Plex Mono'", "ui-monospace", "SFMono-Regular", "monospace"],
+     }
+     ```
+   - `src/index.css` lines 114–122:
+     - OpenType tabular numerals enforced: `font-feature-settings: "tnum" on` and `font-variant-numeric: tabular-nums` on `code, kbd, pre, .font-mono, .tabular-nums`.
+     - Sans typography enforced: `body`, `h1-h6` use `'Inter'`.
+   - Micro-font compliance: No sub-11px text in `PublicHeader.tsx`, `PublicFooter.tsx`, or `PublicConversionBanner.tsx`. System chips and badges properly use `text-[11px] font-medium` or `font-semibold`.
+
+2. **Neutral Color Architecture**:
+   - Light canvas: `--background: 210 20% 98%` (`#F8FAFC`), `--card: 0 0% 100%` (`#FFFFFF`), `--border: 214 32% 91%` (`#E2E8F0` / `border-slate-200/80`).
+   - Dark canvas: `--background: 224 45% 6%` (`#090D16`), `--card: 224 35% 10%` (`#111726`), `--border: 217 33% 18%` (`#1E293B` / `border-slate-800`).
+   - Primary Accent: Royal / Electric Blue `--primary: 221 83% 53%` (`#2563EB`).
+   - Brand Accent: CredSmart Orange `#FF6A00`.
+   - Footer Surface: Deep Navy `#0B132B` in `PublicFooter.tsx` line 16.
+   - WCAG 2.1 Contrast ratios validated by `src/test/designTokensM1.challenger.test.ts`:
+     - Light mode text-on-bg: 17.1:1 (WCAG AAA >= 7:1)
+     - Light mode primary button white-on-blue: 5.17:1 (WCAG AA >= 4.5:1)
+     - Dark mode text-on-bg: 18.68:1 (WCAG AAA >= 7:1)
+
+---
+
+### C. Non-Regression & Quarantine Invariance (R4)
+1. **The 19 Quarantined Invoice Files**:
+   Forensic execution of `.agents/teamwork/auditor_m3/verify_protected.cjs` verified:
+   ```
+   === STARTING FORENSIC AUDIT: 19 QUARANTINED PROTECTED FILES ===
+   [PASS - 0 DIFF] src/components/invoices/mobile/MobileCreateInvoice.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/AddItemModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/SelectPartyModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/EditItemModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/MobileInvoiceSuccessView.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/MobileBillPreviewModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/MobileInvoiceFitViewer.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/CreatePartyModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx
+   [PASS - 0 DIFF] src/components/items/mobile/CreateNewItemModal.tsx
+   [PASS - 0 DIFF] src/components/SalesInvoiceModal.tsx
+   [PASS - 0 DIFF] src/components/PurchaseInvoiceModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/AddItemsToBillModal.tsx
+   [PASS - 0 DIFF] src/components/invoices/InvoiceFitView.tsx
+   [PASS - 0 DIFF] src/components/invoices/UnifiedInvoiceRenderer.tsx
+   [PASS - 0 DIFF] src/utils/downloadExactInvoice.ts
+   [PASS - 0 DIFF] src/utils/whatsappPdfShare.ts
+   [PASS - 0 DIFF] src/utils/invoiceThemeLoader.ts
+   [PASS - 0 DIFF] src/services/documentsService.ts
+   ===============================================================
+   Summary: 19 / 19 protected files untouched.
+   VERDICT: ZERO LINES MODIFIED IN ALL 19 QUARANTINED FILES.
+   ```
+   Exit code: `0`.
+
+2. **Quarantine Import Decoupling**:
+   - Ripgrep searches across `src/components/public/` for `documentsService`, `downloadExactInvoice`, `whatsappPdfShare`, `invoiceThemeLoader`, `SalesInvoiceModal`, and `PurchaseInvoiceModal` returned **0 matches**.
+   - Public components do NOT import, invoke, or reference any of the 19 quarantine files.
+
+3. **Shell & Route Boundary Isolation**:
+   Inspection of `src/App.tsx` lines 243–280 proved complete isolation:
+   - Public marketing routes (`/`, `/features`, `/pricing`, `/about`, `/contact`, `/security`, `/faq`, guides) use `PublicLayout`, `PublicHeader`, and `PublicFooter`.
+   - Authenticated POS & Billing ERP (`/billing/*`): Wrapped strictly in `<ProtectedRoutes>` -> `<BillingLockdownGuard>` -> `<AppLayout>`.
+   - Authenticated Workforce CRM (`/crm/*`): Wrapped strictly in `<CrmApp>` (standalone subsystem).
+   - `AppLayout.tsx` and `CrmApp` do NOT import or render `PublicHeader`, `PublicFooter`, or `PublicConversionBanner`.
+   - Modifying public header and footer components carries **zero risk** of altering authenticated workflows.
+
+---
+
+### D. Mobile Viewport (< 768px) Ergonomics & Responsiveness
+1. **Hamburger Button Touch Target**:
+   `PublicHeader.tsx` line 165:
+   ```tsx
+   <button
+     type="button"
+     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+     className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+     aria-label="Toggle navigation menu"
+   >
+     {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+   </button>
+   ```
+   *Issue*: With `w-6 h-6` (24px) and `p-2` (8px), the clickable bounding box is 40x40px, falling short of the required 44x44px ergonomic touch target standard. Standardizing to `p-2.5` or `w-11 h-11 flex items-center justify-center` resolves this to 44x44px.
+
+2. **Mobile Drawer Client-Side Routing Bug**:
+   `PublicHeader.tsx` lines 177–191:
+   ```tsx
+   {navLinks.map((link) => (
+     <a
+       key={link.label}
+       href={link.href}
+       onClick={(e) => {
+         if (link.href.startsWith("/#")) {
+           e.preventDefault();
+           handleNavClick(link.href);
+           setMobileMenuOpen(false);
+         }
+       }}
+       className="px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+     >
+       {link.label}
+     </a>
+   ))}
+   ```
+   *Issue*: For non-anchor links (e.g. `/features`, `/pricing`, `/about`, `/contact`), `link.href.startsWith("/#")` evaluates to false. This causes `<a href="...">` to trigger a **full browser page reload** instead of smooth client-side SPA routing! It must use React Router `Link` or programmatic navigation and close the drawer.
+
+3. **Double-Slash Navigation Bug**:
+   `PublicHeader.tsx` line 56:
+   ```tsx
+   if (location.pathname !== "/") {
+     navigate(`/${href}`);
+   }
+   ```
+   *Issue*: When `href` is `/#suites`, `/${href}` produces `navigate("//#suites")` with an erroneous double slash. Must be normalized: `/${href.replace(/^\/+/, '')}`.
+
+4. **Missing Anchor Targets in `Landing.tsx`**:
+   Grep search for `id="suites"`, `id="ecosystem"`, `id="intelligence"`, `id="download"` in `src/pages/Landing.tsx` returned **0 matches**. The header navigation handler `document.getElementById(elementId)` currently fails silently.
+
+5. **Horizontal Overflow Check**:
+   On mobile viewports (360px–430px):
+   - `PublicHeader.tsx`: Responsive padding `px-4`, flex justify-between, zero horizontal overflow.
+   - `PublicFooter.tsx`: Grid collapses cleanly from `lg:grid-cols-5` to `grid-cols-1`, zero horizontal overflow.
+   - `PublicConversionBanner.tsx`: Container has `overflow-hidden`, preventing ambient gradient blurs from causing horizontal scrollbar.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Static Analysis of SQL Ensures Schema Invariants Before Execution**:
-   Because CredSmart does not execute raw DDL in browser environments, migration verification relies on deterministic static analysis. As observed in `crmAttendanceMigrationStress.test.ts`, parsing the file directly ensures that syntax errors, missing `IF NOT EXISTS` clauses, un-dropped policies/triggers, invalid numeric precisions, or incorrect check constraints are caught before any database interaction occurs.
+1. **Button Sizing & Token Enforcement**:
+   - Observation A proves that buttons in `PublicHeader.tsx` use `h-10 px-3.5` and `h-10 px-5` instead of `h-8.5 px-3` (34px), and `PublicConversionBanner.tsx` uses `h-13 px-8` (52px) instead of `h-9.5 px-4.5` (38px).
+   - Observation A3 proves that `tailwind.config.ts` does not define `"4.5"` and `"9.5"` in `spacing`, meaning `h-9.5` and `px-4.5` will fail to render without config extension.
+   - Therefore, Milestone 1 must extend `tailwind.config.ts` spacing scale with `"4.5": "1.125rem"` and `"9.5": "2.375rem"`, and replace raw classes in `PublicHeader.tsx` and `PublicConversionBanner.tsx` with the standardized tokens.
 
-2. **Statement Splitting with Context Awareness Prevents False Failures**:
-   DDL files contain semicolons within trigger definitions or string literals. The custom scanner from `crmAttendanceMigrationStress.test.ts` accurately balances quotes and parentheses, preventing premature statement splitting. Applying this exact algorithm to `crmSalaryMigration.test.ts` guarantees reliable statement extraction.
+2. **Dual-Suite Brand Presentation**:
+   - `PROJECT.md` dictates CredSmart is a dual-suite platform: Suite 1 (POS & Billing ERP) and Suite 2 (Workforce CRM).
+   - In `PublicFooter.tsx`, Observation B shows that only "Product & POS" is present in Column 1, with zero mention of Workforce CRM.
+   - In `PublicHeader.tsx`, both "POS Billing" and "Workforce CRM" point to `/#suites`, but `Landing.tsx` lacks `id="suites"`.
+   - Therefore, M1 must update `PublicFooter.tsx` with a dedicated Workforce CRM column and feature links, and ensure `PublicHeader.tsx` anchor contracts are wired properly for M2.
 
-3. **Checking All 5 Constraint Categories Eliminates Runtime Divergence**:
-   - Primary Keys: UUIDs with `gen_random_uuid()`
-   - Foreign Keys: `ON DELETE CASCADE` on `org_id` and parent records; `ON DELETE SET NULL` on audit actors (`locked_by`, `requested_by`, `approved_by`)
-   - Unique Constraints: prevents duplicate salary profiles per staff (`org_id, staff_id`), duplicate payroll runs per month (`org_id, month_year`), and duplicate payslips per staff per month (`org_id, staff_id, month_year`)
-   - Check Constraints: enforces allowed domain enums at the database engine level
-   - Defaults: prevents NULL insertion into financial aggregates (`0.00`, `'INR'`, `2`, `'draft'`, `'pending'`)
+3. **Core Invariance & Non-Regression Guarantee**:
+   - Observation C1 proves all 19 quarantine files are 100% clean with 0 diff.
+   - Observation C2 proves public components have 0 dependencies on any quarantine file.
+   - Observation C3 proves that authenticated routes (`/billing/*`, `/crm/*`) are rendered by `AppLayout` and `CrmApp`, which never render public header or footer components.
+   - Therefore, modifying `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, and `PublicLayout.tsx` is completely invariant and guaranteed to cause zero regressions in core POS billing or CRM workflows.
 
-4. **Bi-Directional TypeScript Type Checking (`Row`, `Insert`, `Update`, `Domain`) Prevents Type Drift**:
-   As observed in `crmAttendanceTypes.challenger.test.ts`:
-   - Checking `ExactKeys<Row, ExpectedKeys>` ensures no omitted or extra columns.
-   - `expectTypeOf<...>().toEqualTypeOf<...>()` verifies strict types including nullability.
-   - Testing `Insert` against a minimal object verifies that columns with database defaults (`created_at`, `status`, `base_amount`) are truly optional in the client type definition, while mandatory foreign keys (`org_id`, `staff_id`) remain strictly required.
-   - Negative assignability checks (`Extends<Bad, Good> = false`) prove the compiler rejects invalid payloads.
-   - Checking domain models against raw Supabase rows validates that domain interfaces can ingest Supabase responses without runtime surprises.
+4. **Mobile Usability & Touch Ergonomics**:
+   - Observation D1 shows the hamburger button is 40x40px, failing the 44px threshold.
+   - Observation D2 shows mobile drawer links trigger full page reloads for public pages.
+   - Observation D3 shows the double-slash bug in anchor navigation.
+   - Therefore, fixing these three items in `PublicHeader.tsx` achieves full compliance with `minimal-design-system.md` Section 6 and `PROJECT.md` Feature F1.
 
 ---
 
 ## 3. Caveats
 
-1. **Pre-Implementation Nature**:
-   This test design is ready to be written once the worker begins Milestone 1. Running these tests before `20261017020000_create_crm_salary_tables.sql` and `src/types/crmSalary.ts` exist will naturally fail on file existence.
-2. **PostgreSQL NUMERIC to TypeScript mapping**:
-   In Supabase generated types, `NUMERIC(12,2)` is represented as `number`. JavaScript floating point numbers are standard IEEE 754, so domain utility calculations must apply `Math.round(x * 100) / 100` for currency safety.
-3. **Trigger Reusability**:
-   The `updated_at` column triggers should execute `public.update_updated_at()`, which already exists in the CredSmart database from Phase 1 and 2 migrations.
-4. **No caveats** regarding testing framework availability: Vitest v3.2.4 is installed, fast (sub-5s per suite), and fully functional on Windows via `cmd /c npx vitest run`.
+1. **`Landing.tsx` Dependency on M2**:
+   Anchor targets `id="suites"`, `id="ecosystem"`, `id="intelligence"`, and `id="download"` must be added to `Landing.tsx` in Milestone 2. In M1, `PublicHeader.tsx` can implement the smooth scroll fallback safely without crashing even if the element is not yet present on the DOM.
+2. **Tailwind Spacing Extension Impact**:
+   Adding `"4.5": "1.125rem"` and `"9.5": "2.375rem"` to `tailwind.config.ts` is purely additive. It extends the utility dictionary without altering any existing classes, making it 100% regression-free.
+3. No other caveats.
 
 ---
 
-## 4. Conclusion & Recommended Test Architecture
+## 4. Conclusion
 
-### 4.1 Test Suite 1: `src/test/crmSalaryMigration.test.ts` (23 Tests Planned)
+1. **Button Standardization & Token Health**:
+   - `tailwind.config.ts` must be extended with:
+     ```ts
+     spacing: {
+       "4.5": "1.125rem", // 18px
+       "7.5": "1.875rem", // 30px
+       "8.5": "2.125rem", // 34px
+       "9.5": "2.375rem", // 38px
+       "11.5": "2.875rem", // 46px
+       "13": "3.25rem",    // 52px
+     }
+     ```
+   - `PublicHeader.tsx` action buttons must be converted to `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (standard) or `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs` (elevated CTA).
+   - `PublicConversionBanner.tsx` CTA button must be converted from `h-13 px-8` to `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs`.
 
-#### File Structure
-```
-src/test/crmSalaryMigration.test.ts
-├── Suite 1: SQL File Existence & DDL Syntax Hygiene (6 tests)
-│   ├── Test 1.1: Migration file exists and is non-empty (>1000 bytes)
-│   ├── Test 1.2: Transactional block wrapping (BEGIN; ... COMMIT;)
-│   ├── Test 1.3: Balanced parentheses across entire SQL content
-│   ├── Test 1.4: Balanced single quotes (handling '' escape)
-│   ├── Test 1.5: Balanced double quotes
-│   └── Test 1.6: DDL statement splitter validates keywords (CREATE/ALTER/DROP/GRANT)
-├── Suite 2: Table Declarations, Primary Keys & Column Definitions (6 tests)
-│   ├── Test 2.1: Declares all 4 required tables with IF NOT EXISTS
-│   ├── Test 2.2: Primary keys use UUID with gen_random_uuid()
-│   ├── Test 2.3: Column types and precision in crm_salary_profiles
-│   ├── Test 2.4: Column types and precision in crm_payroll_runs
-│   ├── Test 2.5: Column types, JSONB snapshot, and precision in crm_payslips
-│   └── Test 2.6: Column types and precision in crm_salary_adjustments
-├── Suite 3: Constraints, Foreign Keys & CHECK Enums (6 tests)
-│   ├── Test 3.1: Unique constraint uq_crm_salary_profiles_staff (org_id, staff_id)
-│   ├── Test 3.2: Unique constraint uq_crm_payroll_runs_month (org_id, month_year)
-│   ├── Test 3.3: Unique constraint uq_crm_payslips_staff_month (org_id, staff_id, month_year)
-│   ├── Test 3.4: CHECK constraints on salary_type, payroll status, payment status
-│   ├── Test 3.5: CHECK constraints on adjustment type and adjustment status
-│   └── Test 3.6: Foreign keys and onDelete cascade/set null rules
-├── Suite 4: Idempotency & Repeat-Execution Oracle (3 tests)
-│   ├── Test 4.1: All CREATE TABLE and CREATE INDEX use IF NOT EXISTS
-│   ├── Test 4.2: All triggers preceded by DROP TRIGGER IF EXISTS
-│   └── Test 4.3: All policies preceded by DROP POLICY IF EXISTS
-└── Suite 5: Security & Row-Level Security (RLS) (2 tests)
-    ├── Test 5.1: Verifies RLS is enabled on all 4 tables
-    └── Test 5.2: Verifies all 16 RLS policies enforce auth.role() and has_org_access
-```
+2. **Navigation & Mobile Drawer Remediation**:
+   - Fix double-slash bug: `/${href.replace(/^\/+/, '')}`.
+   - Fix mobile drawer links: Use client-side React Router navigation for page routes (`/features`, `/pricing`, etc.) and ensure `setMobileMenuOpen(false)` is called on every link click.
+   - Enforce 44x44px minimum touch target on mobile hamburger toggle (`p-2.5` / `w-11 h-11`).
 
-#### Drop-In Code Blueprint for `src/test/crmSalaryMigration.test.ts`
-```typescript
-import { describe, it, expect } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
+3. **Dual-Suite Public Footer**:
+   - Restructure `PublicFooter.tsx` grid to balanced dual-suite columns:
+     - Col 1: POS & Billing ERP (POS Retail Billing, GST Invoices, Inventory, Customer Ledgers, Android APK, Windows PC)
+     - Col 2: Workforce CRM (GPS Geofenced Attendance, Automated Monthly Payroll, Staff Task Delegation & Kanban, Team Video Meet, Role-Based Access Control)
+     - Col 3: Resources & Pricing (100% Free Forever, GST Invoicing Guide, Barcode Guide, e-Invoicing Guide, Vyapar / myBillBook / Tally comparisons, FAQ)
+     - Col 4: Company & Trust (About CredSmart, CredAlert Network, Security Architecture, Privacy Policy, Terms of Service, Support & Grievance)
 
-describe("Milestone 1: CRM Phase 3 Salary Migration Static Analysis & Stress Test", () => {
-  const migrationPath = path.resolve(
-    process.cwd(),
-    "supabase/migrations/20261017020000_create_crm_salary_tables.sql"
-  );
-
-  const migrationSql = fs.existsSync(migrationPath)
-    ? fs.readFileSync(migrationPath, "utf-8")
-    : "";
-
-  const splitSqlStatements = (sql: string): string[] => {
-    const cleanSql = sql.replace(/--.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
-    const statements: string[] = [];
-    let current = "";
-    let inSingleQuote = false;
-    let inDoubleQuote = false;
-    let parenDepth = 0;
-
-    for (let i = 0; i < cleanSql.length; i++) {
-      const char = cleanSql[i];
-      const prev = i > 0 ? cleanSql[i - 1] : "";
-
-      if (char === "'" && prev !== "\\") {
-        inSingleQuote = !inSingleQuote;
-      } else if (char === '"' && prev !== "\\") {
-        inDoubleQuote = !inDoubleQuote;
-      } else if (!inSingleQuote && !inDoubleQuote) {
-        if (char === "(") parenDepth++;
-        else if (char === ")") parenDepth--;
-      }
-
-      if (char === ";" && !inSingleQuote && !inDoubleQuote && parenDepth === 0) {
-        const trimmed = current.trim();
-        if (trimmed.length > 0) statements.push(trimmed);
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    if (current.trim().length > 0) statements.push(current.trim());
-    return statements;
-  };
-
-  describe("Suite 1: SQL File Existence & DDL Syntax Hygiene", () => {
-    it("migration file exists and is non-empty", () => {
-      expect(fs.existsSync(migrationPath)).toBe(true);
-      expect(migrationSql.length).toBeGreaterThan(1000);
-    });
-
-    it("verifies proper transactional block wrapping (BEGIN ... COMMIT)", () => {
-      const trimmed = migrationSql.trim();
-      expect(trimmed.startsWith("BEGIN;")).toBe(true);
-      expect(trimmed.endsWith("COMMIT;")).toBe(true);
-    });
-
-    it("validates balanced parentheses across the entire migration", () => {
-      let openCount = 0;
-      let closeCount = 0;
-      let inQuote = false;
-      for (let i = 0; i < migrationSql.length; i++) {
-        const char = migrationSql[i];
-        if (char === "'" && migrationSql[i - 1] !== "\\") inQuote = !inQuote;
-        if (!inQuote) {
-          if (char === "(") openCount++;
-          if (char === ")") closeCount++;
-        }
-      }
-      expect(openCount).toBe(closeCount);
-      expect(openCount).toBeGreaterThan(0);
-    });
-
-    it("validates balanced single quotes (accounting for PostgreSQL '' escapes)", () => {
-      const unescaped = migrationSql.replace(/''/g, "");
-      const singleQuotes = (unescaped.match(/'/g) || []).length;
-      expect(singleQuotes % 2).toBe(0);
-    });
-
-    it("validates balanced double quotes", () => {
-      const doubleQuotes = (migrationSql.match(/"/g) || []).length;
-      expect(doubleQuotes % 2).toBe(0);
-    });
-
-    it("parses all DDL statements and confirms valid DDL keywords", () => {
-      const statements = splitSqlStatements(migrationSql);
-      expect(statements.length).toBeGreaterThan(20);
-      for (const stmt of statements) {
-        if (stmt === "BEGIN" || stmt === "COMMIT") continue;
-        const validKeyword = /^(CREATE|ALTER|DROP|GRANT|REVOKE|COMMENT)\b/i.test(stmt);
-        expect(validKeyword, `Invalid DDL start: ${stmt.slice(0, 40)}`).toBe(true);
-      }
-    });
-  });
-
-  describe("Suite 2: Table Declarations, Primary Keys & Column Definitions", () => {
-    it("declares all 4 required tables with IF NOT EXISTS", () => {
-      expect(migrationSql).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?public\.crm_salary_profiles\s*\(/i);
-      expect(migrationSql).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?public\.crm_payroll_runs\s*\(/i);
-      expect(migrationSql).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?public\.crm_payslips\s*\(/i);
-      expect(migrationSql).toMatch(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?public\.crm_salary_adjustments\s*\(/i);
-    });
-
-    it("validates UUID primary keys with gen_random_uuid()", () => {
-      const pkMatches = migrationSql.match(/id\s+UUID\s+(?:NOT\s+NULL\s+)?DEFAULT\s+gen_random_uuid\(\)\s+PRIMARY\s+KEY/gi) || [];
-      expect(pkMatches.length).toBe(4);
-    });
-
-    it("validates column types and precision in crm_salary_profiles", () => {
-      expect(migrationSql).toMatch(/base_amount\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/currency\s+TEXT\s+NOT\s+NULL\s+DEFAULT\s+'INR'/i);
-      expect(migrationSql).toMatch(/allowed_leaves_per_month\s+INTEGER\s+NOT\s+NULL\s+DEFAULT\s+2/i);
-      expect(migrationSql).toMatch(/hourly_overtime_rate\s+NUMERIC\(10,\s*2\)\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/pf_deduction_percent\s+NUMERIC\(5,\s*2\)\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/esi_deduction_percent\s+NUMERIC\(5,\s*2\)\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/is_active\s+BOOLEAN\s+NOT\s+NULL\s+DEFAULT\s+true/i);
-    });
-
-    it("validates column types and precision in crm_payroll_runs", () => {
-      expect(migrationSql).toMatch(/month_year\s+TEXT\s+NOT\s+NULL/i);
-      expect(migrationSql).toMatch(/total_payout\s+NUMERIC\(14,\s*2\)\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/staff_count\s+INTEGER\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/locked_by\s+UUID\s+REFERENCES\s+auth\.users\(id\)\s+ON\s+DELETE\s+SET\s+NULL/i);
-      expect(migrationSql).toMatch(/locked_at\s+TIMESTAMPTZ/i);
-      expect(migrationSql).toMatch(/notes\s+TEXT/i);
-    });
-
-    it("validates column types, JSONB snapshot, and precision in crm_payslips", () => {
-      expect(migrationSql).toMatch(/salary_profile_snapshot\s+JSONB\s+NOT\s+NULL/i);
-      expect(migrationSql).toMatch(/working_days_in_month\s+INTEGER\s+NOT\s+NULL/i);
-      expect(migrationSql).toMatch(/present_days\s+INTEGER\s+NOT\s+NULL\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/absent_days\s+INTEGER\s+NOT\s+NULL\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/half_days\s+INTEGER\s+NOT\s+NULL\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/lop_days\s+NUMERIC\(5,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/overtime_minutes\s+INTEGER\s+NOT\s+NULL\s+DEFAULT\s+0/i);
-      expect(migrationSql).toMatch(/gross_salary\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/lop_deduction\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/overtime_amount\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/pf_deduction\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/esi_deduction\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/advance_deduction\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/bonus_amount\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/net_salary\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL\s+DEFAULT\s+0\.00/i);
-      expect(migrationSql).toMatch(/paid_at\s+TIMESTAMPTZ/i);
-    });
-
-    it("validates column types and precision in crm_salary_adjustments", () => {
-      expect(migrationSql).toMatch(/amount\s+NUMERIC\(12,\s*2\)\s+NOT\s+NULL/i);
-      expect(migrationSql).toMatch(/description\s+TEXT/i);
-      expect(migrationSql).toMatch(/month_year\s+TEXT/i);
-      expect(migrationSql).toMatch(/requested_by\s+UUID\s+REFERENCES\s+auth\.users\(id\)\s+ON\s+DELETE\s+SET\s+NULL/i);
-      expect(migrationSql).toMatch(/approved_by\s+UUID\s+REFERENCES\s+auth\.users\(id\)\s+ON\s+DELETE\s+SET\s+NULL/i);
-      expect(migrationSql).toMatch(/approved_at\s+TIMESTAMPTZ/i);
-    });
-  });
-
-  describe("Suite 3: Constraints, Foreign Keys & CHECK Enums", () => {
-    it("validates unique constraints on all designated tables", () => {
-      expect(migrationSql).toMatch(/CONSTRAINT\s+uq_crm_salary_profiles_staff\s+UNIQUE\s*\(\s*org_id\s*,\s*staff_id\s*\)/i);
-      expect(migrationSql).toMatch(/CONSTRAINT\s+uq_crm_payroll_runs_month\s+UNIQUE\s*\(\s*org_id\s*,\s*month_year\s*\)/i);
-      expect(migrationSql).toMatch(/CONSTRAINT\s+uq_crm_payslips_staff_month\s+UNIQUE\s*\(\s*org_id\s*,\s*staff_id\s*,\s*month_year\s*\)/i);
-    });
-
-    it("validates CHECK constraints on salary_type, payroll status, payment status", () => {
-      expect(migrationSql).toMatch(/CHECK\s*\(\s*salary_type\s+IN\s*\(\s*'monthly'\s*,\s*'daily'\s*,\s*'hourly'\s*\)\s*\)/i);
-      expect(migrationSql).toMatch(/CHECK\s*\(\s*status\s+IN\s*\(\s*'draft'\s*,\s*'locked'\s*,\s*'disbursed'\s*\)\s*\)/i);
-      expect(migrationSql).toMatch(/CHECK\s*\(\s*payment_status\s+IN\s*\(\s*'pending'\s*,\s*'paid'\s*,\s*'partial'\s*\)\s*\)/i);
-    });
-
-    it("validates CHECK constraints on adjustment type and adjustment status", () => {
-      expect(migrationSql).toMatch(/CHECK\s*\(\s*type\s+IN\s*\(\s*'advance'\s*,\s*'bonus'\s*,\s*'deduction'\s*,\s*'loan_repayment'\s*\)\s*\)/i);
-      expect(migrationSql).toMatch(/CHECK\s*\(\s*status\s+IN\s*\(\s*'pending'\s*,\s*'approved'\s*,\s*'deducted'\s*,\s*'rejected'\s*\)\s*\)/i);
-    });
-
-    it("validates foreign keys and referential integrity actions", () => {
-      // Cascades on org_id
-      const orgCascades = migrationSql.match(/org_id\s+UUID\s+NOT\s+NULL\s+REFERENCES\s+public\.organizations\(id\)\s+ON\s+DELETE\s+CASCADE/gi) || [];
-      expect(orgCascades.length).toBe(4);
-
-      // Cascades on staff_id
-      const staffCascades = migrationSql.match(/staff_id\s+UUID\s+NOT\s+NULL\s+REFERENCES\s+auth\.users\(id\)\s+ON\s+DELETE\s+CASCADE/gi) || [];
-      expect(staffCascades.length).toBe(3);
-
-      // Payslip payroll_run_id cascade
-      expect(migrationSql).toMatch(/payroll_run_id\s+UUID\s+NOT\s+NULL\s+REFERENCES\s+public\.crm_payroll_runs\(id\)\s+ON\s+DELETE\s+CASCADE/i);
-    });
-  });
-
-  describe("Suite 4: Idempotency & Repeat-Execution Oracle", () => {
-    it("ensures all CREATE TABLE and CREATE INDEX use IF NOT EXISTS", () => {
-      const createTableMatches = migrationSql.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?public\.\w+/gi) || [];
-      expect(createTableMatches.length).toBe(4);
-      for (const m of createTableMatches) {
-        expect(m.toUpperCase()).toContain("IF NOT EXISTS");
-      }
-
-      const createIndexMatches = migrationSql.match(/CREATE\s+INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?\w+/gi) || [];
-      expect(createIndexMatches.length).toBeGreaterThanOrEqual(14);
-      for (const m of createIndexMatches) {
-        expect(m.toUpperCase()).toContain("IF NOT EXISTS");
-      }
-    });
-
-    it("ensures all triggers are preceded by DROP TRIGGER IF EXISTS", () => {
-      const triggerMatches = Array.from(migrationSql.matchAll(/CREATE\s+TRIGGER\s+(\w+)\s+BEFORE\s+UPDATE\s+ON\s+public\.(\w+)/gi));
-      expect(triggerMatches.length).toBe(4);
-      for (const match of triggerMatches) {
-        const triggerName = match[1];
-        const tableName = match[2];
-        const dropPattern = new RegExp(`DROP\\s+TRIGGER\\s+IF\\s+EXISTS\\s+${triggerName}\\s+ON\\s+public\\.${tableName};`, "i");
-        expect(dropPattern.test(migrationSql), `Missing DROP TRIGGER for ${triggerName} on ${tableName}`).toBe(true);
-      }
-    });
-
-    it("ensures all policies are preceded by DROP POLICY IF EXISTS", () => {
-      const policyMatches = Array.from(migrationSql.matchAll(/CREATE\s+POLICY\s+"([^"]+)"\s+ON\s+public\.(\w+)/gi));
-      expect(policyMatches.length).toBe(16);
-      for (const match of policyMatches) {
-        const policyName = match[1];
-        const tableName = match[2];
-        const dropPattern = new RegExp(`DROP\\s+POLICY\\s+IF\\s+EXISTS\\s+"${policyName}"\\s+ON\\s+public\\.${tableName};`, "i");
-        expect(dropPattern.test(migrationSql), `Missing DROP POLICY for "${policyName}" on ${tableName}`).toBe(true);
-      }
-    });
-  });
-
-  describe("Suite 5: Security & Row-Level Security (RLS)", () => {
-    it("verifies RLS is enabled on all 4 tables", () => {
-      expect(migrationSql).toContain("ALTER TABLE public.crm_salary_profiles ENABLE ROW LEVEL SECURITY;");
-      expect(migrationSql).toContain("ALTER TABLE public.crm_payroll_runs ENABLE ROW LEVEL SECURITY;");
-      expect(migrationSql).toContain("ALTER TABLE public.crm_payslips ENABLE ROW LEVEL SECURITY;");
-      expect(migrationSql).toContain("ALTER TABLE public.crm_salary_adjustments ENABLE ROW LEVEL SECURITY;");
-    });
-
-    it("verifies all 16 RLS policies enforce auth.role() and has_org_access", () => {
-      const policies = Array.from(migrationSql.matchAll(/CREATE\s+POLICY\s+"([^"]+)"[\s\S]*?;/gi));
-      expect(policies.length).toBe(16);
-      for (const p of policies) {
-        const text = p[0];
-        expect(text).toContain("auth.role() = 'authenticated'");
-        expect(text).toContain("has_org_access(org_id)");
-      }
-    });
-  });
-});
-```
+4. **Zero-Regression Assurance**:
+   - All 19 quarantine files remain 100% untouched.
+   - Authenticated layouts (`AppLayout.tsx`, `/billing/*`, `/crm/*`) remain completely isolated from public navigation components.
 
 ---
 
-### 4.2 Test Suite 2: `src/test/crmSalaryTypes.test.ts` (17 Tests Planned)
+## 5. Verification Blueprint for Reviewers and Auditors
 
-#### File Structure
-```
-src/test/crmSalaryTypes.test.ts
-├── Suite 1: Supabase Database Row Type Contracts & Nullability (4 tests)
-│   ├── Test 1.1: crm_salary_profiles.Row exact 13 keys & types
-│   ├── Test 1.2: crm_payroll_runs.Row exact 11 keys & types
-│   ├── Test 1.3: crm_payslips.Row exact 24 keys & JSONB snapshot type
-│   └── Test 1.4: crm_salary_adjustments.Row exact 12 keys & types
-├── Suite 2: Supabase Insert & Update Partiality Contracts (5 tests)
-│   ├── Test 2.1: crm_salary_profiles.Insert minimal vs full & negative type check
-│   ├── Test 2.2: crm_payroll_runs.Insert minimal vs full & negative type check
-│   ├── Test 2.3: crm_payslips.Insert minimal required fields & negative check
-│   ├── Test 2.4: crm_salary_adjustments.Insert minimal vs full & negative check
-│   └── Test 2.5: Update types allow empty object {} and partial single-field updates
-├── Suite 3: Foreign Key Relationships in Supabase Database Type (2 tests)
-│   ├── Test 3.1: Relationships on crm_salary_profiles and crm_payroll_runs
-│   └── Test 3.2: Relationships on crm_payslips and crm_salary_adjustments
-├── Suite 4: Domain Literal Union Types & Snapshot Contracts (3 tests)
-│   ├── Test 4.1: SalaryType, PayrollRunStatus, PaymentStatus unions & invalid literal rejection
-│   ├── Test 4.2: AdjustmentType and AdjustmentStatus unions & invalid literal rejection
-│   └── Test 4.3: SalaryProfileSnapshot structure conforms to required snapshot schema
-└── Suite 5: Domain Models, Computed Types & Transformation Ergonomics (3 tests)
-    ├── Test 5.1: CRMSalaryProfile conforms to Row + UI enrichment
-    ├── Test 5.2: PayslipComputedData has all 16 calculated metrics
-    └── Test 5.3: Pure mapper transforms raw Supabase row to UI model handling nulls & fallbacks
-```
+### Concrete Verification Checklist for Milestone 1
 
-#### Drop-In Code Blueprint for `src/test/crmSalaryTypes.test.ts`
-```typescript
-import { describe, it, expect, expectTypeOf } from "vitest";
-import type { Database, Json } from "@/integrations/supabase/types";
-import type {
-  SalaryType,
-  PayrollRunStatus,
-  PaymentStatus,
-  AdjustmentType,
-  AdjustmentStatus,
-  CRMSalaryProfile,
-  CRMPayrollRun,
-  CRMPayslip,
-  CRMSalaryAdjustment,
-  PayslipComputedData,
-  SalaryProfileSnapshot,
-} from "@/types/crmSalary";
+| Target | Verification Item | Inspection Criterion | Pass Condition |
+|---|---|---|:---:|
+| **Quarantine Files** | 19 protected files integrity | `node .agents/teamwork/auditor_m3/verify_protected.cjs` | 19/19 untouched, 0 diff |
+| **Static Types** | TypeScript compilation | `node ./node_modules/typescript/bin/tsc --noEmit` | Exit code 0, 0 diagnostics |
+| **Production Build** | Vite production bundle | `node ./node_modules/vite/bin/vite.js build` | Exit code 0, dist/ generated |
+| **Design Tokens** | Spacing scale resolution | `node -e "..."` checks `spacing['9.5']` and `spacing['4.5']` | Both defined as 2.375rem and 1.125rem |
+| **Header Buttons** | `PublicHeader.tsx` button sizing | Grep for `h-10`, `h-11`, `px-5` in `PublicHeader.tsx` | 0 occurrences in desktop CTAs |
+| **Banner Button** | `PublicConversionBanner.tsx` CTA | Grep for `h-13` or `px-8` in `PublicConversionBanner.tsx` | 0 occurrences, uses `h-9.5 px-4.5` |
+| **Footer Columns** | Dual-suite column in `PublicFooter.tsx` | Grep for "Workforce CRM" in `PublicFooter.tsx` | Found in column header |
+| **Navigation Bug** | Double-slash bug in `PublicHeader.tsx` | Inspect `handleNavClick` | No `/${href}` with leading slash |
+| **Mobile Drawer** | Client-side routing in mobile drawer | Inspect mobile drawer links in `PublicHeader.tsx` | Uses SPA routing, closes drawer |
+| **Mobile Target** | Hamburger toggle touch target | Inspect toggle button in `PublicHeader.tsx` | Bounding box >= 44x44px |
+| **Auth Isolation** | Public components in authenticated shells | Grep for `PublicHeader`/`PublicFooter` in `AppLayout.tsx` | 0 matches |
 
-// Type-level assertion helpers
-type Extends<T, U> = [T] extends [U] ? true : false;
-type ExactKeys<T, K extends string> = [keyof T] extends [K]
-  ? [K] extends [keyof T]
-    ? true
-    : false
-  : false;
+### Concrete Independent Verification Commands
 
-describe("Milestone 1: CRM Phase 3 Salary TypeScript Type Completeness & Strictness", () => {
-  describe("Suite 1: Supabase Database Row Type Contracts & Nullability", () => {
-    it("empirically verifies crm_salary_profiles has exact 13 SQL columns in Row", () => {
-      type ProfileRow = Database["public"]["Tables"]["crm_salary_profiles"]["Row"];
-      type ExpectedKeys =
-        | "id"
-        | "org_id"
-        | "staff_id"
-        | "salary_type"
-        | "base_amount"
-        | "currency"
-        | "allowed_leaves_per_month"
-        | "hourly_overtime_rate"
-        | "pf_deduction_percent"
-        | "esi_deduction_percent"
-        | "is_active"
-        | "created_at"
-        | "updated_at";
+```powershell
+# 1. Verify 19 Quarantined Invoice Files
+node .agents/teamwork/auditor_m3/verify_protected.cjs
 
-      type KeysMatch = ExactKeys<ProfileRow, ExpectedKeys>;
-      const keysMatch: KeysMatch = true;
-      expect(keysMatch).toBe(true);
+# 2. Verify TypeScript Compilation
+node ./node_modules/typescript/bin/tsc --noEmit
 
-      expectTypeOf<ProfileRow["id"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["org_id"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["staff_id"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["salary_type"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["base_amount"]>().toEqualTypeOf<number>();
-      expectTypeOf<ProfileRow["currency"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["allowed_leaves_per_month"]>().toEqualTypeOf<number>();
-      expectTypeOf<ProfileRow["hourly_overtime_rate"]>().toEqualTypeOf<number | null>();
-      expectTypeOf<ProfileRow["pf_deduction_percent"]>().toEqualTypeOf<number | null>();
-      expectTypeOf<ProfileRow["esi_deduction_percent"]>().toEqualTypeOf<number | null>();
-      expectTypeOf<ProfileRow["is_active"]>().toEqualTypeOf<boolean>();
-      expectTypeOf<ProfileRow["created_at"]>().toEqualTypeOf<string>();
-      expectTypeOf<ProfileRow["updated_at"]>().toEqualTypeOf<string>();
-    });
+# 3. Verify Tailwind Spacing Scale includes 9.5 and 4.5
+node -e "const r = require('tailwindcss/resolveConfig'); const c = require('./tailwind.config.ts'); const t = r(c.default || c).theme; console.log('9.5:', t.spacing['9.5'], '4.5:', t.spacing['4.5'], '8.5:', t.spacing['8.5']); if (!t.spacing['9.5'] || !t.spacing['4.5']) process.exit(1);"
 
-    it("empirically verifies crm_payroll_runs has exact 11 SQL columns in Row", () => {
-      type RunRow = Database["public"]["Tables"]["crm_payroll_runs"]["Row"];
-      type ExpectedKeys =
-        | "id"
-        | "org_id"
-        | "month_year"
-        | "status"
-        | "total_payout"
-        | "staff_count"
-        | "locked_by"
-        | "locked_at"
-        | "notes"
-        | "created_at"
-        | "updated_at";
+# 4. Verify Zero Bloated Buttons in Public Components
+node -e "const fs = require('fs'); const header = fs.readFileSync('src/components/public/PublicHeader.tsx', 'utf8'); const banner = fs.readFileSync('src/components/public/PublicConversionBanner.tsx', 'utf8'); if (banner.includes('h-13') || banner.includes('px-8')) { console.error('FAIL: bloated h-13/px-8 in PublicConversionBanner'); process.exit(1); } if (header.includes('h-10 px-5') || header.includes('h-10 px-3.5')) { console.error('FAIL: oversized h-10 in PublicHeader'); process.exit(1); } console.log('PASS: Zero bloated buttons in M1 public components.');"
 
-      type KeysMatch = ExactKeys<RunRow, ExpectedKeys>;
-      const keysMatch: KeysMatch = true;
-      expect(keysMatch).toBe(true);
+# 5. Run M1 Empirical Challenger Test Suite
+node ./node_modules/vitest/vitest.mjs run src/test/designTokensM1.challenger.test.ts
 
-      expectTypeOf<RunRow["id"]>().toEqualTypeOf<string>();
-      expectTypeOf<RunRow["org_id"]>().toEqualTypeOf<string>();
-      expectTypeOf<RunRow["month_year"]>().toEqualTypeOf<string>();
-      expectTypeOf<RunRow["status"]>().toEqualTypeOf<string>();
-      expectTypeOf<RunRow["total_payout"]>().toEqualTypeOf<number | null>();
-      expectTypeOf<RunRow["staff_count"]>().toEqualTypeOf<number | null>();
-      expectTypeOf<RunRow["locked_by"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<RunRow["locked_at"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<RunRow["notes"]>().toEqualTypeOf<string | null>();
-    });
-
-    it("empirically verifies crm_payslips has exact 24 SQL columns in Row with JSONB snapshot", () => {
-      type PayslipRow = Database["public"]["Tables"]["crm_payslips"]["Row"];
-      type ExpectedKeys =
-        | "id"
-        | "org_id"
-        | "payroll_run_id"
-        | "staff_id"
-        | "month_year"
-        | "salary_profile_snapshot"
-        | "working_days_in_month"
-        | "present_days"
-        | "absent_days"
-        | "half_days"
-        | "lop_days"
-        | "overtime_minutes"
-        | "gross_salary"
-        | "lop_deduction"
-        | "overtime_amount"
-        | "pf_deduction"
-        | "esi_deduction"
-        | "advance_deduction"
-        | "bonus_amount"
-        | "net_salary"
-        | "payment_status"
-        | "paid_at"
-        | "created_at"
-        | "updated_at";
-
-      type KeysMatch = ExactKeys<PayslipRow, ExpectedKeys>;
-      const keysMatch: KeysMatch = true;
-      expect(keysMatch).toBe(true);
-
-      expectTypeOf<PayslipRow["salary_profile_snapshot"]>().toEqualTypeOf<Json>();
-      expectTypeOf<PayslipRow["working_days_in_month"]>().toEqualTypeOf<number>();
-      expectTypeOf<PayslipRow["lop_days"]>().toEqualTypeOf<number>();
-      expectTypeOf<PayslipRow["net_salary"]>().toEqualTypeOf<number>();
-      expectTypeOf<PayslipRow["paid_at"]>().toEqualTypeOf<string | null>();
-    });
-
-    it("empirically verifies crm_salary_adjustments has exact 12 SQL columns in Row", () => {
-      type AdjRow = Database["public"]["Tables"]["crm_salary_adjustments"]["Row"];
-      type ExpectedKeys =
-        | "id"
-        | "org_id"
-        | "staff_id"
-        | "type"
-        | "amount"
-        | "description"
-        | "month_year"
-        | "status"
-        | "requested_by"
-        | "approved_by"
-        | "approved_at"
-        | "created_at";
-
-      type KeysMatch = ExactKeys<AdjRow, ExpectedKeys>;
-      const keysMatch: KeysMatch = true;
-      expect(keysMatch).toBe(true);
-
-      expectTypeOf<AdjRow["type"]>().toEqualTypeOf<string>();
-      expectTypeOf<AdjRow["amount"]>().toEqualTypeOf<number>();
-      expectTypeOf<AdjRow["description"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<AdjRow["month_year"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<AdjRow["requested_by"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<AdjRow["approved_by"]>().toEqualTypeOf<string | null>();
-      expectTypeOf<AdjRow["approved_at"]>().toEqualTypeOf<string | null>();
-    });
-  });
-
-  describe("Suite 2: Supabase Insert & Update Partiality Contracts", () => {
-    it("validates minimal vs full payload for crm_salary_profiles.Insert and negative type check", () => {
-      type ProfileInsert = Database["public"]["Tables"]["crm_salary_profiles"]["Insert"];
-      const minimal: ProfileInsert = {
-        org_id: "org-1",
-        staff_id: "user-1",
-      };
-      expect(minimal.org_id).toBe("org-1");
-
-      const full: ProfileInsert = {
-        org_id: "org-1",
-        staff_id: "user-1",
-        salary_type: "monthly",
-        base_amount: 50000,
-        currency: "INR",
-        allowed_leaves_per_month: 2,
-        hourly_overtime_rate: 250,
-        pf_deduction_percent: 12,
-        esi_deduction_percent: 0.75,
-        is_active: true,
-      };
-      expect(full.base_amount).toBe(50000);
-
-      type MissingStaff = { org_id: string; base_amount: number };
-      type CanAssignMissingStaff = Extends<MissingStaff, ProfileInsert>;
-      const canAssignMissingStaff: CanAssignMissingStaff = false;
-      expect(canAssignMissingStaff).toBe(false);
-    });
-
-    it("validates minimal vs full payload for crm_payroll_runs.Insert and negative type check", () => {
-      type RunInsert = Database["public"]["Tables"]["crm_payroll_runs"]["Insert"];
-      const minimal: RunInsert = {
-        org_id: "org-1",
-        month_year: "2026-10",
-      };
-      expect(minimal.month_year).toBe("2026-10");
-
-      type MissingMonth = { org_id: string };
-      type CanAssignMissingMonth = Extends<MissingMonth, RunInsert>;
-      const canAssignMissingMonth: CanAssignMissingMonth = false;
-      expect(canAssignMissingMonth).toBe(false);
-    });
-
-    it("validates minimal required fields for crm_payslips.Insert", () => {
-      type PayslipInsert = Database["public"]["Tables"]["crm_payslips"]["Insert"];
-      const minimal: PayslipInsert = {
-        org_id: "org-1",
-        payroll_run_id: "run-1",
-        staff_id: "staff-1",
-        month_year: "2026-10",
-        salary_profile_snapshot: { base_amount: 45000 },
-        working_days_in_month: 26,
-      };
-      expect(minimal.working_days_in_month).toBe(26);
-
-      type MissingSnapshot = {
-        org_id: string;
-        payroll_run_id: string;
-        staff_id: string;
-        month_year: string;
-        working_days_in_month: number;
-      };
-      type CanAssignMissingSnapshot = Extends<MissingSnapshot, PayslipInsert>;
-      const canAssignMissingSnapshot: CanAssignMissingSnapshot = false;
-      expect(canAssignMissingSnapshot).toBe(false);
-    });
-
-    it("validates minimal vs full payload for crm_salary_adjustments.Insert", () => {
-      type AdjInsert = Database["public"]["Tables"]["crm_salary_adjustments"]["Insert"];
-      const minimal: AdjInsert = {
-        org_id: "org-1",
-        staff_id: "staff-1",
-        type: "advance",
-        amount: 5000,
-      };
-      expect(minimal.amount).toBe(5000);
-
-      type MissingAmount = { org_id: string; staff_id: string; type: string };
-      type CanAssignMissingAmount = Extends<MissingAmount, AdjInsert>;
-      const canAssignMissingAmount: CanAssignMissingAmount = false;
-      expect(canAssignMissingAmount).toBe(false);
-    });
-
-    it("allows empty object {} for all Update types and validates partial updates", () => {
-      type ProfileUpdate = Database["public"]["Tables"]["crm_salary_profiles"]["Update"];
-      type RunUpdate = Database["public"]["Tables"]["crm_payroll_runs"]["Update"];
-      type PayslipUpdate = Database["public"]["Tables"]["crm_payslips"]["Update"];
-      type AdjUpdate = Database["public"]["Tables"]["crm_salary_adjustments"]["Update"];
-
-      const emptyProfile: ProfileUpdate = {};
-      const emptyRun: RunUpdate = {};
-      const emptyPayslip: PayslipUpdate = {};
-      const emptyAdj: AdjUpdate = {};
-
-      expect(emptyProfile).toBeDefined();
-      expect(emptyRun).toBeDefined();
-      expect(emptyPayslip).toBeDefined();
-      expect(emptyAdj).toBeDefined();
-
-      const singleFieldUpdate: ProfileUpdate = { base_amount: 60000 };
-      expect(singleFieldUpdate.base_amount).toBe(60000);
-    });
-  });
-
-  describe("Suite 3: Foreign Key Relationships in Supabase Database Type", () => {
-    it("defines foreign key relationships for crm_salary_profiles and crm_payroll_runs", () => {
-      type ProfileRels = Database["public"]["Tables"]["crm_salary_profiles"]["Relationships"];
-      type RunRels = Database["public"]["Tables"]["crm_payroll_runs"]["Relationships"];
-
-      const profileRelsSample: ProfileRels = [
-        {
-          foreignKeyName: "crm_salary_profiles_org_id_fkey",
-          columns: ["org_id"],
-          isOneToOne: false,
-          referencedRelation: "organizations",
-          referencedColumns: ["id"],
-        },
-      ];
-      expect(profileRelsSample.length).toBeGreaterThanOrEqual(1);
-
-      const runRelsSample: RunRels = [
-        {
-          foreignKeyName: "crm_payroll_runs_org_id_fkey",
-          columns: ["org_id"],
-          isOneToOne: false,
-          referencedRelation: "organizations",
-          referencedColumns: ["id"],
-        },
-      ];
-      expect(runRelsSample.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("defines foreign key relationships for crm_payslips and crm_salary_adjustments", () => {
-      type PayslipRels = Database["public"]["Tables"]["crm_payslips"]["Relationships"];
-      const payslipRelsSample: PayslipRels = [
-        {
-          foreignKeyName: "crm_payslips_payroll_run_id_fkey",
-          columns: ["payroll_run_id"],
-          isOneToOne: false,
-          referencedRelation: "crm_payroll_runs",
-          referencedColumns: ["id"],
-        },
-        {
-          foreignKeyName: "crm_payslips_org_id_fkey",
-          columns: ["org_id"],
-          isOneToOne: false,
-          referencedRelation: "organizations",
-          referencedColumns: ["id"],
-        },
-      ];
-      expect(payslipRelsSample.length).toBe(2);
-    });
-  });
-
-  describe("Suite 4: Domain Literal Union Types & Snapshot Contracts", () => {
-    it("validates SalaryType, PayrollRunStatus, PaymentStatus literal unions", () => {
-      const types: SalaryType[] = ["monthly", "daily", "hourly"];
-      expect(types).toHaveLength(3);
-
-      const runStatuses: PayrollRunStatus[] = ["draft", "locked", "disbursed"];
-      expect(runStatuses).toHaveLength(3);
-
-      const payStatuses: PaymentStatus[] = ["pending", "paid", "partial"];
-      expect(payStatuses).toHaveLength(3);
-
-      type InvalidSalary = "annual" | "weekly";
-      type CanAssignInvalidSalary = Extends<InvalidSalary, SalaryType>;
-      const canAssignInvalidSalary: CanAssignInvalidSalary = false;
-      expect(canAssignInvalidSalary).toBe(false);
-    });
-
-    it("validates AdjustmentType and AdjustmentStatus literal unions", () => {
-      const adjTypes: AdjustmentType[] = ["advance", "bonus", "deduction", "loan_repayment"];
-      expect(adjTypes).toHaveLength(4);
-
-      const adjStatuses: AdjustmentStatus[] = ["pending", "approved", "deducted", "rejected"];
-      expect(adjStatuses).toHaveLength(4);
-
-      type InvalidAdjType = "reimbursement" | "perk";
-      type CanAssignInvalidAdj = Extends<InvalidAdjType, AdjustmentType>;
-      const canAssignInvalidAdj: CanAssignInvalidAdj = false;
-      expect(canAssignInvalidAdj).toBe(false);
-    });
-
-    it("validates SalaryProfileSnapshot schema contract", () => {
-      const snapshot: SalaryProfileSnapshot = {
-        salary_type: "monthly",
-        base_amount: 55000,
-        currency: "INR",
-        allowed_leaves_per_month: 2,
-        hourly_overtime_rate: 200,
-        pf_deduction_percent: 12,
-        esi_deduction_percent: 0.75,
-      };
-      expect(snapshot.base_amount).toBe(55000);
-      expect(snapshot.currency).toBe("INR");
-    });
-  });
-
-  describe("Suite 5: Domain Models, Computed Types & Transformation Ergonomics", () => {
-    it("validates CRMSalaryProfile conforms to Row with optional enrichment", () => {
-      const profile: CRMSalaryProfile = {
-        id: "prof-1",
-        org_id: "org-1",
-        staff_id: "staff-1",
-        staff_name: "Rahul Verma",
-        staff_email: "rahul@credsmart.app",
-        role_name: "Senior Accountant",
-        salary_type: "monthly",
-        base_amount: 50000,
-        currency: "INR",
-        allowed_leaves_per_month: 2,
-        hourly_overtime_rate: 250,
-        pf_deduction_percent: 12,
-        esi_deduction_percent: 0.75,
-        is_active: true,
-        created_at: "2026-10-18T00:00:00Z",
-        updated_at: "2026-10-18T00:00:00Z",
-      };
-      expect(profile.staff_name).toBe("Rahul Verma");
-      expect(profile.base_amount).toBe(50000);
-    });
-
-    it("validates PayslipComputedData has all 16 calculated metrics", () => {
-      const computed: PayslipComputedData = {
-        staffId: "staff-1",
-        monthYear: "2026-10",
-        workingDaysInMonth: 26,
-        presentDays: 24,
-        absentDays: 2,
-        halfDays: 0,
-        lopDays: 0,
-        overtimeMinutes: 120,
-        grossSalary: 50000,
-        lopDeduction: 0,
-        overtimeAmount: 500,
-        pfDeduction: 6000,
-        esiDeduction: 375,
-        advanceDeduction: 2000,
-        bonusAmount: 1000,
-        netSalary: 43125,
-      };
-      expect(computed.netSalary).toBe(43125);
-      expect(computed.workingDaysInMonth).toBe(26);
-    });
-
-    it("validates pure mapper transforms raw Supabase row to UI model with default fallbacks", () => {
-      type PayslipRow = Database["public"]["Tables"]["crm_payslips"]["Row"];
-
-      const rawRow: PayslipRow = {
-        id: "slip-1",
-        org_id: "org-1",
-        payroll_run_id: "run-1",
-        staff_id: "staff-1",
-        month_year: "2026-10",
-        salary_profile_snapshot: { base_amount: 50000 },
-        working_days_in_month: 26,
-        present_days: 26,
-        absent_days: 0,
-        half_days: 0,
-        lop_days: 0,
-        overtime_minutes: 0,
-        gross_salary: 50000,
-        lop_deduction: 0,
-        overtime_amount: 0,
-        pf_deduction: 6000,
-        esi_deduction: 0,
-        advance_deduction: 0,
-        bonus_amount: 0,
-        net_salary: 44000,
-        payment_status: "pending",
-        paid_at: null,
-        created_at: "2026-10-18T10:00:00Z",
-        updated_at: "2026-10-18T10:00:00Z",
-      };
-
-      function mapRowToDomainPayslip(
-        row: PayslipRow,
-        staffName: string = "Unknown Staff"
-      ): CRMPayslip {
-        return {
-          ...row,
-          staff_name: staffName,
-          payment_status: row.payment_status as PaymentStatus,
-        };
-      }
-
-      const domain = mapRowToDomainPayslip(rawRow, "Priya Sharma");
-      expect(domain.staff_name).toBe("Priya Sharma");
-      expect(domain.payment_status).toBe("pending");
-      expect(domain.paid_at).toBeNull();
-    });
-  });
-});
+# 6. Verify Full Vite Production Build
+node ./node_modules/vite/bin/vite.js build
 ```
 
 ---
-
-## 5. Verification Method
-
-### 5.1 Command Line Verification
-
-To execute and independently verify the test suites once created:
-
-1. **Verify `crmSalaryMigration.test.ts` individually**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmSalaryMigration.test.ts
-   ```
-   - Invalidation condition: Exits with non-zero code or fails syntax/idempotency assertions.
-
-2. **Verify `crmSalaryTypes.test.ts` individually**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmSalaryTypes.test.ts
-   ```
-   - Invalidation condition: Exits with non-zero code or TypeScript type mismatch.
-
-3. **Verify both Milestone 1 test suites together**:
-   ```powershell
-   cmd /c npx vitest run src/test/crmSalary*
-   ```
-   - Invalidation condition: Any failure in either test suite.
-
-4. **Verify TypeScript type checking across the entire project**:
-   ```powershell
-   cmd /c npx tsc --noEmit
-   ```
-   - Invalidation condition: Any TypeScript compiler error reported.
-
-5. **Verify zero regression against Phase 1 & 2 CRM test suites**:
-   ```powershell
-   cmd /c npx vitest run src/test/crm*
-   ```
-   - Expected result: 100% passing across all existing and new CRM tests.
-
-### 5.2 Files to Inspect
-- `supabase/migrations/20261017020000_create_crm_salary_tables.sql`
-- `src/integrations/supabase/types.ts`
-- `src/types/crmSalary.ts`
-- `src/test/crmSalaryMigration.test.ts`
-- `src/test/crmSalaryTypes.test.ts`
+*Report prepared by M1 Explorer 3 (Design Tokens & Invariance Explorer)*

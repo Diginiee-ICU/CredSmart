@@ -1,19 +1,38 @@
-## 2026-10-18T09:39:01Z
+## 2026-10-31T10:40:04Z
 
-You are Explorer M1-3 for CredSmart Phase 3: Salary Management & Payroll Engine.
-Your working directory is c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3.
-You MUST read:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_crm_phase3_gen2\DISPATCH.md
-- Existing migration test suites: `src/test/crmAttendanceMigration.test.ts`, `src/test/crmRbacMigration.test.ts` (or similar tests in src/test/)
+From: 4ca3c226-daa7-4621-95f6-7c629c003e5f (Parent Orchestrator)
+Priority: MESSAGE_PRIORITY_HIGH
 
-Your Task:
-Investigate and design comprehensive test strategies for:
-1. `src/test/crmSalaryMigration.test.ts` (15+ tests verifying SQL migration file exists, SQL syntax/DDL patterns, table definitions, column types, foreign keys, unique constraints, check constraints, indexes, RLS, idempotent clauses)
-2. `src/test/crmSalaryTypes.test.ts` (10+ tests verifying TypeScript type completeness, Row/Insert/Update properties, JSON snapshots, nullability, enum checks)
-Provide exact test assertions, file structures, and vitest command patterns.
+You are M1 Explorer 3 (Design Tokens & Invariance Explorer).
+Your identity: teamwork_explorer
+Your assigned working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
 
-Rules:
-- Read-only exploration. DO NOT write or edit source code or test files yourself.
-- Write your complete analysis and recommendations to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3\handoff.md.
-- Send a message back to the orchestrator (caller) with a concise summary and path to your handoff.md.
+MANDATORY FIRST STEP:
+Read the authoritative user request at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the project master document at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
+
+OBJECTIVE:
+Investigate design system tokens, button sizing compliance, and non-regression invariance boundaries for Milestone 1 (Navigation, Brand & Dual-Suite Foundation).
+
+SCOPE & BOUNDARIES:
+- Read-only exploration. DO NOT edit source code files directly.
+- Write your progress to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3\progress.md.
+- Write your final report to c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3\handoff.md.
+
+INVESTIGATION TARGETS:
+1. Design System Rules Compliance (`minimal-design-system.md`, `credsmart-landing-design`):
+   - Button standards: verify that all buttons in `PublicHeader.tsx`, `PublicFooter.tsx`, and `PublicConversionBanner.tsx` strictly use `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (standard action) or `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs` (elevated CTA).
+   - Typography standards: Inter sans, IBM Plex Mono for numeric/currency tabular numbers.
+   - Neutral surface colors: `#F8FAFC` light / `#090D16` dark, 1px hairline borders (`border-slate-200/80` / `border-slate-800`), Electric Blue `#2563EB` accent.
+2. Non-Regression & Quarantine Invariance (R4):
+   - Verify that changes to public components do NOT alter or import from the 19 quarantine invoice files.
+   - Verify that authenticated layouts (e.g. `AppLayout.tsx`, `/billing/*`, `/crm/*`) remain completely isolated from public header/footer components.
+   - Verify mobile viewport (< 768px) responsiveness: hamburger menu, touch targets (>= 44px), zero horizontal overflow on 360px-430px viewports.
+3. Verification Blueprint for Reviewers and Auditors:
+   - Provide concrete checklist and test verification commands for M1.
+
+DELIVERABLE:
+Write `handoff.md` in your working directory and notify the orchestrator via send_message.

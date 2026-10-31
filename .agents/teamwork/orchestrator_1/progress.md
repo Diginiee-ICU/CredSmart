@@ -1,21 +1,28 @@
 # Progress Tracker
 
 ## Current Status
-Last visited: 2026-10-31T10:30:30Z
+Last visited: 2026-10-31T11:00:30Z
 
 - [x] Initial dispatch received and logged to DISPATCH.md
 - [x] Initialized BRIEFING.md and plan.md
-- [ ] Phase 0: Survey codebase with 3 parallel Explorers / Spec Miners
-  - [x] Survey Agent 1 (11a0f7f8-410c-4e1a-9eba-e9fa7da3202c): Public pages, routes, headers, footers, comparisons, guides [COMPLETED - handoff.md received]
-  - [x] Survey Agent 2 (07e464df-92d0-4173-9522-7b70944afd47): Design system standards, dual-suite tokens, viewport containment rules [COMPLETED - handoff.md received]
-  - [/] Survey Agent 3 (e38a6144-9da1-4cab-a515-282b5a9e4055): Build & test baselines, 19 quarantine invoice files, SEO architecture [IN_PROGRESS - active step at 10:30:20Z, finalizing handoff.md]
-- [ ] Synthesize Survey Findings & Formulate PROJECT.md
+- [x] Phase 0: Survey codebase with 3 parallel Explorers / Spec Miners [COMPLETED]
+- [x] Synthesize Survey Findings & Formulate PROJECT.md (25 Features across 6 Milestones)
 - [ ] Phase 1: Dual Track Launch
-  - [ ] Launch E2E Testing Track Orchestrator
-  - [ ] Launch Milestone 1 Sub-Orchestrator
-- [ ] Milestone Gates & Reviews
-- [ ] Final E2E Pass (100%) & Tier 5 Adversarial Coverage Hardening
-- [ ] Forensic Audit Verification & Final Acceptance Sign-off
+  - [/] Track A: E2E Testing Track (`test_writer_e2e_public` - f5518ef8-a545-4ff0-8103-9c057965245b) [TEST_INFRA.md published, authoring publicPages.e2e.test.tsx]
+  - [/] Track B: Milestone 1: Navigation, Brand & Dual-Suite Foundation
+    - [x] M1 Explorer 1 (e85dd661-5706-4f42-a400-2ec1f7dd87d3): Header & Navigation [COMPLETED]
+    - [x] M1 Explorer 2 (551d7bcd-c4af-42f4-a491-90f354c61f7e): Footer & Shell [COMPLETED]
+    - [x] M1 Explorer 3 (332c706e-8d30-420c-be78-ca961ba9d36b): Design Tokens & Invariance [COMPLETED]
+    - [/] M1 Worker (345fae51-5f80-45bb-a54c-008aeae3dc31): Navigation & Shell [ACTIVE - replacing file content across shell files]
+    - [ ] M1 Reviewers (2)
+    - [ ] M1 Challengers (2)
+    - [ ] M1 Forensic Auditor (1)
+    - [ ] M1 Gate Status
+- [ ] Milestone 2: Desktop Landing Page Dual-Suite Redesign
+- [ ] Milestone 3: Core Public Pages Redesign
+- [ ] Milestone 4: Trust, Security & Knowledge Pages
+- [ ] Milestone 5: Full-Stack SEO & Crawler Privacy Architecture
+- [ ] Milestone 6: Final Verification, 100% E2E Pass, Tier 5 Adversarial Hardening & Final Audit
 
 ## Iteration Status
-Current iteration: 0 / 32
+Current iteration: 1 / 32

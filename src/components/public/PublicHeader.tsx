@@ -21,6 +21,15 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Helper to find target element with resilient dual-suite fallback
+  const findTargetElement = (id: string) => {
+    return (
+      document.getElementById(id) ||
+      (id === "billing-erp" || id === "workforce-crm" ? document.getElementById("suites") : null) ||
+      (id === "suites" ? (document.getElementById("billing-erp") || document.getElementById("workforce-crm")) : null)
+    );
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 15);
@@ -34,11 +43,25 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Smooth scroll to hash anchor after cross-page navigation
+  useEffect(() => {
+    if (location.pathname === "/" && location.hash) {
+      const targetId = location.hash.replace("#", "");
+      const timer = setTimeout(() => {
+        const element = findTargetElement(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 80);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, location.hash]);
+
   const targetAppRoute = userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard;
 
   const navLinks = [
     { label: "Home", href: "/" },
-    { label: "POS Billing", href: "/#suites" },
+    { label: "POS & Billing ERP", shortLabel: "POS Billing", href: "/#suites" },
     { label: "Workforce CRM", href: "/#suites" },
     { label: "Features", href: "/features" },
     { label: "Pricing", href: "/pricing" },
@@ -50,39 +73,62 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
   ];
 
   const handleNavClick = (href: string) => {
-    if (href.startsWith("/#")) {
-      const elementId = href.replace("/#", "");
+    if (href.startsWith("/#") || href.startsWith("#")) {
+      const targetHash = href.startsWith("/#") ? href.slice(1) : href; // e.g. "#suites"
+      const targetId = targetHash.replace("#", "");
       if (location.pathname !== "/") {
-        navigate(`/${href}`);
+        navigate(`/${targetHash}`);
       } else {
-        const element = document.getElementById(elementId);
+        const element = findTargetElement(targetId);
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });
+          window.history.pushState(null, "", `/${targetHash}`);
         }
       }
+    } else {
+      navigate(href);
     }
   };
 
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-200 bg-white/95 backdrop-blur-md",
+        "sticky top-0 z-50 w-full h-12 sm:h-13 transition-colors duration-150 bg-white/95 backdrop-blur-md border-b flex items-center select-none",
         scrolled
-          ? "border-b border-slate-200/80 shadow-sm py-2.5"
-          : "border-b border-transparent py-3 sm:py-4"
+          ? "border-slate-200/80 shadow-2xs"
+          : "border-slate-200/40"
       )}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between w-full">
         {/* Brand Logo with Shield and "by CredAlert" */}
         <Link to="/" className="focus:outline-none flex items-center py-0.5">
           <CredSmartLogo size="md" className="scale-110 sm:scale-100 origin-left" />
         </Link>
 
-        {/* Center Navigation Links (Exact from Reference Image) */}
-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+        {/* Center Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-2 xl:gap-3.5 2xl:gap-5">
           {navLinks.map((link) => {
-            const isExactActive = location.pathname === link.href;
-            return link.href.startsWith("/#") ? (
+            const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");
+            const targetHash = isAnchor ? (link.href.startsWith("/#") ? link.href.slice(1) : link.href) : null;
+            const isExactActive = isAnchor
+              ? location.pathname === "/" && location.hash === targetHash
+              : location.pathname === link.href && (!location.hash || link.href !== "/");
+
+            const commonClasses = cn(
+              "text-xs xl:text-[13px] transition-colors whitespace-nowrap py-1 cursor-pointer",
+              isExactActive
+                ? "font-semibold text-blue-600"
+                : "font-medium text-slate-600 hover:text-slate-900"
+            );
+
+            const content = (
+              <>
+                <span className="hidden xl:inline">{link.label}</span>
+                <span className={cn(link.shortLabel ? "xl:hidden" : "")}>{link.shortLabel || link.label}</span>
+              </>
+            );
+
+            return isAnchor ? (
               <a
                 key={link.label}
                 href={link.href}
@@ -90,29 +136,24 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                   e.preventDefault();
                   handleNavClick(link.href);
                 }}
-                className="text-[15px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                className={commonClasses}
               >
-                {link.label}
+                {content}
               </a>
             ) : (
               <Link
                 key={link.label}
                 to={link.href}
-                className={cn(
-                  "text-[15px] transition-colors",
-                  isExactActive
-                    ? "font-bold text-slate-950"
-                    : "font-medium text-slate-600 hover:text-slate-900"
-                )}
+                className={commonClasses}
               >
-                {link.label}
+                {content}
               </Link>
             );
           })}
         </nav>
 
         {/* Right CTA Actions */}
-        <div className="hidden sm:flex items-center gap-2.5">
+        <div className="hidden sm:flex items-center gap-2">
           {/* Download App Quick Trigger */}
           <button
             type="button"
@@ -123,17 +164,17 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                 handleNavClick("/#download");
               }
             }}
-            className="h-10 px-3.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+            className="h-8.5 px-3 rounded-lg border border-slate-200/80 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-blue-600" />
-            <span className="hidden md:inline">Download App</span>
-            <span className="md:hidden">App</span>
+            <span className="hidden xl:inline">Download App</span>
+            <span className="xl:hidden">App</span>
           </button>
 
           {user ? (
             <Link to={targetAppRoute}>
-              <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all">
-                Open Workspace <ArrowRight className="w-4 h-4 ml-1.5" />
+              <Button className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 flex items-center gap-1.5">
+                Open Workspace <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
           ) : (
@@ -141,7 +182,7 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
               <Link to={`${ROUTE_PATHS.auth}?mode=login`}>
                 <button
                   type="button"
-                  className="h-10 px-4.5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
+                  className="h-8.5 px-3 rounded-lg border border-slate-200/80 hover:border-slate-300 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 cursor-pointer"
                 >
                   Login
                 </button>
@@ -149,7 +190,7 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
               <Link to={`${ROUTE_PATHS.auth}?mode=signup`}>
                 <button
                   type="button"
-                  className="h-10 px-5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-sm shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+                  className="h-8.5 px-3 rounded-lg bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 cursor-pointer flex items-center gap-1"
                 >
                   Start Free
                 </button>
@@ -158,40 +199,62 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle */}
+        {/* Mobile Hamburger Toggle (44x44px minimum touch target) */}
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
+          className="lg:hidden w-11 h-11 flex items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
           aria-label="Toggle navigation menu"
         >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-5 shadow-xl animate-in slide-in-from-top-4 duration-200">
-          <div className="flex flex-col gap-3">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                onClick={(e) => {
-                  if (link.href.startsWith("/#")) {
+        <div className="lg:hidden border-b border-slate-200 bg-white px-4 py-4 shadow-xl animate-in slide-in-from-top-4 duration-200 w-full">
+          <div className="flex flex-col gap-1">
+            {navLinks.map((link) => {
+              const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");
+              const targetHash = isAnchor ? (link.href.startsWith("/#") ? link.href.slice(1) : link.href) : null;
+              const isExactActive = isAnchor
+                ? location.pathname === "/" && location.hash === targetHash
+                : location.pathname === link.href;
+
+              const linkClasses = cn(
+                "px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
+                isExactActive
+                  ? "bg-blue-50 text-blue-700 font-semibold"
+                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+              );
+
+              return isAnchor ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  onClick={(e) => {
                     e.preventDefault();
                     handleNavClick(link.href);
                     setMobileMenuOpen(false);
-                  }
-                }}
-                className="px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
-              >
-                {link.label}
-              </a>
-            ))}
+                  }}
+                  className={linkClasses}
+                >
+                  <span>{link.label}</span>
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={linkClasses}
+                >
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
 
             {/* Quick App Downloads in Mobile Drawer */}
-            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+            <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col gap-2">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono px-3">
                 Download Native Apps
               </span>
@@ -201,7 +264,7 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
+                  className="p-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 text-emerald-800 text-xs font-semibold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4 text-emerald-600" />
                   <span>Android APK</span>
@@ -211,7 +274,7 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs font-bold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
+                  className="p-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-blue-800 text-xs font-semibold flex items-center justify-center gap-1.5 no-underline cursor-pointer"
                 >
                   <Monitor className="w-4 h-4 text-blue-600" />
                   <span>Windows PC</span>
@@ -219,29 +282,29 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+            <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
-                <Link to={targetAppRoute} className="w-full">
-                  <Button className="w-full h-11 rounded-xl bg-blue-600 text-white font-bold">
-                    Open Workspace
+                <Link to={targetAppRoute} className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full h-9.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors flex items-center justify-center gap-1.5">
+                    Open Workspace <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
                 </Link>
               ) : (
                 <>
-                  <Link to={`${ROUTE_PATHS.auth}?mode=login`} className="w-full">
+                  <Link to={`${ROUTE_PATHS.auth}?mode=login`} className="w-full" onClick={() => setMobileMenuOpen(false)}>
                     <button
                       type="button"
-                      className="w-full h-11 rounded-xl border border-blue-600 text-blue-600 font-bold hover:bg-blue-50 transition"
+                      className="w-full h-9.5 rounded-lg border border-slate-200/80 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors cursor-pointer flex items-center justify-center"
                     >
                       Login
                     </button>
                   </Link>
-                  <Link to={`${ROUTE_PATHS.auth}?mode=signup`} className="w-full">
+                  <Link to={`${ROUTE_PATHS.auth}?mode=signup`} className="w-full" onClick={() => setMobileMenuOpen(false)}>
                     <button
                       type="button"
-                      className="w-full h-11 rounded-xl bg-[#FF6A00] text-white font-bold hover:bg-[#E65F00] shadow-md transition"
+                      className="w-full h-9.5 rounded-lg bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors cursor-pointer flex items-center justify-center gap-1"
                     >
-                      Start Free Now 🚀
+                      Start Free Now
                     </button>
                   </Link>
                 </>

@@ -1,120 +1,137 @@
-# Project: Universal Header Logo Architecture & Full CRM/POS Mobile Ergonomics
+# Project: CredSmart Production-Ready Desktop Public & Landing Pages Redesign
 
 ## Architecture
-- **Universal Header**: Housed in `src/components/AppLayout.tsx`. Implements a decoupled dual-lockup architecture:
-  - Far Left: Permanent platform mark unconditionally rendering `/favicon.png` (`w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs`) and styled `CredSmart` wordmark (`hidden sm:inline font-bold text-sm tracking-tight text-slate-900 dark:text-white`).
-  - Tenant Business Selector: Immediately adjacent (separated by 1px hairline divider `border-slate-200 dark:border-slate-800`), responsive active Store Switcher dropdown pill displaying tenant store logo (`org?.logo_url` or `<Building2 />`) and `{org?.name}`.
-  - Viewports: Desktop >= 768px maintains 52px command bar (`md:h-13`), centered `⌘K`, split action button; Mobile < 768px enforces strict 48px height (`h-12`), 28x28px shield logo, compact store pill, and compact 30x30px right-hand controls with 90px of clearance on 360px screens (zero horizontal overflow).
-- **POS Billing Terminal**: Dedicated Single-Column Mobile Terminal (`<MobilePOSTerminal />` in `src/components/pos/`) for viewports < 768px while strictly preserving the 2-column desktop workbench in `src/pages/POSBilling.tsx` on >= 768px.
-  - Sticky 48px top bar (back to dashboard, search input, barcode scan button).
-  - Horizontal category chips carousel with 1-tap filtering.
-  - High-density product cards (4-5 per scroll) with 1-tap `+`/`-` quantity stepper.
-  - Floating bottom cart dock (`fixed bottom-0 left-0 right-0 z-40` with `env(safe-area-inset-bottom)`) with total count, grand total (₹), and "Review Cart & Checkout" CTA.
-  - 1-Tap slide-up bottom sheet checkout drawer for payment methods and receipt generation.
-  - `src/pages/POS.tsx` re-exports `POSBilling` for route parity.
-- **CRM Suite Mobile Ergonomics (9 routes)**:
-  - Route files: `src/pages/crm/*` and `src/components/crm/*`.
-  - Unified `CRMCommandHeader` across CRM sub-pages with compact breadcrumbs.
-  - Tasks (`/crm/tasks`): Segmented status pills (`All`, `To Do`, `In Progress`, `Review`, `Done`), 1-tap status transition button, bottom-sheet task drawer.
-  - Salary & Payroll (`/crm/salary`): High-density mobile payroll cards with staff advance balance indicator pill and 1-tap payslip download/share action button.
-  - Role Management (`/crm/roles`): Collapsible category accordions with 44px toggle rows, full-height bottom-sheet provisioning drawer.
-  - Meet, Broadcasts, AI Assistant, Support: Full-viewport mobile chat (100dvh) with thumb-docked input, 1-tap WhatsApp meeting share, bottom-sheet drawers.
-- **Billing & Ledger Mobile Ergonomics**:
-  - Sales & Purchases (`/sales`, `/purchases`): Dense transaction cards with swipeable/quick actions (print, WhatsApp share, edit/view).
-  - Parties (`/customers`, `/suppliers`): 78px compact cards (4-5 per viewport) with >=44px call/WhatsApp buttons and bottom-sheet quick ledger preview.
-  - Inventory & Godowns (`/inventory`, `/godown`, `/items`): Compact catalog cards with thumbnail, SKU, stock quantity pill, selling price, quick stock adjustment button, and Tab 2 mobile waybill cards.
-  - Reports (`/reports`): 3 collapsible category accordions fitting the report directory into one screen.
-  - Cash & Bank (`/cash-and-bank`): 96px horizontal account carousel above transaction feed.
-- **Desktop Preservation**: Strict `hidden md:flex` / `block md:hidden` media-query boundaries. Zero modification to underlying business logic, Supabase subscriptions, calculation engines, or API routes.
+CredSmart is an Enterprise Hybrid Dual-Suite Platform:
+- **Suite 1: POS & Billing ERP (`/billing/*`)**: Retail POS, thermal ESC/POS printing, GST tax engine, inventory, barcodes, B2B auto-inward, Khata ledgers. Backed by Ubuntu Cloud API (`https://api.credsmart.online`).
+- **Suite 2: Workforce CRM (`/crm/*`)**: GPS geofenced attendance, automated monthly payroll/salary, task delegation & Kanban, role-based access control (RBAC), team meet/huddle, bilingual Voice Copilot. Backed by Supabase Cloud.
+
+### Public Navigation & Shell Architecture
+- **Unified Public Header (`src/components/public/PublicHeader.tsx`)**: 52px sticky command bar (`h-13`), permanent platform logo, balanced center links for "POS & Billing ERP" and "Workforce CRM" pointing to `#suites`, download trigger modal, and auth entry CTAs.
+- **Unified Public Footer (`src/components/public/PublicFooter.tsx`)**: Dark navy surface (`#0B132B`) with balanced dual-suite columns ("POS & Billing ERP", "Workforce CRM", "Resources & Pricing", "Company & Trust"), download links, and copyright.
+- **Global Public Wrapper (`src/components/public/PublicLayout.tsx`)**: Wraps public pages with header, footer, and scroll-to-top effect.
+- **Desktop Viewport Containment**: Layouts on desktop (>= 768px) must fit within standard monitor heights (768px–1080px) using bounded scrolling containers (`max-h-[520px]`, `overflow-y-auto`), split productivity panes, interactive preview docks, and elimination of sprawling 6,000px vertical scroll depth.
+- **Design Tokens**: Standard Action Button `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (34px); Hero CTA `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs` (38px); Table Button `h-7 px-2.5 rounded-md text-[11px]` (28px); Micro Icon `w-7.5 h-7.5 rounded-md` (30px). Complete ban on bloated bubble buttons (`h-11`, `h-12`, `h-13`, `px-8`, `rounded-3xl`).
+- **Typography & Colors**: Inter sans for UI text, IBM Plex Mono with `font-mono tabular-nums` for currency (₹) and numbers. Neutral canvas (`#F8FAFC` light / `#090D16` dark), cards (`#FFFFFF` light / `#111726` dark), 1px borders (`border-slate-200/80` / `border-slate-800`), Electric Blue (`#2563EB`) accent, vibrant orange (`#FF6A00`) brand highlight.
+- **Full-Stack SEO & Privacy Architecture**: Dynamic meta injection via `src/components/public/SEOHead.tsx`, Schema.org JSON-LD structured data, canonical base `https://pos.credalert.bussiness/`, `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt`, `public/llms-full.txt`, and client-side Crawler Privacy Guard setting `<meta name="robots" content="noindex, nofollow, noarchive">` on protected business routes.
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | F1: Permanent Shield Mark | Far left permanent CredSmart platform logo using `/favicon.png` + styled wordmark | M1 | ORIGINAL_REQUEST § R1 |
-| 2 | F2: Store Dual Lockup | Adjacent hairline divider + responsive active Store Switcher dropdown pill with store logo and name | M1 | ORIGINAL_REQUEST § R1 |
-| 3 | F3: Mobile Header 48px | Strict 48px slim header height on < 768px with zero horizontal overflow on 360px-430px viewports | M1 | ORIGINAL_REQUEST § R1 |
-| 4 | F4: Mobile POS Terminal | Single-column touch POS layout on < 768px with sticky top search & barcode bar | M2 | ORIGINAL_REQUEST § R2 |
-| 5 | F5: Mobile POS Category Chips | Horizontal category carousel with 1-tap active filtering | M2 | ORIGINAL_REQUEST § R2 |
-| 6 | F6: Mobile POS Product Cards | High-density product cards (4-5 per scroll) with 1-tap `+`/`-` quantity stepper | M2 | ORIGINAL_REQUEST § R2 |
-| 7 | F7: Mobile POS Floating Cart Dock | Fixed bottom dock with item count, grand total (₹), safe-area padding, and checkout CTA | M2 | ORIGINAL_REQUEST § R2 |
-| 8 | F8: Mobile POS Checkout Drawer | 1-tap slide-up bottom sheet checkout drawer for payment method and printing | M2 | ORIGINAL_REQUEST § R2 |
-| 9 | F9: CRM Command Center Mobile | Polish mobile header & quick tools grid for 360px-430px viewports with zero horizontal scrollbar | M3 | ORIGINAL_REQUEST § R3 |
-| 10 | F10: CRM Tasks Mobile Ergonomics | Segmented status pills, 1-tap status transition chip, bottom-sheet task creation drawer | M3 | ORIGINAL_REQUEST § R3 |
-| 11 | F11: CRM Salary Mobile Cards | High-density payroll cards with staff advance balance indicator pill and 1-tap payslip action | M3 | ORIGINAL_REQUEST § R3 |
-| 12 | F12: CRM Role Management Drawer | Collapsible permission accordions with 44px toggle rows & full-height bottom-sheet provisioning | M3 | ORIGINAL_REQUEST § R3 |
-| 13 | F13: CRM Meet, Broadcasts, AI, Support | 100dvh mobile chat with bottom thumb-zone input, 1-tap WhatsApp meeting share, bottom-sheet dialogs | M3 | ORIGINAL_REQUEST § R3 |
-| 14 | F14: Mobile Sales & Purchases Cards | Dense transaction cards with quick actions (print, WhatsApp share, edit/view) | M4 | ORIGINAL_REQUEST § R4 |
-| 15 | F15: Mobile Parties Cards (Customers & Suppliers) | 78px cards (4-5 per viewport) with >=44px call/WhatsApp buttons and quick ledger preview | M4 | ORIGINAL_REQUEST § R4 |
-| 16 | F16: Mobile Inventory & Godowns | Compact catalog cards with stock adjustment drawer + Tab 2 mobile waybill cards | M4 | ORIGINAL_REQUEST § R4 |
-| 17 | F17: Mobile Reports Accordions | 3 collapsible category accordions fitting reports directory into one viewport | M4 | ORIGINAL_REQUEST § R4 |
-| 18 | F18: Mobile Cash & Bank Carousel | 96px horizontal account carousel bringing transaction feed into thumb zone | M4 | ORIGINAL_REQUEST § R4 |
-| 19 | F19: Desktop 100% Preservation | Strict preservation of >= 768px desktop layouts, hotkeys, and workbench workflows | M1-M5 | ORIGINAL_REQUEST § R5 |
-| 20 | F20: E2E Dual-Track Test Suite & Build | Comprehensive Vitest suite covering mobile responsive branches & full production build | M5 | ORIGINAL_REQUEST § Acceptance Criteria |
+| 1 | F1: Header Navigation & Anchor Fix | Fix `PublicHeader.tsx` `/#suites` anchor target and resolve `navigate(/${href})` double-slash bug | M1 | Survey Explorer 1 / Spec Miner 2 |
+| 2 | F2: Dual-Suite Header Links | Add explicit navigation links for "POS & Billing ERP" and "Workforce CRM" in `PublicHeader.tsx` | M1 | ORIGINAL_REQUEST § R1 |
+| 3 | F3: Header Button Standardization | Standardize header action buttons to `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` | M1 | minimal-design-system.md § 1 |
+| 4 | F4: Dual-Suite Public Footer | Add Workforce CRM column and feature links alongside POS & Billing in `PublicFooter.tsx` | M1 | ORIGINAL_REQUEST § R1 |
+| 5 | F5: Conversion Banner Refinement | Refine `PublicConversionBanner.tsx` button sizing to `h-9.5 px-4.5 rounded-lg text-sm` | M1 | minimal-design-system.md § 1 |
+| 6 | F6: Screen-Fitted Dual Hero | Compact 50/50 split Hero viewport in `Landing.tsx` with dual CTAs and interactive dashboard preview | M2 | ORIGINAL_REQUEST § R1, R2 |
+| 7 | F7: Interactive Dual-Suite Preview Dock | Interactive preview card toggling between POS Retail KPIs and CRM Workforce attendance/tasks | M2 | credsmart-landing-design |
+| 8 | F8: Dedicated `#suites` Showcase Anchor | Side-by-side balanced dual cards in `Landing.tsx` with direct launch buttons for both suites | M2 | ORIGINAL_REQUEST § R1 |
+| 9 | F9: Bounded Module Explorer | Tabbed module viewer (`max-h-[520px]`) supporting both POS and CRM modules with zero vertical overflow | M2 | minimal-design-system.md § 2 |
+| 10 | F10: Desktop Viewport Containment on Landing | Eliminate 6,000px vertical sprawling; structure comparisons and FAQs into bounded containers | M2 | minimal-design-system.md § 2 |
+| 11 | F11: Landing Button Refinement | Replace all bloated `h-12`/`h-13`/`px-8` buttons in `Landing.tsx` with master standard tokens | M2 | minimal-design-system.md § 1 |
+| 12 | F12: Dual-Suite Features Catalog | Organize `Features.tsx` into Suite 1 (POS & Billing — 6 modules) and Suite 2 (Workforce CRM — 6 modules) with sticky category nav | M3 | ORIGINAL_REQUEST § R1, R2 |
+| 13 | F13: Dual-Suite Community Free Pricing | Detail ₹0 Community Lifetime Free tier in `Pricing.tsx` covering both POS & Billing and Workforce CRM | M3 | ORIGINAL_REQUEST § R1 |
+| 14 | F14: About Page Viewport Containment | Compact story, MSME democratization, and statutory disclaimers in `About.tsx` | M3 | minimal-design-system.md § 2 |
+| 15 | F15: Contact Page & Canonical Fix | Support & Grievance Officer desk in `Contact.tsx`; fix canonical URL to `https://pos.credalert.bussiness/contact` | M3 | ultra-master-seo § 1 |
+| 16 | F16: Security Page Desktop Layout | 256-bit encryption, Supabase RLS, and DPDP Act 2023 compliance layout in `Security.tsx` | M4 | ORIGINAL_REQUEST § R1, R2 |
+| 17 | F17: Dual-Suite FAQ Accordion | Searchable FAQ in `FaqPage.tsx` with dedicated Workforce CRM categories alongside POS/Billing | M4 | ORIGINAL_REQUEST § R1 |
+| 18 | F18: Guides & Comparison Pages Polish | Standardize buttons, layout containment, and typography across comparison and guide pages | M4 | minimal-design-system.md |
+| 19 | F19: Crawler Privacy Guard & robots.txt | Client-side `noindex, nofollow` on protected routes (`/billing/*`, `/crm/*`) and update `public/robots.txt` | M5 | ultra-master-seo § 4 |
+| 20 | F20: Generative AI SEO (`llms-full.txt`) | Create comprehensive `public/llms-full.txt` documenting all 12+ ERP and CRM modules for LLM engines | M5 | ultra-master-seo § 5 |
+| 21 | F21: Dynamic JSON-LD Schema Validation | Verify and enforce rich Schema.org JSON-LD and OpenGraph cards across all 17 public routes | M5 | ultra-master-seo § 2, 3 |
+| 22 | F22: SEO & Privacy Automated Test Suite | Add automated Vitest suites (`src/test/seoHead.test.tsx` and `src/test/crawlerPrivacy.test.tsx`) | M5 | ultra-master-seo § 7 |
+| 23 | F23: 100% E2E Test Suite Pass | Verify all Tier 1-4 tests pass with exit code 0 | M6 | ORIGINAL_REQUEST Acceptance Criteria |
+| 24 | F24: Adversarial Coverage Hardening (Tier 5) | White-box adversarial testing with Challengers to close edge cases and untested paths | M6 | Project Pattern Phase 2 |
+| 25 | F25: 19 Quarantine Files Forensic Audit | Execute `verify_protected.cjs` and forensic audit confirming 100% clean 0-diff integrity | M6 | ORIGINAL_REQUEST § R4 |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Universal Header Dual Lockup | Implement permanent CredSmart shield mark + store dropdown pill + 48px mobile height in `AppLayout.tsx` | none | DONE |
-| 2 | Mobile POS Billing Terminal | Implement single-column `<MobilePOSTerminal />`, product cards, floating cart dock, checkout drawer | none | DONE |
-| 3 | Mobile CRM Suite Ergonomics | Implement mobile ergonomics across all 9 CRM routes (`Tasks`, `Salary`, `Roles`, `Meet`, `Broadcasts`, `AI`, `Support`, `Dashboard`) | none | PLANNED |
-| 4 | Mobile Ledger, Inventory & Reports | Implement mobile cards and touch drawers in `Sales`, `Purchases`, `Customers`, `Suppliers`, `Inventory`, `Godown`, `Reports`, `CashAndBank` | none | PLANNED |
-| 5 | E2E Dual-Track Verification & Hardening | Automated Vitest test suite for mobile ergonomics & brand lockup + production build (`npm run build`) | M1, M2, M3, M4 | PLANNED |
+| M1 | Navigation, Brand & Dual-Suite Foundation | `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicLayout.tsx`, `PublicConversionBanner.tsx` | None | IN_PROGRESS (Explorers e85dd661, 551d7bcd, 332c706e) |
+| M2 | Desktop Landing Page Dual-Suite Redesign | `Landing.tsx`, `HeroDashboardCard.tsx`, interactive dual preview dock, `#suites` section, bounded module explorer | M1 | PLANNED |
+| M3 | Core Public Pages Redesign | `Features.tsx`, `Pricing.tsx`, `About.tsx`, `Contact.tsx` | M1 | PLANNED |
+| M4 | Trust, Security & Knowledge Pages | `Security.tsx`, `FaqPage.tsx`, comparison pages, guide pages | M1 | PLANNED |
+| M5 | Full-Stack SEO & Crawler Privacy Architecture | `SEOHead.tsx`, Crawler Privacy Guard, `robots.txt`, `llms-full.txt`, SEO test suites | M1 | PLANNED |
+| M6 | Final Verification, E2E Pass & Forensic Audit | Pass 100% E2E tests, Tier 5 adversarial testing, verify 19 quarantine files with `verify_protected.cjs` | M2, M3, M4, M5, E2E Track | PLANNED |
 
 ## Interface Contracts
+### `PublicHeader` ↔ Page Anchors
+- Element `id="suites"` must exist on `Landing.tsx` as the target for header "POS Billing" and "Workforce CRM" links.
+- `PublicHeader.tsx` smooth navigation handler must check `location.pathname === "/"`:
+  - If on `/`, call `document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth' })`.
+  - If on subpage, navigate to `/${targetHref.replace(/^\/+/, '')}` without double forward-slashes.
 
-### Universal Header Lockup (`src/components/AppLayout.tsx`)
-- Far Left: Permanent CredSmart platform mark:
-  - Container: `w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs`
-  - Asset: `<img src="/favicon.png" alt="CredSmart" className="w-full h-full object-contain" />`
-  - Wordmark: `<span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white hidden sm:inline">CredSmart</span>`
-- Hairline Divider: `<div className="h-4 w-px bg-slate-200 dark:border-slate-800 shrink-0 mx-0.5 sm:mx-1" />`
-- Adjacent Store Switcher Trigger:
-  - Container: `flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]`
-  - Store Logo: `{org?.logo_url ? <img src={org.logo_url} ... /> : <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}`
-  - Store Name: `<span className="truncate">{org?.name || "My Business"}</span>`
+### `SEOHead` ↔ Protected Shells
+- Prop `noIndex?: boolean` (defaults to `false`).
+- When `noIndex: true`, injects `<meta name="robots" content="noindex, nofollow, noarchive">` and removes `seo-dynamic-structured-data`.
+- Protected route layout wrappers (`BillingLockdownGuard`, `CrmApp`, `ProtectedRoutes`) invoke Crawler Privacy protection to guarantee private ERP/CRM views are never indexed.
 
-### Mobile POS Terminal (`src/components/pos/MobilePOSTerminal.tsx`)
-- Props interface:
-  ```typescript
-  interface MobilePOSTerminalProps {
-    items: CartItem[];
-    products: Product[];
-    categories: string[];
-    selectedCategory: string;
-    onSelectCategory: (cat: string) => void;
-    searchQuery: string;
-    onSearchChange: (query: string) => void;
-    onAddItem: (product: Product) => void;
-    onUpdateQuantity: (index: number, qty: number) => void;
-    onRemoveItem: (index: number) => void;
-    grandTotal: number;
-    totalItemCount: number;
-    onCheckout: () => void;
-    customer: Customer | null;
-    paymentMethod: string;
-    onSelectPaymentMethod: (method: string) => void;
-    onSaveAndPrint: () => void;
-  }
-  ```
+### Public Pages ↔ Design Tokens
+- Action buttons must use `src/components/ui/button.tsx` or master utility classes:
+  - Default Action: `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`
+  - Hero CTA: `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs`
+  - Small / Table Action: `h-7 px-2.5 rounded-md text-[11px] font-medium`
+  - Micro Icon Button: `w-7.5 h-7.5 rounded-md`
+- Numeric & Currency figures must use `font-mono tabular-nums`.
 
 ## Code Layout
-- `src/components/AppLayout.tsx`: Universal Header dual lockup, mobile header height & control spacing.
-- `src/pages/POSBilling.tsx`: Desktop 2-column POS workbench (preserved 100%) + mobile branching to `<MobilePOSTerminal />`.
-- `src/pages/POS.tsx`: Clean re-export of `POSBilling`.
-- `src/components/pos/MobilePOSTerminal.tsx`: Main mobile touch POS terminal container.
-- `src/components/pos/MobileProductCard.tsx`: Touch product card with stepper.
-- `src/components/pos/MobileCartDock.tsx`: Sticky bottom cart dock with safe area padding.
-- `src/components/pos/MobileCheckoutDrawer.tsx`: Slide-up checkout drawer.
-- `src/pages/crm/Tasks.tsx`: Mobile segmented status pills & 1-tap transition chips.
-- `src/pages/crm/SalaryManagement.tsx`: Mobile payroll cards with advance balance & payslip action.
-- `src/pages/crm/RoleManagement.tsx`: Mobile permission accordions & 44px toggle targets.
-- `src/pages/crm/Attendance.tsx`: Mobile camera container & touch attendance logs.
-- `src/pages/crm/AIAssistant.tsx`, `Meet.tsx`, `Broadcasts.tsx`, `Support.tsx`: 100dvh mobile viewports & thumb docks.
-- `src/pages/Customers.tsx`, `Suppliers.tsx`: 78px compact party cards with >=44px call/WhatsApp chips.
-- `src/pages/Godown.tsx`, `Inventory.tsx`: Tab 2 mobile waybill cards & bottom-sheet adjusters.
-- `src/pages/Reports.tsx`: 3 collapsible category accordions.
-- `src/pages/CashAndBank.tsx`: 96px horizontal account carousel.
-- `src/test/universalHeaderDualLockup.test.tsx`: Milestone 1 test suite.
-- `src/test/mobilePosTerminal.test.tsx`: Milestone 2 test suite.
-- `src/test/mobileCrmSuiteErgonomics.test.tsx`: Milestone 3 test suite.
-- `src/test/mobileLedgersErgonomics.test.tsx`: Milestone 4 test suite.
+```
+src/
+├── components/
+│   ├── public/
+│   │   ├── PublicHeader.tsx           # Global public navigation header
+│   │   ├── PublicFooter.tsx           # Global public footer
+│   │   ├── PublicLayout.tsx           # Wrapper layout for public pages
+│   │   ├── PublicConversionBanner.tsx # Standardized CTA conversion strip
+│   │   ├── SEOHead.tsx                # Dynamic meta hydration & schema injection
+│   │   ├── HeroDashboardCard.tsx      # Interactive dual-suite preview card
+│   │   └── CredSmartLogo.tsx          # Brand mark & shield logo
+│   └── ui/
+│       └── button.tsx                 # Master button primitives (h-8.5, h-9.5, h-7)
+├── pages/
+│   ├── Landing.tsx                    # Screen-fitted dual-suite marketing landing page
+│   └── public/
+│       ├── Features.tsx               # Dual-suite 12-module feature catalog
+│       ├── Pricing.tsx                # Community ₹0 lifetime free plan breakdown
+│       ├── About.tsx                  # Company story & MSME democratization
+│       ├── Contact.tsx                # Support & Grievance Officer desk
+│       ├── Security.tsx               # 256-bit encryption & DPDP 2023 compliance
+│       ├── FaqPage.tsx                # Searchable FAQ accordion
+│       ├── GstBillingGuide.tsx        # GST billing guide
+│       ├── BarcodeGuide.tsx           # Barcode generator guide
+│       ├── EInvoicingGuide.tsx        # e-Invoicing guide
+│       ├── CompareVyapar.tsx          # Competitor comparison vs Vyapar
+│       ├── CompareMyBillBook.tsx      # Competitor comparison vs myBillBook
+│       └── CompareTally.tsx           # Competitor comparison vs Tally Prime
+├── test/
+│   ├── seoHead.test.tsx               # Automated Vitest suite for SEOHead & schemas
+│   ├── crawlerPrivacy.test.tsx        # Automated Vitest suite for crawler privacy tags
+│   └── e2e/                           # Requirement-driven E2E tests
+public/
+├── robots.txt                         # Search engine crawler permissions & protected disallows
+├── sitemap.xml                        # Canonical XML sitemap (15 public routes)
+├── llms.txt                           # Summary context for LLM search engines
+└── llms-full.txt                      # Comprehensive context for LLM search engines
+```
+
+## Quarantine Files Lockdown (DO NOT TOUCH)
+The following 19 files are quarantined and must remain completely untouched (0 diff):
+1. `src/components/invoices/mobile/MobileCreateInvoice.tsx`
+2. `src/components/invoices/mobile/AddItemModal.tsx`
+3. `src/components/invoices/mobile/SelectPartyModal.tsx`
+4. `src/components/invoices/mobile/EditItemModal.tsx`
+5. `src/components/invoices/mobile/MobileInvoiceSuccessView.tsx`
+6. `src/components/invoices/mobile/MobileBillPreviewModal.tsx`
+7. `src/components/invoices/mobile/MobileInvoiceFitViewer.tsx`
+8. `src/components/invoices/mobile/CreatePartyModal.tsx`
+9. `src/components/invoices/mobile/MobileCreatePurchaseInvoice.tsx`
+10. `src/components/items/mobile/CreateNewItemModal.tsx`
+11. `src/components/SalesInvoiceModal.tsx`
+12. `src/components/PurchaseInvoiceModal.tsx`
+13. `src/components/invoices/AddItemsToBillModal.tsx`
+14. `src/components/invoices/InvoiceFitView.tsx`
+15. `src/components/invoices/UnifiedInvoiceRenderer.tsx`
+16. `src/utils/downloadExactInvoice.ts`
+17. `src/utils/whatsappPdfShare.ts`
+18. `src/utils/invoiceThemeLoader.ts`
+19. `src/services/documentsService.ts`
+Verification: `node .agents/teamwork/auditor_m3/verify_protected.cjs` must pass with zero diff.

@@ -1,51 +1,51 @@
-# BRIEFING — 2026-10-18T09:42:00Z
+# BRIEFING — 2026-10-31T10:48:00Z
 
 ## Mission
-Investigate and design a comprehensive database migration blueprint for CredSmart Phase 3: Salary Management & Payroll Engine (`supabase/migrations/20261017020000_create_crm_salary_tables.sql`) covering 4 core tables: crm_salary_profiles, crm_payroll_runs, crm_payslips, and crm_salary_adjustments with full RLS, constraints, types, and indexes.
+Investigate `src/components/public/PublicHeader.tsx` and related components to formulate a surgical implementation specification for Milestone 1 (Navigation, Brand & Dual-Suite Foundation).
 
 ## 🔒 My Identity
 - Archetype: explorer
-- Roles: database architect, schema explorer, investigator
+- Roles: Teamwork explorer (Header & Navigation Explorer)
 - Working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_1
-- Original parent: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Milestone: M1-1 Database Migration Blueprint for Phase 3 Salary & Payroll
+- Original parent: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Milestone: Milestone 1 (Navigation, Brand & Dual-Suite Foundation)
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement or modify source code or migration files directly
-- Write all findings, blueprints, and proposals to explorer_m1_1 folder
-- Ensure complete alignment with existing RBAC and Attendance architecture and conventions
+- Read-only investigation — do NOT implement / edit source code
+- Files for content delivery, messages for coordination
+- Follow 5-component handoff protocol (Observation, Logic Chain, Caveats, Conclusion, Verification Method)
+- Adhere to CredSmart Minimal Design System & rules
 
 ## Current Parent
-- Conversation ID: caf7924e-19e5-4a1d-ae03-b43c66838dd3
-- Updated: 2026-10-18T09:42:00Z
+- Conversation ID: 4ca3c226-daa7-4621-95f6-7c629c003e5f
+- Updated: not yet
 
 ## Investigation State
 - **Explored paths**:
-  - `ORIGINAL_REQUEST.md` (all 723 lines reviewed)
-  - `orchestrator_crm_phase3_gen2/DISPATCH.md` (complete specification reviewed)
-  - `.agents/skills/crm-rbac-skill/SKILL.md` (RBAC architecture, seeding, permissions)
-  - `.agents/skills/crm-attendance-skill/SKILL.md` (Shift metrics, attendance schema, payroll contract)
-  - `supabase/migrations/20261017000000_create_crm_rbac_tables.sql` (schema reference)
-  - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` (schema reference)
-  - `src/types/crmAttendance.ts` and `src/integrations/supabase/types.ts`
-  - `src/test/crmAttendanceMigrationStress.test.ts` (verified 31/31 passed)
+  - `src/components/public/PublicHeader.tsx`
+  - `src/components/public/PublicLayout.tsx`
+  - `src/components/public/PublicFooter.tsx`
+  - `src/pages/Landing.tsx`
+  - `src/components/ui/button.tsx`
+  - `src/components/public/CredSmartLogo.tsx`
+  - `src/test/universalHeaderDualLockup.test.tsx`
+  - `PROJECT.md`, `ORIGINAL_REQUEST.md`, `minimal-design-system.md`
 - **Key findings**:
-  - Phase 3 requires 4 tables: `crm_salary_profiles`, `crm_payroll_runs`, `crm_payslips`, and `crm_salary_adjustments`.
-  - All tables require UUID PKs (`gen_random_uuid()`), `org_id` referencing `public.organizations(id) ON DELETE CASCADE`, and RLS enabled with `has_org_access(org_id)` for SELECT, INSERT, UPDATE, DELETE.
-  - Three unique constraints required: `(org_id, staff_id)` on profiles, `(org_id, month_year)` on payroll runs, `(org_id, staff_id, month_year)` on payslips.
-  - 17 indexes required across the 4 tables for fast org, staff, status, and month_year filtering.
-  - 4 `updated_at` triggers using existing `public.update_updated_at()`.
-  - Check constraints for salary types, run statuses, payslip payment statuses, adjustment types, adjustment statuses, and month_year regex formats.
-  - RBAC seed extension for `['salary', 'approve']` permission.
-- **Unexplored areas**: None. Complete migration blueprint designed.
+  1. Double-slash bug confirmed at `PublicHeader.tsx:56`: `navigate('/' + href)` produces `navigate('//#suites')` when on subpages.
+  2. Missing cross-page anchor scrolling: `PublicLayout` scrolls to (0,0) on route change without checking hash. `PublicHeader` needs a companion `useEffect` to scroll into view when navigating from subpages.
+  3. NavLinks Dual-Suite: Needs explicit "POS & Billing ERP" and "Workforce CRM" labels both targeting `#suites` (with fallback support for `#billing-erp` / `#workforce-crm`).
+  4. Header Button Standardization: Desktop buttons currently use bloated `h-10 px-5 rounded-xl text-sm`; must be standardized to `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` with `active:scale-[0.98]`.
+  5. Header Container Height: Variable padding (`py-3 sm:py-4` / `py-2.5`) causes layout shift; must be fixed at `h-12 sm:h-13` (48px mobile / 52px desktop).
+  6. Mobile Drawer Bug: Mobile navigation uses raw `<a href>` for routes without calling React Router `navigate()`, triggering full page reload and failing to close the drawer.
+- **Unexplored areas**: None for M1 PublicHeader scope.
 
 ## Key Decisions Made
-- Fully specified SQL migration blueprint adhering to `BEGIN; ... COMMIT;` transactional wrapping and strict idempotency (`CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `DROP POLICY IF EXISTS`, `DROP TRIGGER IF EXISTS`).
-- Provided exact TypeScript definitions for `src/integrations/supabase/types.ts` and domain types for `src/types/crmSalary.ts`.
-- Outlined complete test matrix for `src/test/crmSalaryMigration.test.ts` and `src/test/crmSalaryTypes.test.ts`.
+- Formulated clean path normalization `/${href.replace(/^\/+/, '')}`.
+- Designed fallback element resolution for `#billing-erp` and `#workforce-crm` to `#suites`.
+- Specified desktop buttons to adhere strictly to `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`.
+- Formulated mobile drawer fix to use React Router `Link` and close drawer on click.
 
 ## Artifact Index
-- DISPATCH.md — Dispatch instructions
-- BRIEFING.md — Persistent context & state
-- progress.md — Liveness heartbeat and milestone tracking
-- handoff.md — Complete investigation report and migration SQL blueprint
+- DISPATCH.md — Received orchestrator instructions
+- progress.md — Liveness heartbeat and investigation progress
+- handoff.md — Final 5-component handoff report with exact blueprint diffs

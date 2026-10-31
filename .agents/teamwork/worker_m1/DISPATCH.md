@@ -1,51 +1,72 @@
-## 2026-10-27T03:06:59Z
-You are a Worker subagent (Worker Milestone 1: Universal Header Dual Lockup).
-Your working directory is: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
-Read ORIGINAL_REQUEST.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md (specifically the last section ## 2026-10-27T02:39:33Z).
-Read PROJECT.md at: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md.
-Read Explorer 1's detailed findings and architectural blueprint in:
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\analysis.md
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_1\handoff.md
-Read user rules in: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\rules\minimal-design-system.md.
+## 2026-10-31T10:52:24Z
+You are Worker M1 (M1 Navigation & Shell Worker).
+Your identity: teamwork_worker
+Your assigned working directory: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1
+Project root: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart
+
+MANDATORY FIRST STEP:
+Read the authoritative user request at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md
+Read the project master document at:
+c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
 
 MANDATORY INTEGRITY WARNING:
-DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
+DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-EXCLUSIVE WRITE OWNERSHIP:
-- src/components/AppLayout.tsx
-- src/test/universalHeaderDualLockup.test.tsx (create unit/integration test)
-- src/test/desktopShellMilestone2.challenger.test.tsx (update lines 55-64 brand regex to match new permanent shield mark per Explorer 1 handoff)
+EXCLUSIVE FILE OWNERSHIP:
+You exclusively own and may edit only the following files:
+1. `tailwind.config.ts` (extend theme spacing to include "4.5" and "9.5")
+2. `src/components/public/PublicHeader.tsx`
+3. `src/components/public/PublicFooter.tsx`
+4. `src/components/public/PublicConversionBanner.tsx`
+5. `src/components/public/PublicLayout.tsx`
+6. `src/test/publicShellComponents.test.tsx` (create automated unit/integration test for M1 components)
+DO NOT touch any other source files. NEVER touch any of the 19 quarantined invoice files!
 
-TASK:
-1. Implement the Permanent CredSmart Shield Logo & Tenant Store Dual Lockup in src/components/AppLayout.tsx:
-   a) Far Left Platform Mark:
-      - Unconditionally render the CredSmart platform shield using /favicon.png inside:
-        `w-7 h-7 sm:w-7.5 sm:h-7.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0`
-      - Paired with styled `CredSmart` wordmark:
-        `<span className="font-bold text-sm tracking-tight text-slate-900 dark:text-white font-sans hidden sm:inline">CredSmart</span>`
-      - Decouple this completely from `org.logo_url` and `org.name`.
-   b) Adjacent Store Switcher Trigger:
-      - Place immediately adjacent to the platform mark, separated by a 1px hairline divider:
-        `<div className="h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" />`
-      - Render the active Store Switcher dropdown pill displaying tenant store logo (`org?.logo_url` or `<Building2 />`) and `{org?.name || "My Business"}`.
-      - Make the trigger visible on mobile: `flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]`.
-   c) Mobile Viewport (< 768px):
-      - Ensure strict 48px slim header height (`h-12` / `h-[calc(3rem+env(safe-area-inset-top,0px))]`) and 52px desktop height (`md:h-13`).
-      - Compact 28x28px shield logo paired with compact store pill.
-      - Enforce zero horizontal overflow/wrapping on 360px-430px screens. Ensure right-side controls (search, action (+), bell, profile) fit with ample margin.
-   d) 100% Desktop Preservation on >= 768px:
-      - Desktop command palette (⌘K), split action button, suite switcher, notifications, profile, and theme toggle remain 100% intact.
-2. Update `src/test/desktopShellMilestone2.challenger.test.tsx` (lines 55-64) where it checks the old Sparkles/bg-blue-600 icon, updating it to assert the permanent /favicon.png CredSmart shield mark.
-3. Write a comprehensive test suite in `src/test/universalHeaderDualLockup.test.tsx` verifying:
-   - Platform shield mark renders `/favicon.png` regardless of whether org has a logo.
-   - Wordmark 'CredSmart' is rendered.
-   - Adjacent Store Switcher pill renders org.name and org.logo (or Building2 fallback).
-   - Mobile classes enforce 48px height (`h-12`) and desktop classes enforce 52px height (`md:h-13`).
-4. Run tests and typecheck:
-   - `cmd /c npx vitest run src/test/universalHeaderDualLockup.test.tsx`
-   - `cmd /c npx vitest run src/test/desktopShellMilestone2.challenger.test.tsx`
-   - `cmd /c npx vitest run src/test/mobileErgonomicsChallenger.test.ts`
-   - `cmd /c npx tsc --noEmit`
-5. Write your complete completion report in:
-   c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md
-6. Send completion message via send_message to orchestrator (conversation ID: d2d7b35b-d1d5-45b5-9a65-d7a02d968987).
+INPUT EXPLORER REPORTS (Read before modifying code):
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_1\handoff.md (PublicHeader specifications & diff blueprints)
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_2\handoff.md (PublicFooter, PublicConversionBanner, PublicLayout specifications & blueprints)
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_m1_3\handoff.md (Design token standards, spacing gap analysis, verification blueprint)
+
+OBJECTIVE & IMPLEMENTATION TASKS:
+Execute Milestone 1 (Features F1 through F5) with zero regression:
+1. `tailwind.config.ts`:
+   - Under `theme.extend.spacing`, add:
+     `"4.5": "1.125rem",`
+     `"9.5": "2.375rem",`
+   - This ensures `h-9.5`, `px-4.5`, etc. compile to exact pixel values (38px and 18px).
+2. `src/components/public/PublicHeader.tsx`:
+   - Fix double-slash bug in `handleNavClick`: navigate to `/${href.replace(/^\/+/, '')}` instead of `/${href}`.
+   - Add `useEffect` on `[location.pathname, location.hash]` to smoothly scroll to anchor elements (`#suites`, etc.) when navigating from subpages.
+   - Update navigation links: explicitly include "POS & Billing ERP" and "Workforce CRM" both pointing to `/#suites`.
+   - Standardize desktop action buttons:
+     - Download App: `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`
+     - Open Workspace (logged in): `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`
+     - Login: `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`
+     - Start Free (elevated CTA): `h-9.5 px-4 rounded-lg text-sm font-semibold shadow-xs` (or `h-8.5 px-3.5`)
+   - Header height: enforce `h-12 sm:h-13` (48px mobile, 52px desktop) to prevent layout shifts.
+   - Mobile navigation drawer: ensure hamburger touch target is >= 44x44px; use client-side SPA navigation for route links (`/features`, `/pricing`, `/about`, `/contact`) closing drawer on click.
+3. `src/components/public/PublicFooter.tsx`:
+   - Balance dual suites: Add dedicated "Workforce CRM" column with 7 feature links (Attendance, Monthly Payroll, Task Boards, Meet & Huddle, Roles & Permissions, AI Voice Copilot, Team Pulse).
+   - Rebalance grid to 6 columns (`grid-cols-2 md:grid-cols-4 lg:grid-cols-6`) with brand column spanning 2 cols on mobile/desktop, 4 cols on tablet.
+   - Standardize badges to `text-[11px] font-semibold`.
+   - Add download chips (`Smartphone` for Android APK, `Monitor` for Windows PC) in the brand column.
+4. `src/components/public/PublicConversionBanner.tsx`:
+   - Remediate button bloat: replace line 68 `h-13 px-8 rounded-xl shadow-2xl` with `h-9.5 px-4.5 rounded-lg text-sm font-semibold shadow-xs active:scale-[0.98] transition-colors duration-150`.
+   - Refine padding and dimensions to eliminate viewport scroll sprawl.
+   - Update copy to represent the dual-suite platform.
+5. `src/components/public/PublicLayout.tsx`:
+   - Hash-aware scroll behavior: when route changes with hash (`/#suites`), avoid forcing `window.scrollTo(0,0)`, allow smooth scroll to element.
+   - Add `overflow-x-hidden relative flex-1 min-h-0` to `<main>`.
+6. `src/test/publicShellComponents.test.tsx`:
+   - Write comprehensive unit tests for `PublicHeader`, `PublicFooter`, `PublicConversionBanner`, and `PublicLayout` verifying links, button classes, hash routing, and dual-suite rendering.
+
+MANDATORY VERIFICATION CHECKS:
+Run each command and document the full output in your handoff report:
+1. `node .agents/teamwork/auditor_m3/verify_protected.cjs` (Must pass with 19/19 clean, 0 diff)
+2. `node ./node_modules/typescript/bin/tsc --noEmit` (Must pass with 0 errors)
+3. `node ./node_modules/vitest/vitest.mjs run src/test/publicShellComponents.test.tsx` (Must pass 100%)
+4. `node ./node_modules/vitest/vitest.mjs run src/crm/test/ src/test/e2e/` (Regression test suites must pass 100%)
+
+DELIVERABLE:
+Write your final report to `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\worker_m1\handoff.md` and send a message back to the orchestrator.

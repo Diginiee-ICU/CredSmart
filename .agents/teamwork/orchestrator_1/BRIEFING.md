@@ -13,21 +13,25 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 ## 🔒 My Workflow
 - **Pattern**: Project
 - **Scope document**: c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md
-1. **Decompose**: Survey existing public pages, routing, dual-suite assets, design system tokens, SEO standards, and quarantine files with 3 Explorers / Spec Miners. Formulate PROJECT.md with architecture, feature inventory, milestones, and interface contracts.
+1. **Decompose**: Surveyed public routes, components, design tokens, build/test baselines, quarantine files, and SEO architecture with 3 agents. Formulated PROJECT.md with 25 features across 6 milestones and parallel E2E track.
 2. **Dispatch & Execute**:
-   - Implementation Track: Sequential milestones with Explorer -> Worker -> Reviewer -> Challenger -> Auditor gate.
+   - Implementation Track: Sequential milestones with Explorer (3) -> Worker (1) -> Reviewer (2) -> Challenger (2) -> Auditor (1) gate.
    - E2E Testing Track: Requirements-driven opaque-box tests across Tiers 1-4, publish TEST_READY.md.
    - Final Milestone: Pass 100% E2E tests, then Tier 5 adversarial coverage hardening.
 3. **On failure**: Retry -> Replace -> Skip (non-auditor) -> Redistribute -> Redesign.
 4. **Succession**: At 16 spawns, write handoff.md, cancel crons, spawn successor.
 - **Work items**:
-  1. Survey & Codebase Exploration [in-progress]
-  2. PROJECT.md formulation & decomposition [pending]
-  3. E2E Testing Track dispatch [pending]
-  4. Implementation Track milestones dispatch [pending]
-  5. Final E2E Verification & Adversarial Hardening [pending]
-- **Current phase**: 0 (Survey)
-- **Current focus**: Awaiting Explorer 3 completion to synthesize PROJECT.md
+  1. Survey & Codebase Exploration [done]
+  2. PROJECT.md formulation & decomposition [done]
+  3. E2E Testing Track dispatch [in-progress]
+  4. Milestone 1: Navigation, Brand & Dual-Suite Foundation [in-progress]
+  5. Milestone 2: Desktop Landing Page Dual-Suite Redesign [pending]
+  6. Milestone 3: Core Public Pages Redesign [pending]
+  7. Milestone 4: Trust, Security & Knowledge Pages [pending]
+  8. Milestone 5: Full-Stack SEO & Crawler Privacy Architecture [pending]
+  9. Milestone 6: Final Verification, E2E Pass & Forensic Audit [pending]
+- **Current phase**: 1 (Dual Track Launch: E2E Testing Track + Milestone 1)
+- **Current focus**: Milestone 1 Implementation by Worker M1
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -43,21 +47,26 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 - Updated: 2026-10-31T10:05:12Z
 
 ## Key Decisions Made
-- Selected Project Orchestration Pattern with Survey phase (3 parallel Explorers / Spec Miners).
-- Completed survey of public routes & component inventory (Explorer 1): 17 public routes, dual-suite gap identified, `#suites` anchor missing.
-- Completed design standard mining (Spec Miner 2): standardized button tokens (h-8.5, h-9.5), 3 desktop viewport containment patterns (Hero split, #suites showcase, bounded module explorer).
+- All 3 M1 Explorers delivered comprehensive handoff reports with blueprints.
+- Worker M1 dispatched with exclusive file boundaries (`tailwind.config.ts`, `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicConversionBanner.tsx`, `PublicLayout.tsx`, `src/test/publicShellComponents.test.tsx`).
+- Mandatory integrity warning passed verbatim.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
 | explorer_survey_public_routes | teamwork_explorer | Survey public routes, components, dual-suite coverage | completed | 11a0f7f8-410c-4e1a-9eba-e9fa7da3202c |
 | spec_miner_survey_landing_design | teamwork_spec_miner | Survey design rules, tokens, viewport containment | completed | 07e464df-92d0-4173-9522-7b70944afd47 |
-| explorer_survey_tests_seo_quarantine | teamwork_explorer | Survey test baselines, quarantine files, SEO architecture | in-progress | e38a6144-9da1-4cab-a515-282b5a9e4055 |
+| explorer_survey_tests_seo_quarantine | teamwork_explorer | Survey test baselines, quarantine files, SEO architecture | completed | e38a6144-9da1-4cab-a515-282b5a9e4055 |
+| test_writer_e2e_public | teamwork_test_writer | E2E Testing Track (TEST_INFRA.md, Tiers 1-4, TEST_READY.md) | in-progress | f5518ef8-a545-4ff0-8103-9c057965245b |
+| explorer_m1_1 | teamwork_explorer | M1 Header & Navigation Explorer | completed | e85dd661-5706-4f42-a400-2ec1f7dd87d3 |
+| explorer_m1_2 | teamwork_explorer | M1 Footer & Shell Explorer | completed | 551d7bcd-c4af-42f4-a491-90f354c61f7e |
+| explorer_m1_3 | teamwork_explorer | M1 Design Tokens & Invariance Explorer | completed | 332c706e-8d30-420c-be78-ca961ba9d36b |
+| worker_m1 | teamwork_worker | Milestone 1 Implementation (Shell & Navigation) | in-progress | 345fae51-5f80-45bb-a54c-008aeae3dc31 |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 3 / 16
-- Pending subagents: e38a6144-9da1-4cab-a515-282b5a9e4055
+- Spawn count: 8 / 16
+- Pending subagents: f5518ef8-a545-4ff0-8103-9c057965245b, 345fae51-5f80-45bb-a54c-008aeae3dc31
 - Predecessor: none
 - Successor: not yet spawned
 
@@ -72,5 +81,4 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\plan.md — Orchestration plan
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\progress.md — Liveness & status tracking
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Global architecture, feature inventory, milestones
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\explorer_survey_public_routes\handoff.md — Survey Explorer 1 Report
-- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\spec_miner_survey_landing_design\handoff.md — Survey Spec Miner 2 Report
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_INFRA.md — E2E Test Infrastructure & methodology

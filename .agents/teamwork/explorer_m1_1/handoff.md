@@ -1,793 +1,456 @@
-# Database Migration Blueprint: CRM Phase 3 Salary Management & Payroll Engine
+# M1 Explorer 1 Handoff Report: PublicHeader & Navigation Specification
 
-## Executive Summary
-This report delivers the comprehensive architectural blueprint for `supabase/migrations/20261017020000_create_crm_salary_tables.sql`, establishing the 4 core database tables required for CredSmart CRM Phase 3:
-1. `public.crm_salary_profiles` — Staff compensation configurations and statutory deductions
-2. `public.crm_payroll_runs` — Monthly organization-wide payroll execution lifecycle
-3. `public.crm_payslips` — Immutable per-staff payslip records and attendance-driven calculations
-4. `public.crm_salary_adjustments` — Advances, bonuses, ad-hoc deductions, and loan repayments
+**Target Component**: `src/components/public/PublicHeader.tsx`  
+**Milestone**: Milestone 1 (Navigation, Brand & Dual-Suite Foundation)  
+**Author**: M1 Explorer 1 (Header & Navigation Explorer)  
+**Date**: 2026-10-31  
 
 ---
 
 ## 1. Observation
-1. **Existing Migrations**:
-   - `supabase/migrations/20261017000000_create_crm_rbac_tables.sql` established the RBAC layer: `crm_roles`, `crm_permissions`, and `crm_staff_roles`. It defined `seed_crm_super_admin_for_org(_org_id UUID)` which currently seeds `['salary', 'view']` and `['salary', 'edit']`.
-   - `supabase/migrations/20261017010000_create_crm_attendance_tables.sql` established the Phase 2 layer: `crm_geolocations`, `crm_attendance`, and `crm_attendance_requests`. All tables enforce `has_org_access(org_id)` RLS, use `update_updated_at()` triggers, and conform to `BEGIN; ... COMMIT;` transaction wrapping.
-   - Vitest test `src/test/crmAttendanceMigrationStress.test.ts` confirms 31/31 passing tests, proving the standard DDL patterns: `IF NOT EXISTS` for tables/indexes, preceding `DROP POLICY IF EXISTS`, and preceding `DROP TRIGGER IF EXISTS`.
 
-2. **Phase 3 Requirements**:
-   - Per `ORIGINAL_REQUEST.md` (lines 442-525) and `orchestrator_crm_phase3_gen2/DISPATCH.md` (lines 30-111), the migration must create:
-     - `crm_salary_profiles`: unique on `(org_id, staff_id)`, check on `salary_type IN ('monthly', 'daily', 'hourly')`.
-     - `crm_payroll_runs`: unique on `(org_id, month_year)`, check on `status IN ('draft', 'locked', 'disbursed')`.
-     - `crm_payslips`: unique on `(org_id, staff_id, month_year)`, check on `payment_status IN ('pending', 'paid', 'partial')`, stores `salary_profile_snapshot JSONB`.
-     - `crm_salary_adjustments`: check on `type IN ('advance', 'bonus', 'deduction', 'loan_repayment')`, check on `status IN ('pending', 'approved', 'deducted', 'rejected')`.
-   - All tables must enable Row Level Security (RLS) with policy `USING (has_org_access(org_id))` for SELECT, INSERT, UPDATE, DELETE.
-   - RBAC requirements for Phase 3 UI require `useCRMPermission('salary', 'approve')` for locking payroll and approving advances/deductions.
+Direct code observations from `src/components/public/PublicHeader.tsx` and related architecture files:
 
-3. **Database Types & Integration**:
-   - `src/integrations/supabase/types.ts` contains database Row, Insert, Update, and Relationship interfaces.
-   - `src/types/crmAttendance.ts` contains the domain type interfaces for Phase 2. A parallel `src/types/crmSalary.ts` or `src/utils/crmPayrollUtils.ts` must export strict domain models.
+### 1.1 The Double-Slash Navigation Bug
+- **Location**: `src/components/public/PublicHeader.tsx:52-64`
+- **Existing Code**:
+  ```tsx
+  const handleNavClick = (href: string) => {
+    if (href.startsWith("/#")) {
+      const elementId = href.replace("/#", "");
+      if (location.pathname !== "/") {
+        navigate(`/${href}`);
+      } else {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    }
+  };
+  ```
+- **Observed Behavior**: When user is on any subpage (e.g. `/features`, `/pricing`, `/about`), clicking an anchor link like `href="/#suites"` results in `navigate('/' + href)` which resolves to `navigate('//#suites')`. In browser routing, `//#suites` is interpreted as a protocol-relative URL or corrupt pathname containing double slashes (`//`), causing routing anomalies or failing to anchor cleanly to the target section.
+- **Cross-Page Scroll Suppression**: In `src/components/public/PublicLayout.tsx:13-15`:
+  ```tsx
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  ```
+  When navigating from `/features` to `/#suites`, `pathname` changes to `"/"`, and `PublicLayout` immediately forces `window.scrollTo(0, 0)`. Because `PublicHeader` lacks a hash listener on route change, user is left at the top of the landing page instead of smoothly scrolling down to `#suites`.
+
+### 1.2 Dual-Suite Navigation Links
+- **Location**: `src/components/public/PublicHeader.tsx:39-50`
+- **Existing Code**:
+  ```tsx
+  const navLinks = [
+    { label: "Home", href: "/" },
+    { label: "POS Billing", href: "/#suites" },
+    { label: "Workforce CRM", href: "/#suites" },
+    { label: "Features", href: "/features" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Ecosystem", href: "/#ecosystem" },
+    { label: "CredAlert Intel", href: "/#intelligence" },
+    { label: "Download", href: "/#download" },
+    { label: "About Us", href: "/about" },
+    { label: "Contact", href: "/contact" },
+  ];
+  ```
+- **Observed Discrepancy**: Line 41 uses label `"POS Billing"` rather than the authoritative standard `"POS & Billing ERP"` defined in `PROJECT.md` Feature F2 ("Add explicit navigation links for 'POS & Billing ERP' and 'Workforce CRM' in `PublicHeader.tsx`"). Both suites currently point to `"/#suites"`.
+
+### 1.3 Desktop Action Buttons Token Non-Compliance
+- **Location**: `src/components/public/PublicHeader.tsx:114-159`
+- **Existing Code**:
+  ```tsx
+  {/* Download button: 40px, rounded-xl */}
+  className="h-10 px-3.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+  
+  {/* Open Workspace button: 40px, rounded-xl, heavy gradient & shadow */}
+  className="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all"
+  
+  {/* Login button: 40px, rounded-xl */}
+  className="h-10 px-4.5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
+  
+  {/* Start Free button: 40px, rounded-xl, heavy orange shadow */}
+  className="h-10 px-5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-sm shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+  ```
+- **Design System Violation**: Master standard `.agents/rules/minimal-design-system.md` § 1 prohibits bloated buttons (`h-10`, `h-11`, `h-12`, `px-5`, `rounded-xl`, heavy gradients/shadows). The desktop standard action button token is strictly:
+  `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` (34px height) with tactile feedback `active:scale-[0.98] transition-colors duration-150`.
+
+### 1.4 Header Viewport Height & Layout Shift (CLS)
+- **Location**: `src/components/public/PublicHeader.tsx:67-74`
+- **Existing Code**:
+  ```tsx
+  <header
+    className={cn(
+      "sticky top-0 z-50 w-full transition-all duration-200 bg-white/95 backdrop-blur-md",
+      scrolled
+        ? "border-b border-slate-200/80 shadow-sm py-2.5"
+        : "border-b border-transparent py-3 sm:py-4"
+    )}
+  >
+  ```
+- **Observed Behavior**: Unscrolled header has height ~60px-64px due to `py-3 sm:py-4`; scrolled header shrinks to ~50px via `py-2.5`. This introduces Cumulative Layout Shift (CLS). `PROJECT.md` line 9 mandates: `52px sticky command bar (h-13)` on desktop and `minimal-design-system.md` § 6 mandates `48px slim header (h-12)` on mobile.
+
+### 1.5 Mobile Navigation Drawer Client-Side Routing Defect
+- **Location**: `src/components/public/PublicHeader.tsx:176-191`
+- **Existing Code**:
+  ```tsx
+  {navLinks.map((link) => (
+    <a
+      key={link.label}
+      href={link.href}
+      onClick={(e) => {
+        if (link.href.startsWith("/#")) {
+          e.preventDefault();
+          handleNavClick(link.href);
+          setMobileMenuOpen(false);
+        }
+      }}
+      className="px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+    >
+      {link.label}
+    </a>
+  ))}
+  ```
+- **Observed Defect**: For route links (`/features`, `/pricing`, `/about`, `/contact`), the click handler does NOT intercept the click or close the drawer; instead, raw `<a href>` triggers a full browser reload, breaking SPA state and causing slow page transitions on mobile devices.
+
+### 1.6 Landing Page Anchor Target Verification
+- **File**: `src/pages/Landing.tsx`
+- **Observed Anchors**:
+  - Line 455: `<section id="features" ...>`
+  - Line 561: `id="ecosystem"` (Business Ecosystem card)
+  - Line 657: `id="intelligence"` (CredAlert Intelligence card)
+  - Line 847: `<section id="download" ...>` (Downloads Hub)
+  - **Missing Anchor**: Currently `Landing.tsx` does NOT have `id="suites"`. Milestone 2 (Feature F8) is scheduled to implement the `#suites` section.
 
 ---
 
 ## 2. Logic Chain
-1. **Idempotency & Resilience**:
-   - In automated deployment and development environments, migrations may be executed repeatedly. Therefore, every table definition MUST use `CREATE TABLE IF NOT EXISTS`, every index MUST use `CREATE INDEX IF NOT EXISTS`, and every policy and trigger MUST be preceded by a corresponding `DROP ... IF EXISTS`.
-   - Wrapping the entire script in `BEGIN;` and `COMMIT;` guarantees that migration steps execute atomically without leaving partial tables if a connection fails.
 
-2. **Referential Integrity & Cascading**:
-   - Tenant isolation is paramount: every table references `public.organizations(id) ON DELETE CASCADE`. If an organization is removed, all associated salary profiles, payroll runs, payslips, and adjustments are cleaned up immediately.
-   - Staff references point to `auth.users(id) ON DELETE CASCADE`.
-   - Audit references (`locked_by`, `requested_by`, `approved_by`) point to `auth.users(id) ON DELETE SET NULL` to preserve historical financial records even if a managerial account is deleted.
-   - Payslip to payroll run link: `payroll_run_id REFERENCES public.crm_payroll_runs(id) ON DELETE CASCADE`. If a draft run is deleted, its uncommitted payslips are safely removed.
-
-3. **Check Constraints & Data Integrity**:
-   - Monetary values (`base_amount`, `gross_salary`, `net_salary`, etc.) must be non-negative (`>= 0`).
-   - Deduction percentages (`pf_deduction_percent`, `esi_deduction_percent`) must be bounded between `0.00` and `100.00`.
-   - Adjustment amounts must be strictly positive (`amount > 0`).
-   - `month_year` formats must follow ISO year-month: `^[0-9]{4}-(0[1-9]|1[0-2])$`.
-   - Enums are enforced via PostgreSQL `CHECK (field IN (...))` to align with project conventions without requiring custom Postgres ENUM types that complicate migrations.
-
-4. **RBAC Extension**:
-   - Phase 1 seeded `['salary', 'view']` and `['salary', 'edit']`.
-   - Phase 3 Milestone 3 requires `['salary', 'approve']` for payroll run locking and advance approval.
-   - Following `crm-rbac-skill/SKILL.md` Section 5, `seed_crm_super_admin_for_org` is idempotently updated to include `['salary', 'approve']`, and executed for all existing organizations with `ON CONFLICT DO NOTHING`.
+1. **Premise 1**: Route transitions in React Router must use clean, normalized paths without leading double slashes (`//`).
+   - *From 1.1*: `navigate('/' + href)` when `href="/#suites"` creates `"//#suites"`.
+   - *Deduction*: Normalizing `href` via `/${href.replace(/^\/+/, '')}` yields `"/#suites"` unconditionally, eliminating double slashes whether `href` is passed as `"/#suites"`, `"#suites"`, or `"//#suites"`.
+2. **Premise 2**: Navigating to an anchor on another page requires post-render DOM scrolling.
+   - *From 1.1*: Because React Router does not automatically scroll down to hash targets and `PublicLayout` executes `window.scrollTo(0, 0)` on pathname change, `PublicHeader` must listen to `[location.pathname, location.hash]`.
+   - *Deduction*: Adding a `useEffect` in `PublicHeader` that runs when `location.pathname === "/"` and `location.hash` is present ensures smooth scrolling to the target section after DOM mount.
+3. **Premise 3**: Dual-suite branding requires equal, first-class prominence for POS & Billing ERP and Workforce CRM.
+   - *From 1.2*: Changing label from `"POS Billing"` to `"POS & Billing ERP"` aligns with `PROJECT.md` Feature F2.
+   - *Deduction*: Both links pointing to `/#suites` allows both suites to be discovered together at the dedicated dual-suite showcase anchor. A resilient fallback helper allows future direct anchors (`#billing-erp` and `#workforce-crm`) to resolve cleanly even if only `#suites` is present in DOM.
+4. **Premise 4**: Desktop action buttons must conform to the master design standard.
+   - *From 1.3*: Replacing `h-10 px-5 rounded-xl text-sm` with `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs` brings all desktop header buttons into 100% compliance with `minimal-design-system.md` § 1.
+5. **Premise 5**: Fixed command bar height eliminates visual jumps and CLS.
+   - *From 1.4*: Setting the header element to `h-12 sm:h-13` (48px mobile, 52px desktop) eliminates layout shift while matching the desktop command bar token defined in `PROJECT.md` line 9.
+6. **Premise 6**: Mobile menu links must utilize client-side navigation.
+   - *From 1.5*: Using React Router `<Link to={link.href} onClick={() => setMobileMenuOpen(false)}>` for route links eliminates full browser refreshes and ensures immediate drawer closing on mobile.
 
 ---
 
 ## 3. Caveats
-- Assumptions:
-  - The PostgreSQL function `public.update_updated_at()` already exists in the database (verified from `20261017010000_create_crm_attendance_tables.sql`).
-  - The helper function `public.has_org_access(org_id UUID)` already exists in the database (verified from `20260211173918` and `20261017000000`).
-- Areas Not Investigated:
-  - Automated direct bank disbursement APIs (Phase 3 currently manages disbursement states inside the app and exports payslip PDFs and CSVs; banking gateway integration is out of scope).
+
+1. **Milestone 2 Dependency for `#suites` Section**:
+   `id="suites"` does not yet exist in `src/pages/Landing.tsx` (it will be added in Milestone 2 under Feature F8). To prevent runtime breakages before Milestone 2 is implemented, the smooth scroll helper safely checks `if (element)` before invoking `scrollIntoView`.
+2. **Quarantine Files Lockdown**:
+   Zero touch to all 19 quarantine invoice files. `PublicHeader.tsx` does not import or affect any invoice components.
+3. **Design System Button Variants**:
+   `src/components/ui/button.tsx` already has `size="default"` configured as `h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`. The worker can use `<Button>` or standard utility classes directly.
 
 ---
 
-## 4. Conclusion & SQL Blueprint
+## 4. Conclusion & Worker Implementation Plan
 
-### 4.1 SQL Migration Blueprint (`supabase/migrations/20261017020000_create_crm_salary_tables.sql`)
+The worker must implement the following changes in `src/components/public/PublicHeader.tsx`:
 
-```sql
-BEGIN;
+### Recommended Worker Diff Blueprint
 
--- ============================================================================
--- Migration: 20261017020000_create_crm_salary_tables.sql
--- Description: CRM Phase 3: Salary Management & Payroll Engine
--- Tables:
---   1. public.crm_salary_profiles
---   2. public.crm_payroll_runs
---   3. public.crm_payslips
---   4. public.crm_salary_adjustments
--- Permissions:
---   Updates seed_crm_super_admin_for_org to include ['salary', 'approve']
--- ============================================================================
-
--- ----------------------------------------------------------------------------
--- 1. Table: public.crm_salary_profiles
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.crm_salary_profiles (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  salary_type TEXT NOT NULL DEFAULT 'monthly' CHECK (salary_type IN ('monthly', 'daily', 'hourly')),
-  base_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (base_amount >= 0),
-  currency TEXT NOT NULL DEFAULT 'INR',
-  allowed_leaves_per_month INTEGER NOT NULL DEFAULT 2 CHECK (allowed_leaves_per_month >= 0),
-  hourly_overtime_rate NUMERIC(10,2) DEFAULT 0.00 CHECK (hourly_overtime_rate >= 0),
-  pf_deduction_percent NUMERIC(5,2) DEFAULT 0.00 CHECK (pf_deduction_percent >= 0 AND pf_deduction_percent <= 100),
-  esi_deduction_percent NUMERIC(5,2) DEFAULT 0.00 CHECK (esi_deduction_percent >= 0 AND esi_deduction_percent <= 100),
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_crm_salary_profiles_staff UNIQUE (org_id, staff_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_org ON public.crm_salary_profiles(org_id);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_staff ON public.crm_salary_profiles(staff_id);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_profiles_active ON public.crm_salary_profiles(org_id, is_active);
-
-DROP TRIGGER IF EXISTS update_crm_salary_profiles_updated_at ON public.crm_salary_profiles;
-CREATE TRIGGER update_crm_salary_profiles_updated_at
-  BEFORE UPDATE ON public.crm_salary_profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
--- ----------------------------------------------------------------------------
--- 2. Table: public.crm_payroll_runs
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.crm_payroll_runs (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  month_year TEXT NOT NULL CHECK (month_year ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
-  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'locked', 'disbursed')),
-  total_payout NUMERIC(14,2) DEFAULT 0.00 CHECK (total_payout >= 0),
-  staff_count INTEGER DEFAULT 0 CHECK (staff_count >= 0),
-  locked_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  locked_at TIMESTAMPTZ,
-  notes TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_crm_payroll_runs_month UNIQUE (org_id, month_year)
-);
-
-CREATE INDEX IF NOT EXISTS idx_crm_payroll_runs_org ON public.crm_payroll_runs(org_id);
-CREATE INDEX IF NOT EXISTS idx_crm_payroll_runs_org_month ON public.crm_payroll_runs(org_id, month_year);
-CREATE INDEX IF NOT EXISTS idx_crm_payroll_runs_status ON public.crm_payroll_runs(org_id, status);
-CREATE INDEX IF NOT EXISTS idx_crm_payroll_runs_locked_by ON public.crm_payroll_runs(locked_by);
-
-DROP TRIGGER IF EXISTS update_crm_payroll_runs_updated_at ON public.crm_payroll_runs;
-CREATE TRIGGER update_crm_payroll_runs_updated_at
-  BEFORE UPDATE ON public.crm_payroll_runs
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
--- ----------------------------------------------------------------------------
--- 3. Table: public.crm_payslips
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.crm_payslips (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  payroll_run_id UUID NOT NULL REFERENCES public.crm_payroll_runs(id) ON DELETE CASCADE,
-  staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  month_year TEXT NOT NULL CHECK (month_year ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
-  salary_profile_snapshot JSONB NOT NULL,
-  working_days_in_month INTEGER NOT NULL CHECK (working_days_in_month >= 0),
-  present_days INTEGER NOT NULL DEFAULT 0 CHECK (present_days >= 0),
-  absent_days INTEGER NOT NULL DEFAULT 0 CHECK (absent_days >= 0),
-  half_days INTEGER NOT NULL DEFAULT 0 CHECK (half_days >= 0),
-  lop_days NUMERIC(5,2) NOT NULL DEFAULT 0.00 CHECK (lop_days >= 0),
-  overtime_minutes INTEGER NOT NULL DEFAULT 0 CHECK (overtime_minutes >= 0),
-  gross_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (gross_salary >= 0),
-  lop_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (lop_deduction >= 0),
-  overtime_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (overtime_amount >= 0),
-  pf_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (pf_deduction >= 0),
-  esi_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (esi_deduction >= 0),
-  advance_deduction NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (advance_deduction >= 0),
-  bonus_amount NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (bonus_amount >= 0),
-  net_salary NUMERIC(12,2) NOT NULL DEFAULT 0.00 CHECK (net_salary >= 0),
-  payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'partial')),
-  paid_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_crm_payslips_staff_month UNIQUE (org_id, staff_id, month_year)
-);
-
-CREATE INDEX IF NOT EXISTS idx_crm_payslips_org ON public.crm_payslips(org_id);
-CREATE INDEX IF NOT EXISTS idx_crm_payslips_run ON public.crm_payslips(payroll_run_id);
-CREATE INDEX IF NOT EXISTS idx_crm_payslips_staff_month ON public.crm_payslips(staff_id, month_year);
-CREATE INDEX IF NOT EXISTS idx_crm_payslips_org_month ON public.crm_payslips(org_id, month_year);
-CREATE INDEX IF NOT EXISTS idx_crm_payslips_status ON public.crm_payslips(org_id, payment_status);
-
-DROP TRIGGER IF EXISTS update_crm_payslips_updated_at ON public.crm_payslips;
-CREATE TRIGGER update_crm_payslips_updated_at
-  BEFORE UPDATE ON public.crm_payslips
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
--- ----------------------------------------------------------------------------
--- 4. Table: public.crm_salary_adjustments
--- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS public.crm_salary_adjustments (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  org_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  staff_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('advance', 'bonus', 'deduction', 'loan_repayment')),
-  amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-  description TEXT,
-  month_year TEXT CHECK (month_year IS NULL OR month_year ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'deducted', 'rejected')),
-  requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  approved_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  approved_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_crm_salary_adjustments_org ON public.crm_salary_adjustments(org_id);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_adjustments_staff ON public.crm_salary_adjustments(staff_id);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_adjustments_status ON public.crm_salary_adjustments(org_id, status);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_adjustments_month ON public.crm_salary_adjustments(org_id, month_year);
-CREATE INDEX IF NOT EXISTS idx_crm_salary_adjustments_type ON public.crm_salary_adjustments(type);
-
-DROP TRIGGER IF EXISTS update_crm_salary_adjustments_updated_at ON public.crm_salary_adjustments;
-CREATE TRIGGER update_crm_salary_adjustments_updated_at
-  BEFORE UPDATE ON public.crm_salary_adjustments
-  FOR EACH ROW
-  EXECUTE FUNCTION public.update_updated_at();
-
--- ----------------------------------------------------------------------------
--- 5. Row Level Security (RLS) Enablement
--- ----------------------------------------------------------------------------
-ALTER TABLE public.crm_salary_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.crm_payroll_runs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.crm_payslips ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.crm_salary_adjustments ENABLE ROW LEVEL SECURITY;
-
--- ----------------------------------------------------------------------------
--- 6. RLS Policies: public.crm_salary_profiles
--- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS "Members can view crm salary profiles" ON public.crm_salary_profiles;
-CREATE POLICY "Members can view crm salary profiles"
-  ON public.crm_salary_profiles FOR SELECT
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can insert crm salary profiles" ON public.crm_salary_profiles;
-CREATE POLICY "Members can insert crm salary profiles"
-  ON public.crm_salary_profiles FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can update crm salary profiles" ON public.crm_salary_profiles;
-CREATE POLICY "Members can update crm salary profiles"
-  ON public.crm_salary_profiles FOR UPDATE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can delete crm salary profiles" ON public.crm_salary_profiles;
-CREATE POLICY "Members can delete crm salary profiles"
-  ON public.crm_salary_profiles FOR DELETE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
--- ----------------------------------------------------------------------------
--- 7. RLS Policies: public.crm_payroll_runs
--- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS "Members can view crm payroll runs" ON public.crm_payroll_runs;
-CREATE POLICY "Members can view crm payroll runs"
-  ON public.crm_payroll_runs FOR SELECT
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can insert crm payroll runs" ON public.crm_payroll_runs;
-CREATE POLICY "Members can insert crm payroll runs"
-  ON public.crm_payroll_runs FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can update crm payroll runs" ON public.crm_payroll_runs;
-CREATE POLICY "Members can update crm payroll runs"
-  ON public.crm_payroll_runs FOR UPDATE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can delete crm payroll runs" ON public.crm_payroll_runs;
-CREATE POLICY "Members can delete crm payroll runs"
-  ON public.crm_payroll_runs FOR DELETE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
--- ----------------------------------------------------------------------------
--- 8. RLS Policies: public.crm_payslips
--- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS "Members can view crm payslips" ON public.crm_payslips;
-CREATE POLICY "Members can view crm payslips"
-  ON public.crm_payslips FOR SELECT
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can insert crm payslips" ON public.crm_payslips;
-CREATE POLICY "Members can insert crm payslips"
-  ON public.crm_payslips FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can update crm payslips" ON public.crm_payslips;
-CREATE POLICY "Members can update crm payslips"
-  ON public.crm_payslips FOR UPDATE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can delete crm payslips" ON public.crm_payslips;
-CREATE POLICY "Members can delete crm payslips"
-  ON public.crm_payslips FOR DELETE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
--- ----------------------------------------------------------------------------
--- 9. RLS Policies: public.crm_salary_adjustments
--- ----------------------------------------------------------------------------
-DROP POLICY IF EXISTS "Members can view crm salary adjustments" ON public.crm_salary_adjustments;
-CREATE POLICY "Members can view crm salary adjustments"
-  ON public.crm_salary_adjustments FOR SELECT
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can insert crm salary adjustments" ON public.crm_salary_adjustments;
-CREATE POLICY "Members can insert crm salary adjustments"
-  ON public.crm_salary_adjustments FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can update crm salary adjustments" ON public.crm_salary_adjustments;
-CREATE POLICY "Members can update crm salary adjustments"
-  ON public.crm_salary_adjustments FOR UPDATE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
-DROP POLICY IF EXISTS "Members can delete crm salary adjustments" ON public.crm_salary_adjustments;
-CREATE POLICY "Members can delete crm salary adjustments"
-  ON public.crm_salary_adjustments FOR DELETE
-  USING (auth.role() = 'authenticated' AND has_org_access(org_id));
-
--- ----------------------------------------------------------------------------
--- 10. RBAC Seeding Extension: Add ['salary', 'approve']
--- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.seed_crm_super_admin_for_org(_org_id UUID)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_role_id UUID;
-  v_module TEXT;
-  v_action TEXT;
-  v_modules_actions TEXT[][] := ARRAY[
-    ARRAY['attendance', 'view'],
-    ARRAY['attendance', 'edit'],
-    ARRAY['salary', 'view'],
-    ARRAY['salary', 'edit'],
-    ARRAY['salary', 'approve'],
-    ARRAY['tasks', 'view'],
-    ARRAY['tasks', 'create'],
-    ARRAY['tasks', 'approve'],
-    ARRAY['meetings', 'view'],
-    ARRAY['meetings', 'create'],
-    ARRAY['broadcasts', 'view'],
-    ARRAY['broadcasts', 'send'],
-    ARRAY['ai_assistant', 'access'],
-    ARRAY['support', 'view'],
-    ARRAY['support', 'manage']
-  ];
-  i INT;
-BEGIN
-  -- Find or create super_admin role
-  SELECT id INTO v_role_id
-  FROM public.crm_roles
-  WHERE org_id = _org_id AND is_super_admin = true
-  LIMIT 1;
-
-  IF v_role_id IS NULL THEN
-    INSERT INTO public.crm_roles (org_id, name, color, icon, is_super_admin)
-    VALUES (_org_id, 'Super Admin', '#1D4ED8', 'Crown', true)
-    RETURNING id INTO v_role_id;
-  END IF;
-
-  -- Ensure all permissions are granted
-  FOR i IN 1..array_length(v_modules_actions, 1) LOOP
-    v_module := v_modules_actions[i][1];
-    v_action := v_modules_actions[i][2];
-
-    INSERT INTO public.crm_permissions (role_id, module, action, allowed)
-    VALUES (v_role_id, v_module, v_action, true)
-    ON CONFLICT (role_id, module, action)
-    DO NOTHING;
-  END LOOP;
-
-  RETURN v_role_id;
-END;
-$$;
-
--- Seed for all existing organizations
-DO $$
-DECLARE
-  r RECORD;
-BEGIN
-  FOR r IN SELECT id FROM public.organizations LOOP
-    PERFORM public.seed_crm_super_admin_for_org(r.id);
-  END LOOP;
-END;
-$$;
-
-COMMIT;
+#### Change 1: Update `navLinks` (Dual-Suite Foundation)
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -40,4 +40,4 @@
+   const navLinks = [
+     { label: "Home", href: "/" },
+-    { label: "POS Billing", href: "/#suites" },
++    { label: "POS & Billing ERP", href: "/#suites" },
+     { label: "Workforce CRM", href: "/#suites" },
 ```
 
----
-
-### 4.2 TypeScript Schema Definitions for `src/integrations/supabase/types.ts`
-
-These definitions must be added to `Database["public"]["Tables"]`:
-
-```typescript
-      crm_payroll_runs: {
-        Row: {
-          created_at: string
-          id: string
-          locked_at: string | null
-          locked_by: string | null
-          month_year: string
-          notes: string | null
-          org_id: string
-          staff_count: number
-          status: string
-          total_payout: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          locked_at?: string | null
-          locked_by?: string | null
-          month_year: string
-          notes?: string | null
-          org_id: string
-          staff_count?: number
-          status?: string
-          total_payout?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          locked_at?: string | null
-          locked_by?: string | null
-          month_year?: string
-          notes?: string | null
-          org_id?: string
-          staff_count?: number
-          status?: string
-          total_payout?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_payroll_runs_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crm_payslips: {
-        Row: {
-          absent_days: number
-          advance_deduction: number
-          bonus_amount: number
-          created_at: string
-          esi_deduction: number
-          gross_salary: number
-          half_days: number
-          id: string
-          lop_days: number
-          lop_deduction: number
-          month_year: string
-          net_salary: number
-          org_id: string
-          overtime_amount: number
-          overtime_minutes: number
-          paid_at: string | null
-          payment_status: string
-          payroll_run_id: string
-          pf_deduction: number
-          present_days: number
-          salary_profile_snapshot: Json
-          staff_id: string
-          updated_at: string
-          working_days_in_month: number
-        }
-        Insert: {
-          absent_days?: number
-          advance_deduction?: number
-          bonus_amount?: number
-          created_at?: string
-          esi_deduction?: number
-          gross_salary?: number
-          half_days?: number
-          id?: string
-          lop_days?: number
-          lop_deduction?: number
-          month_year: string
-          net_salary?: number
-          org_id: string
-          overtime_amount?: number
-          overtime_minutes?: number
-          paid_at?: string | null
-          payment_status?: string
-          payroll_run_id: string
-          pf_deduction?: number
-          present_days?: number
-          salary_profile_snapshot: Json
-          staff_id: string
-          updated_at?: string
-          working_days_in_month: number
-        }
-        Update: {
-          absent_days?: number
-          advance_deduction?: number
-          bonus_amount?: number
-          created_at?: string
-          esi_deduction?: number
-          gross_salary?: number
-          half_days?: number
-          id?: string
-          lop_days?: number
-          lop_deduction?: number
-          month_year?: string
-          net_salary?: number
-          org_id?: string
-          overtime_amount?: number
-          overtime_minutes?: number
-          paid_at?: string | null
-          payment_status?: string
-          payroll_run_id?: string
-          pf_deduction?: number
-          present_days?: number
-          salary_profile_snapshot?: Json
-          staff_id?: string
-          updated_at?: string
-          working_days_in_month?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_payslips_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crm_payslips_payroll_run_id_fkey"
-            columns: ["payroll_run_id"]
-            isOneToOne: false
-            referencedRelation: "crm_payroll_runs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crm_salary_adjustments: {
-        Row: {
-          amount: number
-          approved_at: string | null
-          approved_by: string | null
-          created_at: string
-          description: string | null
-          id: string
-          month_year: string | null
-          org_id: string
-          requested_by: string | null
-          staff_id: string
-          status: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          approved_at?: string | null
-          approved_by?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          month_year?: string | null
-          org_id: string
-          requested_by?: string | null
-          staff_id: string
-          status?: string
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          approved_at?: string | null
-          approved_by?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          month_year?: string | null
-          org_id?: string
-          requested_by?: string | null
-          staff_id?: string
-          status?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_salary_adjustments_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crm_salary_profiles: {
-        Row: {
-          allowed_leaves_per_month: number
-          base_amount: number
-          created_at: string
-          currency: string
-          esi_deduction_percent: number
-          hourly_overtime_rate: number
-          id: string
-          is_active: boolean
-          org_id: string
-          pf_deduction_percent: number
-          salary_type: string
-          staff_id: string
-          updated_at: string
-        }
-        Insert: {
-          allowed_leaves_per_month?: number
-          base_amount?: number
-          created_at?: string
-          currency?: string
-          esi_deduction_percent?: number
-          hourly_overtime_rate?: number
-          id?: string
-          is_active?: boolean
-          org_id: string
-          pf_deduction_percent?: number
-          salary_type?: string
-          staff_id: string
-          updated_at?: string
-        }
-        Update: {
-          allowed_leaves_per_month?: number
-          base_amount?: number
-          created_at?: string
-          currency?: string
-          esi_deduction_percent?: number
-          hourly_overtime_rate?: number
-          id?: string
-          is_active?: boolean
-          org_id?: string
-          pf_deduction_percent?: number
-          salary_type?: string
-          staff_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crm_salary_profiles_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+#### Change 2: Fix Double-Slash Bug, Anchor Fallback & Hash Listener
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -23,2 +23,26 @@
+   const [scrolled, setScrolled] = useState(false);
++
++  // Helper to find target element with resilient dual-suite fallback
++  const findTargetElement = (id: string) => {
++    return (
++      document.getElementById(id) ||
++      (id === "billing-erp" || id === "workforce-crm" ? document.getElementById("suites") : null) ||
++      (id === "suites" ? (document.getElementById("billing-erp") || document.getElementById("workforce-crm")) : null)
++    );
++  };
++
++  // Smooth scroll to hash anchor after cross-page navigation
++  useEffect(() => {
++    if (location.pathname === "/" && location.hash) {
++      const targetId = location.hash.replace("#", "");
++      const timer = setTimeout(() => {
++        const element = findTargetElement(targetId);
++        if (element) {
++          element.scrollIntoView({ behavior: "smooth" });
++        }
++      }, 80);
++      return () => clearTimeout(timer);
++    }
++  }, [location.pathname, location.hash]);
+@@ -52,14 +76,21 @@
+   const handleNavClick = (href: string) => {
+-    if (href.startsWith("/#")) {
+-      const elementId = href.replace("/#", "");
++    if (href.startsWith("/#") || href.startsWith("#")) {
++      const targetHash = href.startsWith("/#") ? href.slice(1) : href; // e.g. "#suites"
++      const targetId = targetHash.replace("#", "");
+       if (location.pathname !== "/") {
+-        navigate(`/${href}`);
++        // Clean path without double-slashes: e.g. navigate("/#suites")
++        navigate(`/${targetHash}`);
+       } else {
+-        const element = document.getElementById(elementId);
++        const element = findTargetElement(targetId);
+         if (element) {
+           element.scrollIntoView({ behavior: "smooth" });
++          window.history.pushState(null, "", `/${targetHash}`);
+         }
+       }
++    } else {
++      navigate(href);
+     }
+   };
 ```
 
----
+#### Change 3: Fixed Header Height (`h-12 sm:h-13`) & Layout Shift Prevention
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -67,8 +98,8 @@
+     <header
+       className={cn(
+-        "sticky top-0 z-50 w-full transition-all duration-200 bg-white/95 backdrop-blur-md",
++        "sticky top-0 z-50 w-full h-12 sm:h-13 transition-colors duration-150 bg-white/95 backdrop-blur-md border-b flex items-center select-none",
+         scrolled
+-          ? "border-b border-slate-200/80 shadow-sm py-2.5"
+-          : "border-b border-transparent py-3 sm:py-4"
++          ? "border-slate-200/80 shadow-2xs"
++          : "border-slate-200/40"
+       )}
+     >
+```
 
-### 4.3 Domain Type Definitions (`src/types/crmSalary.ts` / `src/utils/crmPayrollUtils.ts`)
+#### Change 4: Desktop Center Nav Links Refinement & Active States
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -82,29 +113,38 @@
+-        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
++        <nav className="hidden lg:flex items-center gap-2.5 xl:gap-4.5 2xl:gap-6">
+           {navLinks.map((link) => {
+-            const isExactActive = location.pathname === link.href;
+-            return link.href.startsWith("/#") ? (
++            const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");
++            const targetHash = isAnchor ? (link.href.startsWith("/#") ? link.href.slice(1) : link.href) : null;
++            const isExactActive = isAnchor
++              ? location.pathname === "/" && location.hash === targetHash
++              : location.pathname === link.href && (!location.hash || link.href !== "/");
++
++            const commonClasses = cn(
++              "text-xs xl:text-[13px] transition-colors whitespace-nowrap py-1 cursor-pointer",
++              isExactActive
++                ? "font-semibold text-blue-600"
++                : "font-medium text-slate-600 hover:text-slate-900"
++            );
++
++            return isAnchor ? (
+               <a
+                 key={link.label}
+                 href={link.href}
+                 onClick={(e) => {
+                   e.preventDefault();
+                   handleNavClick(link.href);
+                 }}
+-                className="text-[15px] font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
++                className={commonClasses}
+               >
+                 {link.label}
+               </a>
+             ) : (
+               <Link
+                 key={link.label}
+                 to={link.href}
+-                className={cn(
+-                  "text-[15px] transition-colors",
+-                  isExactActive
+-                    ? "font-bold text-slate-950"
+-                    : "font-medium text-slate-600 hover:text-slate-900"
+-                )}
++                className={commonClasses}
+               >
+                 {link.label}
+               </Link>
+             );
+           })}
+         </nav>
+```
 
-```typescript
-export type SalaryType = "monthly" | "daily" | "hourly";
-export type PayrollRunStatus = "draft" | "locked" | "disbursed";
-export type PayslipPaymentStatus = "pending" | "paid" | "partial";
-export type SalaryAdjustmentType = "advance" | "bonus" | "deduction" | "loan_repayment";
-export type SalaryAdjustmentStatus = "pending" | "approved" | "deducted" | "rejected";
+#### Change 5: Standardize Desktop Action Buttons (`h-8.5 px-3 rounded-lg text-xs font-semibold shadow-2xs`)
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -115,44 +155,44 @@
+-        <div className="hidden sm:flex items-center gap-2.5">
++        <div className="hidden sm:flex items-center gap-2">
+           {/* Download App Quick Trigger */}
+           <button
+             type="button"
+             onClick={() => {
+               if (onOpenDownloadModal) {
+                 onOpenDownloadModal("android");
+               } else {
+                 handleNavClick("/#download");
+               }
+             }}
+-            className="h-10 px-3.5 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs sm:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
++            className="h-8.5 px-3 rounded-lg border border-slate-200/80 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
+           >
+             <Download className="w-3.5 h-3.5 text-blue-600" />
+-            <span className="hidden md:inline">Download App</span>
+-            <span className="md:hidden">App</span>
++            <span className="hidden xl:inline">Download App</span>
++            <span className="xl:hidden">App</span>
+           </button>
 
-export interface CrmSalaryProfile {
-  id: string;
-  org_id: string;
-  staff_id: string;
-  salary_type: SalaryType;
-  base_amount: number;
-  currency: string;
-  allowed_leaves_per_month: number;
-  hourly_overtime_rate: number;
-  pf_deduction_percent: number;
-  esi_deduction_percent: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+           {user ? (
+             <Link to={targetAppRoute}>
+-              <Button className="h-10 px-5 rounded-xl bg-gradient-to-r from-blue-700 to-blue-600 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all">
+-                Open Workspace <ArrowRight className="w-4 h-4 ml-1.5" />
++              <Button className="h-8.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 flex items-center gap-1.5">
++                Open Workspace <ArrowRight className="w-3.5 h-3.5" />
+               </Button>
+             </Link>
+           ) : (
+             <>
+               <Link to={`${ROUTE_PATHS.auth}?mode=login`}>
+                 <button
+                   type="button"
+-                  className="h-10 px-4.5 rounded-xl border border-blue-600/80 text-blue-600 hover:bg-blue-50 font-semibold text-sm transition-all cursor-pointer"
++                  className="h-8.5 px-3 rounded-lg border border-slate-200/80 hover:border-slate-300 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 cursor-pointer"
+                 >
+                   Login
+                 </button>
+               </Link>
+               <Link to={`${ROUTE_PATHS.auth}?mode=signup`}>
+                 <button
+                   type="button"
+-                  className="h-10 px-5 rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-sm shadow-md shadow-orange-500/20 transition-all cursor-pointer"
++                  className="h-8.5 px-3 rounded-lg bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-xs shadow-2xs active:scale-[0.98] transition-colors duration-150 cursor-pointer flex items-center gap-1"
+                 >
+                   Start Free
+                 </button>
+               </Link>
+             </>
+           )}
+         </div>
+```
 
-export interface CrmPayrollRun {
-  id: string;
-  org_id: string;
-  month_year: string;
-  status: PayrollRunStatus;
-  total_payout: number;
-  staff_count: number;
-  locked_by: string | null;
-  locked_at: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CrmPayslip {
-  id: string;
-  org_id: string;
-  payroll_run_id: string;
-  staff_id: string;
-  month_year: string;
-  salary_profile_snapshot: Record<string, unknown>;
-  working_days_in_month: number;
-  present_days: number;
-  absent_days: number;
-  half_days: number;
-  lop_days: number;
-  overtime_minutes: number;
-  gross_salary: number;
-  lop_deduction: number;
-  overtime_amount: number;
-  pf_deduction: number;
-  esi_deduction: number;
-  advance_deduction: number;
-  bonus_amount: number;
-  net_salary: number;
-  payment_status: PayslipPaymentStatus;
-  paid_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CrmSalaryAdjustment {
-  id: string;
-  org_id: string;
-  staff_id: string;
-  type: SalaryAdjustmentType;
-  amount: number;
-  description: string | null;
-  month_year: string | null;
-  status: SalaryAdjustmentStatus;
-  requested_by: string | null;
-  approved_by: string | null;
-  approved_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+#### Change 6: Fix Mobile Drawer Client-Side Routing & Tactile Actions
+```diff
+--- a/src/components/public/PublicHeader.tsx
++++ b/src/components/public/PublicHeader.tsx
+@@ -176,17 +216,40 @@
+-            {navLinks.map((link) => (
+-              <a
+-                key={link.label}
+-                href={link.href}
+-                onClick={(e) => {
+-                  if (link.href.startsWith("/#")) {
+-                    e.preventDefault();
+-                    handleNavClick(link.href);
+-                    setMobileMenuOpen(false);
+-                  }
+-                }}
+-                className="px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+-              >
+-                {link.label}
+-              </a>
+-            ))}
++            {navLinks.map((link) => {
++              const isAnchor = link.href.startsWith("/#") || link.href.startsWith("#");
++              const isExactActive = isAnchor
++                ? location.pathname === "/" && location.hash === (link.href.startsWith("/#") ? link.href.slice(1) : link.href)
++                : location.pathname === link.href;
++
++              const linkClasses = cn(
++                "px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-between",
++                isExactActive
++                  ? "bg-blue-50 text-blue-700 font-semibold"
++                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
++              );
++
++              return isAnchor ? (
++                <a
++                  key={link.label}
++                  href={link.href}
++                  onClick={(e) => {
++                    e.preventDefault();
++                    handleNavClick(link.href);
++                    setMobileMenuOpen(false);
++                  }}
++                  className={linkClasses}
++                >
++                  <span>{link.label}</span>
++                </a>
++              ) : (
++                <Link
++                  key={link.label}
++                  to={link.href}
++                  onClick={() => setMobileMenuOpen(false)}
++                  className={linkClasses}
++                >
++                  <span>{link.label}</span>
++                </Link>
++              );
++            })}
 ```
 
 ---
 
 ## 5. Verification Method
 
-### 5.1 Proposed Test Suites
-To verify this migration and its types, the test writer should implement two test suites:
-
-1. `src/test/crmSalaryMigration.test.ts` (15+ tests):
-   - **T1: Syntax & Wrapping**:
-     - File exists and is non-empty.
-     - Script starts with `BEGIN;` and ends with `COMMIT;`.
-     - Parentheses, single quotes, and double quotes are balanced.
-   - **T2: Table & Column DDL**:
-     - All 4 tables exist with `CREATE TABLE IF NOT EXISTS public.<name>`.
-     - Primary keys are UUID with `DEFAULT gen_random_uuid() PRIMARY KEY`.
-     - Foreign keys reference `public.organizations(id) ON DELETE CASCADE` and `auth.users(id) ON DELETE CASCADE`.
-   - **T3: Constraints & Unique Keys**:
-     - `uq_crm_salary_profiles_staff` on `(org_id, staff_id)`.
-     - `uq_crm_payroll_runs_month` on `(org_id, month_year)`.
-     - `uq_crm_payslips_staff_month` on `(org_id, staff_id, month_year)`.
-     - Check constraints on salary_type, payroll status, payment status, adjustment type, adjustment status.
-   - **T4: Idempotency & Triggers**:
-     - All indexes use `CREATE INDEX IF NOT EXISTS`.
-     - All 4 triggers preceded by `DROP TRIGGER IF EXISTS`.
-     - All 16 policies preceded by `DROP POLICY IF EXISTS`.
-   - **T5: RLS Security**:
-     - `ENABLE ROW LEVEL SECURITY` called on all 4 tables.
-     - All 16 policies require `auth.role() = 'authenticated'` and `has_org_access(org_id)`.
-
-2. `src/test/crmSalaryTypes.test.ts` (10+ tests):
-   - Type verification of `Database["public"]["Tables"]` for all 4 tables (`Row`, `Insert`, `Update`).
-   - Domain type assignability checks for `CrmSalaryProfile`, `CrmPayrollRun`, `CrmPayslip`, and `CrmSalaryAdjustment`.
-   - Union string literal checks for `SalaryType`, `PayrollRunStatus`, `PayslipPaymentStatus`, `SalaryAdjustmentType`, `SalaryAdjustmentStatus`.
-
-### 5.2 Verification Commands
-```bash
-# Typecheck to confirm zero compile errors
-cmd /c npx tsc --noEmit
-
-# Run migration and types tests
-cmd /c npx vitest run src/test/crmSalaryMigration.test.ts src/test/crmSalaryTypes.test.ts
-
-# Confirm zero regression on existing Phase 1 & 2 tests
-cmd /c npx vitest run src/test/crmAttendanceMigrationStress.test.ts
+### 5.1 Automated Project Tests
+Execute the following verification command:
+```powershell
+cmd /c "npm test -- --run src/test/universalHeaderDualLockup.test.tsx"
 ```
+**Expected Outcome**: 12/12 passing with 0 errors.
 
-### 5.3 Invalidation Conditions
-- If column names deviate between migration SQL and Supabase types (e.g. `monthYear` instead of `month_year`).
-- If numeric monetary columns are declared as `FLOAT` or `DOUBLE PRECISION` rather than exact `NUMERIC(12,2)` / `NUMERIC(14,2)` (floating point drift in payroll).
-- If any table omits `IF NOT EXISTS` or triggers omit `DROP TRIGGER IF EXISTS`, breaking repeated execution.
+### 5.2 Build Verification
+```powershell
+cmd /c "npm run build"
+```
+**Expected Outcome**: Zero TypeScript errors, clean bundle compilation.
+
+### 5.3 Quarantine Files Lockdown Verification
+```powershell
+cmd /c "node .agents/teamwork/auditor_m3/verify_protected.cjs"
+```
+**Expected Outcome**: 19/19 quarantined invoice files intact with 0 differences.
+
+### 5.4 Manual Inspection Checklist
+1. **Double-Slash Bug**: Load `/features`, click "POS & Billing ERP". Browser URL should be `/#suites`, NOT `//#suites`.
+2. **Button Height**: Inspect desktop "Login" and "Start Free" buttons in dev tools. Computed height must be exactly `34px` (`h-8.5`).
+3. **Desktop Header Height**: Inspect `<header>` in dev tools at screen width >= 768px. Computed height must be exactly `52px` (`h-13`), with no vertical shift upon scroll.
+4. **Mobile Navigation**: Open mobile drawer on `< 768px` viewport. Click "Features". Drawer closes and route transitions client-side without full-page browser refresh.
+
+### 5.5 Invalidation Conditions
+- Any occurrence of `navigate('/' + href)` returning `//` anywhere in header logic.
+- Any desktop action button retaining `h-10`, `h-11`, or `rounded-xl`.
+- Any modification to quarantined invoice files.

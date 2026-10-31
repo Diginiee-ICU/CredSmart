@@ -1,20 +1,18 @@
-# Progress — Worker Milestone 1: Universal Header Dual Lockup
+# Progress Tracker - Worker M1 (Navigation & Shell)
 
-Last visited: 2026-10-27T03:18:00Z
-Status: Completed
+- **Agent**: worker_m1
+- **Status**: Starting investigation
+- **Last visited**: 2026-10-31T10:55:30Z
 
-## Milestones & Checklist
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [x] Read ORIGINAL_REQUEST.md, explorer findings, and AppLayout.tsx
-- [x] Examine desktopShellMilestone2.challenger.test.tsx and mobileErgonomicsChallenger.test.ts
-- [x] Implement dual lockup in AppLayout.tsx
-  - Permanent CredSmart platform shield using `/favicon.png` in 28x28px/30x30px container
-  - Styled `CredSmart` wordmark (`hidden sm:inline`)
-  - 1px hairline divider (`h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1`)
-  - Responsive Tenant Store Switcher trigger pill displaying store logo/Building2 fallback and name/My Business fallback
-  - Desktop-only sidebar toggle (`hidden sm:flex`) and suite switcher (`hidden sm:inline-flex`)
-  - Strict 48px mobile height (`h-[calc(3rem+env(safe-area-inset-top,0px))]`) and 52px desktop height (`md:h-13`)
-- [x] Update desktopShellMilestone2.challenger.test.tsx to assert permanent /favicon.png shield mark & responsive trigger
-- [x] Create universalHeaderDualLockup.test.tsx with comprehensive static and empirical DOM tests
-- [x] Run vitest test suite & tsc --noEmit (all passed!)
-- [ ] Write handoff.md and send completion message to orchestrator
+## Checklist
+- [ ] Read ORIGINAL_REQUEST.md and PROJECT.md
+- [ ] Read Explorer handoffs (explorer_m1_1, explorer_m1_2, explorer_m1_3)
+- [ ] Inspect existing owned files: tailwind.config.ts, PublicHeader.tsx, PublicFooter.tsx, PublicConversionBanner.tsx, PublicLayout.tsx
+- [ ] Implement Task 1: `tailwind.config.ts` spacing extension
+- [ ] Implement Task 2: `src/components/public/PublicHeader.tsx` updates & bug fixes
+- [ ] Implement Task 3: `src/components/public/PublicFooter.tsx` dual-suite & grid updates
+- [ ] Implement Task 4: `src/components/public/PublicConversionBanner.tsx` button & copy updates
+- [ ] Implement Task 5: `src/components/public/PublicLayout.tsx` hash-aware scroll
+- [ ] Implement Task 6: `src/test/publicShellComponents.test.tsx` test suite
+- [ ] Run verification checks (auditor script, tsc, vitest tests)
+- [ ] Produce handoff report and notify orchestrator
