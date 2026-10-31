@@ -1,7 +1,7 @@
 # Progress Tracker
 
 ## Current Status
-Last visited: 2026-10-31T12:38:30Z
+Last visited: 2026-10-31T12:58:30Z
 
 - [x] Initial dispatch received and logged to DISPATCH.md
 - [x] Initialized BRIEFING.md and plan.md
@@ -20,7 +20,7 @@ Last visited: 2026-10-31T12:38:30Z
 - [/] Milestone 2: Desktop Landing Page Dual-Suite Redesign [IN_PROGRESS - Phase 2B.c-e Verification]
   - [x] Explorers M2: All 3 Explorers completed blueprints (`Landing.tsx`, `HeroDashboardCard.tsx`, Module Explorer)
   - [x] Worker M2 (ec5a8772-cebc-4d99-897a-83daa9439c28): Landing.tsx & HeroDashboardCard.tsx completed; 82/82 tests pass [COMPLETED]
-  - [/] Verifiers M2: Dispatching 2 Reviewers, 2 Challengers, 1 Auditor [ACTIVE]
+  - [/] Verifiers M2: 2 Reviewers, 2 Challengers, 1 Auditor dispatched [IN_PROGRESS]
   - [ ] Gate Evaluation M2
 - [ ] Milestone 3: Core Public Pages Redesign
 - [ ] Milestone 4: Trust, Security & Knowledge Pages

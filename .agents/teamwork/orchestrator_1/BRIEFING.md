@@ -78,18 +78,23 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 | explorer_m2_landing_2 | teamwork_explorer | M2 Dual-Suite Preview Dock Explorer | completed | 4403842c-aee9-46dd-a736-d12ceabba445 |
 | explorer_m2_landing_3 | teamwork_explorer | M2 Module Explorer & Token Explorer | completed | 8493fa9f-4628-4d30-9f5d-6b93fef22717 |
 | worker_m2_landing | teamwork_worker | M2 Landing Redesign Worker | completed | ec5a8772-cebc-4d99-897a-83daa9439c28 |
+| reviewer_m2_landing_1 | teamwork_reviewer | M2 Landing Page Code & Dual-Suite Reviewer | in-progress | 8b31d258-8dcf-429d-82ac-03a54fcb9f53 |
+| reviewer_m2_landing_2 | teamwork_reviewer | M2 Viewport Containment, Tokens & Invariance Reviewer | in-progress | f311dbc6-46ed-4c46-9049-5a8a803a3020 |
+| challenger_m2_landing_1 | teamwork_challenger | M2 Preview Dock Interactive & Viewport Challenger | in-progress | 528cbfea-087f-451d-a66d-a33a96448c1e |
+| challenger_m2_landing_2 | teamwork_challenger | M2 #suites Anchor Contract & Module Explorer Challenger | in-progress | d60724e0-4fd0-49da-a024-47644f2d5950 |
+| auditor_m2_landing | teamwork_auditor | M2 Forensic Integrity Auditor | in-progress | a96e6576-bf4c-495f-9775-cd420a708b25 |
 
 ## Succession Status
 - Succession required: no (Generation 2 active)
-- Spawn count: 4 / 16 (Generation 2)
-- Total historic spawns: 24
-- Pending subagents: none
+- Spawn count: 9 / 16 (Generation 2)
+- Total historic spawns: 29
+- Pending subagents: 8b31d258-8dcf-429d-82ac-03a54fcb9f53, f311dbc6-46ed-4c46-9049-5a8a803a3020, 528cbfea-087f-451d-a66d-a33a96448c1e, d60724e0-4fd0-49da-a024-47644f2d5950, a96e6576-bf4c-495f-9775-cd420a708b25
 - Predecessor: Generation 1 (spawn count reached 20, state dumped to handoff.md)
 - Successor: Generation 2 (in-place)
 
 ## Active Timers
 - Heartbeat cron: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-594
-- Safety timer: none
+- Safety timer: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-804
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Authoritative User Request
