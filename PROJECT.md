@@ -46,7 +46,7 @@ CredSmart is an Enterprise Hybrid Dual-Suite Platform:
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Navigation, Brand & Dual-Suite Foundation | `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicLayout.tsx`, `PublicConversionBanner.tsx` | None | IN_PROGRESS (Explorers e85dd661, 551d7bcd, 332c706e) |
+| M1 | Navigation, Brand & Dual-Suite Foundation | `PublicHeader.tsx`, `PublicFooter.tsx`, `PublicLayout.tsx`, `PublicConversionBanner.tsx` | None | DONE (Gate passed, 172/172 tests, 19/19 quarantine clean) |
 | M2 | Desktop Landing Page Dual-Suite Redesign | `Landing.tsx`, `HeroDashboardCard.tsx`, interactive dual preview dock, `#suites` section, bounded module explorer | M1 | PLANNED |
 | M3 | Core Public Pages Redesign | `Features.tsx`, `Pricing.tsx`, `About.tsx`, `Contact.tsx` | M1 | PLANNED |
 | M4 | Trust, Security & Knowledge Pages | `Security.tsx`, `FaqPage.tsx`, comparison pages, guide pages | M1 | PLANNED |
