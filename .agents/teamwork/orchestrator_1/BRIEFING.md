@@ -24,14 +24,14 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
   1. Survey & Codebase Exploration [done]
   2. PROJECT.md formulation & decomposition [done]
   3. E2E Testing Track dispatch [done - TEST_READY.md published]
-  4. Milestone 1: Navigation, Brand & Dual-Suite Foundation [in-progress - Iteration 2 remediation]
-  5. Milestone 2: Desktop Landing Page Dual-Suite Redesign [pending]
+  4. Milestone 1: Navigation, Brand & Dual-Suite Foundation [done - Gate 2 PASS]
+  5. Milestone 2: Desktop Landing Page Dual-Suite Redesign [pending - next for Gen 2]
   6. Milestone 3: Core Public Pages Redesign [pending]
   7. Milestone 4: Trust, Security & Knowledge Pages [pending]
   8. Milestone 5: Full-Stack SEO & Crawler Privacy Architecture [pending]
   9. Milestone 6: Final Verification, E2E Pass & Forensic Audit [pending]
-- **Current phase**: 1 (Milestone 1 Iteration 2 Remediation)
-- **Current focus**: Remediation of PublicHeader mobile drawer layout
+- **Current phase**: 2 (Milestone 2: Desktop Landing Page Dual-Suite Redesign)
+- **Current focus**: Succession to Generation 2 Orchestrator
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -48,7 +48,9 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 
 ## Key Decisions Made
 - Milestone 1 Iteration 1 Gate failed solely on Reviewer 2 REQUEST_CHANGES (mobile drawer lacking absolute positioning inside horizontal flex header). Auditor verified CLEAN, Reviewer 1 & Challengers verified APPROVE.
-- Dispatched Explorer M1 R2 (`4f7f03bb-c257-4acd-8797-0900c10225b3`) to formulate the exact remediation blueprint for Worker M1 R2.
+- Dispatched Explorer M1 R2 (`4f7f03bb-c257-4acd-8797-0900c10225b3`) and Worker M1 R2 (`3a310f26-bb9a-4436-a2e6-c89bbbfc557f`) to implement absolute dropdown overlay and React Router navigation sync.
+- Milestone 1 Iteration 2 Gate passed unanimously: Reviewer 1 (APPROVE), Reviewer 2 (APPROVE), Challenger 1 (APPROVE), Challenger 2 (APPROVE), Auditor (CLEAN). All 172 tests passed, 19/19 quarantined invoice files untouched (0 diff).
+- Succession threshold reached (20 cumulative spawns >= 16) with all subagents completed. Preparing handover to Gen 2 successor.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
@@ -71,19 +73,19 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 | reviewer_m1_round2_1 | teamwork_reviewer | M1 Code & Interface Reviewer | completed (APPROVE) | 4134440b-105a-45ff-8502-3444fb047670 |
 | reviewer_m1_round2_2 | teamwork_reviewer | M1 Layout & Regression Reviewer | completed (APPROVE) | 69bf42d3-c816-460f-adf7-e133dde6c33a |
 | challenger_m1_round2_1 | teamwork_challenger | M1 Mobile Layout & Viewport Challenger | completed (APPROVE) | 45ac71e7-b1e1-46b2-8203-34013055f143 |
-| challenger_m1_round2_2 | teamwork_challenger | M1 Router & Navigation State Challenger | in-progress (nudged) | 2d1e43d5-b50e-4d86-a197-373a100cbd5f |
+| challenger_m1_round2_2 | teamwork_challenger | M1 Router & Navigation State Challenger | completed (APPROVE) | 2d1e43d5-b50e-4d86-a197-373a100cbd5f |
 | auditor_m1_round2 | teamwork_auditor | M1 Forensic Integrity Auditor | completed (CLEAN) | 014399e2-8d56-4448-ac84-4019b05e9434 |
 
 ## Succession Status
-- Succession required: yes (threshold reached, pending Challenger 2)
+- Succession required: yes (threshold reached, 20 cumulative spawns >= 16)
 - Spawn count: 20 / 16
-- Pending subagents: 2d1e43d5-b50e-4d86-a197-373a100cbd5f
+- Pending subagents: none
 - Predecessor: none
-- Successor: not yet spawned
+- Successor: spawning gen2
 
 ## Active Timers
-- Heartbeat cron: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-36
-- Safety timer: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-532
+- Heartbeat cron: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-36 (to be cancelled prior to spawn)
+- Safety timer: none
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Authoritative User Request
@@ -92,6 +94,8 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\plan.md — Orchestration plan
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\progress.md — Liveness & status tracking
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\GATE_STATUS.md — Milestone 1 Gate Status
+- c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\orchestrator_1\handoff.md — Soft handoff for Generation 2 Successor
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\PROJECT.md — Global architecture, feature inventory, milestones
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_INFRA.md — E2E Test Infrastructure & methodology
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\TEST_READY.md — E2E Test Suite Sign-off
+
