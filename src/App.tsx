@@ -196,6 +196,10 @@ function HomeRoute() {
   // Priority 1: Cold launch for Native Mobile (Capacitor), Desktop Standalone (Electron), or Standalone PWA
   const isStandaloneApp = isNativePlatform() || isDesktopApp || (typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches);
   if (isStandaloneApp && !portalActive) {
+    const onboardingCompleted = typeof window !== "undefined" && localStorage.getItem("credsmart_onboarding_completed") === "true";
+    if (!onboardingCompleted && isNativePlatform()) {
+      return <MobileAppStartingCards />;
+    }
     return <ColdLaunchHub />;
   }
 
@@ -242,6 +246,7 @@ const App = () => (
                     <Routes>
                     {/* Public & Mobile App Routes */}
                     <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
+                    <Route path="/onboarding" element={<MobileAppStartingCards />} />
                     <Route path="/app" element={<AppEntryRoute />} />
                     <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
                     <Route path={ROUTE_PATHS.features} element={<PublicMarketingRoute element={<Features />} />} />

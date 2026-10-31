@@ -86,7 +86,13 @@ export function ColdLaunchHub(): React.ReactElement {
   }, [isDark]);
 
   return (
-    <div className="min-h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-3.5 sm:p-6 transition-colors duration-200">
+    <div
+      className="min-h-[100dvh] w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-3.5 sm:p-6 transition-colors duration-200 overflow-y-auto"
+      style={{
+        paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+      }}
+    >
       {/* Top Header */}
       <header className="w-full max-w-4xl mx-auto flex items-center justify-between py-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
