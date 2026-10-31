@@ -152,7 +152,7 @@ describe("Universal Header Dual Lockup Test Suite", () => {
     it("verifies store switcher trigger is visible on mobile with responsive max-width", () => {
       // Trigger must use 'flex'
       expect(appLayoutSource).toMatch(
-        /flex\s+h-7\s+sm:h-8\s+px-1\.5\s+sm:px-2\.5\s+rounded-lg\s+border\s+border-slate-200\/80\s+dark:border-slate-800\s+bg-slate-50/
+        /flex\s+(?:h-7\s+sm:h-8\s+px-1\.5\s+sm:px-2\.5|h-8\.5\s+px-2\.5)\s+rounded-lg\s+border\s+border-slate-200\/80\s+dark:border-slate-800\s+(?:bg-slate-50|bg-white\s+dark:bg-slate-900)/
       );
       // Must contain responsive max-widths
       expect(appLayoutSource).toMatch(/max-w-\[100px\]\s+xs:max-w-\[130px\]\s+sm:max-w-\[180px\]\s+lg:max-w-\[220px\]/);

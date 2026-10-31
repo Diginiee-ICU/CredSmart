@@ -69,7 +69,7 @@ export function WorkspaceSwitcher(): React.ReactElement | null {
           title="Switch Workspace"
           aria-label="Switch Workspace"
           data-testid="workspace-switcher-trigger"
-          className="h-7 sm:h-8 px-2 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-colors cursor-pointer select-none"
+          className="h-8.5 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5 text-slate-700 dark:text-slate-300 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-colors cursor-pointer select-none"
         >
           <ArrowRightLeft className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
           <span className="hidden sm:inline">

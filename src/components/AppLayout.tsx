@@ -522,7 +522,7 @@ export default function AppLayout() {
                     loading="eager"
                   />
                 </div>
-                <span className="hidden xs:inline font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-sans shrink-0">
+                <span className="hidden sm:inline font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-sans shrink-0">
                   CredSmart
                 </span>
               </NavLink>
@@ -536,7 +536,7 @@ export default function AppLayout() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex h-7 sm:h-8 px-1.5 sm:px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]"
+                      className="flex h-8.5 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 items-center gap-1.5 shadow-2xs transition-colors cursor-pointer select-none max-w-[100px] xs:max-w-[130px] sm:max-w-[180px] lg:max-w-[220px]"
                       title={org?.name || "Select Business"}
                     >
                       {org?.logo_url ? (
@@ -611,6 +611,9 @@ export default function AppLayout() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+
+              {/* 1px Hairline Divider — Desktop only */}
+              <div className="hidden sm:block h-4 w-px bg-slate-200 dark:bg-slate-800 shrink-0 mx-0.5 sm:mx-1" aria-hidden="true" />
 
               {/* Universal Workspace Switcher */}
               <div className="flex items-center shrink-0">
