@@ -77,19 +77,20 @@ Design production-ready desktop public pages and landing pages for CredSmart, pr
 | explorer_m2_landing_1 | teamwork_explorer | M2 Landing Hero & Viewport Explorer | completed | 4220a296-fc6f-435d-8613-aff8bd5e6279 |
 | explorer_m2_landing_2 | teamwork_explorer | M2 Dual-Suite Preview Dock Explorer | completed | 4403842c-aee9-46dd-a736-d12ceabba445 |
 | explorer_m2_landing_3 | teamwork_explorer | M2 Module Explorer & Token Explorer | completed | 8493fa9f-4628-4d30-9f5d-6b93fef22717 |
-| worker_m2_landing | teamwork_worker | M2 Landing Redesign Worker | in-progress | ec5a8772-cebc-4d99-897a-83daa9439c28 |
+| worker_m2_landing | teamwork_worker | M2 Landing Redesign Worker | failed (crashed: API network timeout) | ec5a8772-cebc-4d99-897a-83daa9439c28 |
+| worker_m2_landing_rep | teamwork_worker | M2 Landing Replacement Worker | in-progress | [pending_conv_id] |
 
 ## Succession Status
 - Succession required: no (Generation 2 active)
-- Spawn count: 4 / 16 (Generation 2)
-- Total historic spawns: 24
-- Pending subagents: ec5a8772-cebc-4d99-897a-83daa9439c28
+- Spawn count: 5 / 16 (Generation 2)
+- Total historic spawns: 25
+- Pending subagents: worker_m2_landing_rep
 - Predecessor: Generation 1 (spawn count reached 20, state dumped to handoff.md)
 - Successor: Generation 2 (in-place)
 
 ## Active Timers
 - Heartbeat cron: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-594
-- Safety timer: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-699
+- Safety timer: 4ca3c226-daa7-4621-95f6-7c629c003e5f/task-730
 
 ## Artifact Index
 - c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\teamwork\ORIGINAL_REQUEST.md — Authoritative User Request

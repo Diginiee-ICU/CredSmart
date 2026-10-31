@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-31T12:28:00Z
+# BRIEFING — 2026-10-31T13:02:00Z
 
 ## Mission
 Implement Milestone 2: Production-grade Dual-Suite Landing Page overhaul (`HeroDashboardCard.tsx`, `Landing.tsx`, and `landingMilestone2.test.tsx`) with strict design system adherence, zero regression, and 100% test passing.
@@ -23,41 +23,44 @@ Implement Milestone 2: Production-grade Dual-Suite Landing Page overhaul (`HeroD
 
 ## Current Parent
 - Conversation ID: 4ca3c226-daa7-4621-95f6-7c629c003e5f
-- Updated: 2026-10-31T12:28:00Z
+- Updated: 2026-10-31T13:02:00Z
 
 ## Task Summary
 - **What to build**:
-  1. `HeroDashboardCard.tsx`: Dual-suite interactive preview dock with Retail POS & Billing ERP view and Workforce CRM view, keeping existing test targets.
-  2. `Landing.tsx`: 50/50 Desktop Hero section, dedicated `#suites` section with anchors `#billing-erp` and `#workforce-crm`, Bounded Module Explorer (`max-h-[520px]`), standardized button tokens.
-  3. `landingMilestone2.test.tsx`: Vitest tests for suites anchors, dock toggling, button tokens, bounded module explorer.
+  1. `HeroDashboardCard.tsx`: Dual-suite interactive preview dock with Retail POS & Billing ERP view and Workforce CRM view, keeping existing test targets. (COMPLETED)
+  2. `Landing.tsx`: 50/50 Desktop Hero section, dedicated `#suites` section with anchors `#billing-erp` and `#workforce-crm`, Bounded Module Explorer (`max-h-[520px]`), standardized button tokens. (COMPLETED)
+  3. `landingMilestone2.test.tsx`: Vitest tests for suites anchors, dock toggling, button tokens, bounded module explorer. (COMPLETED)
 - **Success criteria**:
-  - `verify_protected.cjs`: 19/19 protected files untouched.
-  - `tsc --noEmit`: 0 diagnostics.
-  - `vitest run src/test/landingMilestone2.test.tsx`: 100% pass.
-  - `vitest run src/test/publicShellComponents.test.tsx`: 100% pass.
-  - `vitest run src/test/e2e/publicPages.e2e.test.tsx`: 100% pass.
+  - `verify_protected.cjs`: 19/19 protected files untouched. (VERIFIED PASS)
+  - `tsc --noEmit`: 0 diagnostics. (VERIFIED PASS)
+  - `vitest run src/test/landingMilestone2.test.tsx`: 5/5 pass (100%). (VERIFIED PASS)
+  - `vitest run src/test/publicShellComponents.test.tsx`: 18/18 pass (100%). (VERIFIED PASS)
+  - `vitest run src/test/e2e/publicPages.e2e.test.tsx`: 59/59 pass (100%). (VERIFIED PASS)
 - **Interface contracts**: `PROJECT.md` & `.agents/rules/minimal-design-system.md`
 - **Code layout**: `src/components/public/HeroDashboardCard.tsx`, `src/pages/Landing.tsx`, `src/test/landingMilestone2.test.tsx`
 
 ## Change Tracker
-- **Files modified**: None yet
-- **Build status**: Pending implementation
+- **Files modified**:
+  - `src/components/public/HeroDashboardCard.tsx`: Upgraded with dual-suite interactive dock (Retail POS & Billing and Workforce CRM), live attendance with GPS geofence, field tasks dispatch, and quick tender buttons while preserving all legacy test targets.
+  - `src/pages/Landing.tsx`: Screen-fitted 50/50 hero layout, dedicated `#suites` section with child anchors `id="billing-erp"` and `id="workforce-crm"`, Bounded Module Explorer (`max-h-[520px]`) covering 12 modules, and global button standardization.
+  - `src/test/landingMilestone2.test.tsx`: Created 5 automated verification tests covering `#suites`, launch actions, bounded explorer, preview dock, and button tokens.
+- **Build status**: PASS (`tsc --noEmit` clean, Vitest 82/82 tests pass across all public suites)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pending
-- **Lint status**: 0 violations target
-- **Tests added/modified**: `src/test/landingMilestone2.test.tsx` to be created
+- **Build/test result**: PASS
+- **Lint status**: 0 violations
+- **Tests added/modified**: 5 new tests in `src/test/landingMilestone2.test.tsx`
 
 ## Loaded Skills
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-landing-design\SKILL.md`
-  - **Core methodology**: Ultra-high visual fidelity for landing pages, typography hierarchy, fast desktop productivity, 3D card mockups, protected business routes preservation.
 - **Source**: `c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart\.agents\skills\credsmart-minimal-design-system\SKILL.md`
-  - **Core methodology**: Neutral surface tokens, strict button sizing (h-8.5 standard, h-7 small, h-9.5 hero CTA), tabular numbers, zero regression.
 
 ## Key Decisions Made
-- [Initial] Follow explorer_m2_landing_2 reference implementation for `HeroDashboardCard.tsx` while validating DOM elements tested by `publicShellComponents.test.tsx`.
-- [Initial] Follow explorer_m2_landing_1 & explorer_m2_landing_3 blueprints for `#suites`, Bounded Module Explorer (`max-h-[520px]`), and button token eradication in `Landing.tsx`.
+- Used `activeSuite` toggle with default `"pos"` in `HeroDashboardCard.tsx` ensuring zero regression for legacy tests while adding CRM view.
+- Added dedicated `#suites` section immediately after Hero with child IDs `#billing-erp` and `#workforce-crm`, restoring PublicHeader navigation contract.
+- Replaced unconstrained module showcase with fixed-height Bounded Module Explorer (`max-h-[520px]`) with 35%/65% split pane for all 12 platform modules.
+- Standardized all button tokens to `h-9.5`, `h-8.5`, and `h-7`, eradicating all bloated buttons.
 
 ## Artifact Index
 - `.agents/teamwork/worker_m2_landing/DISPATCH.md` — Assigned instructions
