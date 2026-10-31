@@ -1141,5 +1141,34 @@ describe("CredSmart Desktop Public Pages E2E Master Suite", () => {
       expect(screen.getByText(/Scan with Phone/i)).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /Download Android APK/i })).toBeInTheDocument();
     });
+
+    // ── Scenario 6: Hardware Compatibility & Printing Discovery Journey ──
+    it("T4.Scenario 6: Hardware Compatibility & Printing Discovery Journey", () => {
+      // 1. Merchant checks printer support on FAQ
+      const { unmount: unmountFaq } = render(
+        <MemoryRouter initialEntries={["/faq"]}>
+          <FaqPage />
+        </MemoryRouter>
+      );
+      expect(screen.getByText(/Which thermal printers and barcode scanners are supported\?/i)).toBeInTheDocument();
+      unmountFaq();
+
+      // 2. Merchant reviews barcode sticker generator guide
+      const { unmount: unmountBarcode } = render(
+        <MemoryRouter initialEntries={["/barcode-generator-guide"]}>
+          <BarcodeGuide />
+        </MemoryRouter>
+      );
+      expect(screen.getByText(/Barcode & QR Code Label Generation/i)).toBeInTheDocument();
+      unmountBarcode();
+
+      // 3. Merchant verifies thermal print features in Features catalog
+      render(
+        <MemoryRouter initialEntries={["/features"]}>
+          <Features />
+        </MemoryRouter>
+      );
+      expect(screen.getByText(/Barcode & QR Code Label Designer/i)).toBeInTheDocument();
+    });
   });
 });
