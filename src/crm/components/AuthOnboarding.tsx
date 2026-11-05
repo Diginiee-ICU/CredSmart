@@ -2,12 +2,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/crm/integrations/supabase/client";
 import { actions, useStore } from "@/crm/lib/store";
-const logoFull = { url: "/logo.png" };
+const logoFull = { url: "/crm-logo.jpg" };
 import { Button, Field, inputCls, Sheet } from "./primitives";
-import { Users } from "lucide-react";
+import { Users, ArrowLeft } from "lucide-react";
 
 /** Email/password sign-up & sign-in. */
-export function AuthSheet({ onClose, onStaff }: { onClose: () => void; onStaff?: () => void }) {
+export function AuthSheet({ onClose, onStaff, onBack }: { onClose: () => void; onStaff?: () => void; onBack?: () => void }) {
   const [mode, setMode] = useState<"signup" | "signin">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +27,16 @@ export function AuthSheet({ onClose, onStaff }: { onClose: () => void; onStaff?:
   };
   return (
     <Sheet title={mode === "signup" ? "Create Your Company Account" : "Sign In"} onClose={onClose}>
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors mb-1 -mt-1"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to portal selection
+        </button>
+      )}
       <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mx-auto w-48 max-w-full" data-no-i18n />
       <div className="glass p-1 rounded-full grid grid-cols-2 gap-1">
         <Button type="button" className="h-8 text-xs rounded-full" variant={mode === "signup" ? "default" : "ghost"} onClick={() => setMode("signup")}>Sign Up</Button>
@@ -71,7 +81,7 @@ export function CompanyOnboarding() {
 
 export const STAFF_COMPANY_KEY = "wf-staff-company";
 /** Full-screen employee sign-in: company code + mobile + 4-digit passcode, verified on the server. */
-export function StaffSignIn({ initialCompany, onOwner }: { initialCompany: string; onOwner: () => void }) {
+export function StaffSignIn({ initialCompany, onOwner, onBack }: { initialCompany: string; onOwner: () => void; onBack?: () => void }) {
   const [company, setCompany] = useState(initialCompany);
   const [mobile, setMobile] = useState("");
   const [pin, setPin] = useState("");
@@ -101,6 +111,16 @@ export function StaffSignIn({ initialCompany, onOwner }: { initialCompany: strin
     <div className="fixed inset-0 z-50 bg-background grid place-items-center p-4">
       <form onSubmit={submit} className="glass w-full max-w-sm p-4 space-y-3" aria-label="Staff sign in">
         <div>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors mb-2"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to portal selection
+            </button>
+          )}
           <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="w-44 max-w-full mb-2" data-no-i18n />
           <h1 className="text-xl font-bold">Staff Sign In</h1>
           <p className="text-xs text-muted-foreground">Use the mobile number and passcode your admin shared.</p>

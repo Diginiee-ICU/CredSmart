@@ -266,7 +266,7 @@ export function MobileAppStartingCards(): React.ReactElement {
                 CredSmart
               </span>
               <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                v1.1.8
+                v1.2.0
               </span>
             </div>
             <p className="text-[10.5px] font-mono text-slate-400 dark:text-slate-500 mt-0.5">

@@ -264,7 +264,7 @@ export function QuickCreateItemModal({
           batchNumber,
         };
         toast.warning(
-          "Database schema not found — item created locally. Ensure Supabase schema/tables exist and that migrations/RLS are applied. See SUPABASE_VERCEL_INTEGRATION.md in the project root for guidance."
+          "Database schema not found — item created locally. Item saved locally."
         );
         onItemCreated(fallbackProduct);
         onOpenChange(false);

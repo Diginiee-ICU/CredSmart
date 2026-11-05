@@ -61,11 +61,14 @@ export function WorkspaceSwitcher(): React.ReactElement | null {
     navigate("/");
   };
 
+  const [open, setOpen] = React.useState(false);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
+          onClick={() => setOpen((prev) => !prev)}
           title="Switch Workspace"
           aria-label="Switch Workspace"
           data-testid="workspace-switcher-trigger"
@@ -119,7 +122,7 @@ export function WorkspaceSwitcher(): React.ReactElement | null {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold truncate">POS &amp; Billing ERP</span>
                   <span className="text-[9px] font-mono font-medium px-1 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                    Ubuntu
+                    POS
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
@@ -156,7 +159,7 @@ export function WorkspaceSwitcher(): React.ReactElement | null {
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold truncate">CredSmart CRM</span>
                   <span className="text-[9px] font-mono font-medium px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    Cloud
+                    CRM
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 dark:text-slate-500 truncate">

@@ -243,7 +243,7 @@ export default function TallyImport() {
         setLiveSyncStatusText(`Connected to "${probe.companyName || "Tally"}" (${probe.latencyMs}ms). Exporting masters & daybook...`);
         const tallyData = await fetchLiveTallyData(syncConfig.tallyHost, syncConfig.pairingToken);
 
-        setLiveSyncStatusText(`Parsed ${tallyData.items.length} items, ${tallyData.parties.length} parties, and ${getAllTallyVouchers(tallyData).length} vouchers. Ingesting into Supabase...`);
+        setLiveSyncStatusText(`Parsed ${tallyData.items.length} items, ${tallyData.parties.length} parties, and ${getAllTallyVouchers(tallyData).length} vouchers. Ingesting into cloud database...`);
         const result = await executeDirectSyncIngestion(
           orgId,
           user?.id || "sync-user",
@@ -2345,7 +2345,7 @@ export default function TallyImport() {
                       {liveSyncStatusText || "Communicating with local ERP daemon..."}
                     </p>
                     <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
-                      Querying masters and streaming changes directly into Supabase...
+                      Querying masters and streaming changes directly into cloud database...
                     </p>
                   </div>
                 </div>

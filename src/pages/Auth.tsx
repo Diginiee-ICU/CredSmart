@@ -79,6 +79,15 @@ export default function Auth() {
   const [upiId, setUpiId] = useState("");
   const [suitePreference, setSuitePreference] = useState<SuitePreference>("both");
 
+  // Workforce CRM Direct Authentication state
+  const [crmSubMode, setCrmSubMode] = useState<"staff" | "admin">("staff");
+  const [staffCompany, setStaffCompany] = useState("");
+  const [staffMobile, setStaffMobile] = useState("");
+  const [staffPin, setStaffPin] = useState("");
+  const [crmAdminEmail, setCrmAdminEmail] = useState("");
+  const [crmAdminPassword, setCrmAdminPassword] = useState("");
+  const [crmBusy, setCrmBusy] = useState(false);
+
   // Password reset state
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -439,6 +448,77 @@ export default function Auth() {
     }
   };
 
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffCompany.trim() || !staffMobile.trim() || !staffPin.trim()) {
+      toast({
+        title: "Incomplete details",
+        description: "Please enter Company ID, Mobile number, and 4-digit PIN.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCrmBusy(true);
+    try {
+      const { staffSignIn } = await import("@/crm/lib/staff-auth.functions");
+      const { tokenHash } = await staffSignIn({
+        data: { companyId: staffCompany.trim(), mobile: staffMobile.trim(), pin: staffPin.trim() },
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wf-staff-company", staffCompany.trim());
+        localStorage.setItem("credsmart_active_suite", "crm");
+        localStorage.setItem("credsmart_suite_preference", "crm");
+        sessionStorage.setItem("credsmart_launch_portal_active", "crm");
+      }
+      toast({ title: "Staff Signed In", description: "Welcome to Workforce CRM" });
+      navigate("/crm");
+    } catch (err: unknown) {
+      toast({
+        title: "Sign-in failed",
+        description: err instanceof Error ? err.message : "Invalid mobile number or passcode.",
+        variant: "destructive",
+      });
+    } finally {
+      setCrmBusy(false);
+    }
+  };
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!crmAdminEmail.trim() || !crmAdminPassword) {
+      toast({
+        title: "Incomplete details",
+        description: "Please enter Admin email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setCrmBusy(true);
+    try {
+      const { supabase: crmSupabase } = await import("@/crm/integrations/supabase/client");
+      const { error } = await crmSupabase.auth.signInWithPassword({
+        email: crmAdminEmail.trim(),
+        password: crmAdminPassword,
+      });
+      if (error) throw error;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("credsmart_active_suite", "crm");
+        localStorage.setItem("credsmart_suite_preference", "crm");
+        sessionStorage.setItem("credsmart_launch_portal_active", "crm");
+      }
+      toast({ title: "Signed In", description: "Welcome to Workforce CRM Admin" });
+      navigate("/crm");
+    } catch (err: unknown) {
+      toast({
+        title: "Sign-in failed",
+        description: err instanceof Error ? err.message : "Invalid admin credentials.",
+        variant: "destructive",
+      });
+    } finally {
+      setCrmBusy(false);
+    }
+  };
+
   const totalSteps = 3;
 
   // Portal toggle state — which suite the user intends to access
@@ -475,54 +555,105 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* Portal Selector — only show on step 1 (not deep into signup) */}
+        {/* Dual Suite Selection Cards — displayed on step 1 */}
         {step === 1 && (
-          <div className="flex gap-2 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80 mb-4">
+          <div className="grid grid-cols-2 gap-2.5 mb-4 select-none">
+            {/* Suite Card 1: POS & Billing */}
             <button
               type="button"
               data-testid="pos-portal-toggle-btn"
               onClick={() => handlePortalSwitch("billing")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer",
+                "relative p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between active:scale-[0.98]",
                 portalTarget === "billing"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800"
+                  ? "bg-blue-50/70 dark:bg-blue-950/40 border-blue-600 text-blue-950 dark:text-blue-100 ring-2 ring-blue-600/20"
+                  : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300"
               )}
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              POS & Billing ERP
+              <div className="flex items-center justify-between w-full mb-1">
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                    portalTarget === "billing"
+                      ? "bg-blue-600 text-white shadow-2xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  )}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold",
+                    portalTarget === "billing"
+                      ? "bg-blue-600/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  )}
+                >
+                  Retail
+                </span>
+              </div>
+              <div className="font-bold text-xs truncate">POS &amp; Billing ERP</div>
+              <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                Counters &amp; Invoices
+              </div>
             </button>
+
+            {/* Suite Card 2: Workforce CRM */}
             <button
               type="button"
               data-testid="crm-portal-toggle-btn"
               onClick={() => handlePortalSwitch("crm")}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all duration-150 cursor-pointer",
+                "relative p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between active:scale-[0.98]",
                 portalTarget === "crm"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-800"
+                  ? "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-600 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/20"
+                  : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300"
               )}
             >
-              <UserCircle className="w-3.5 h-3.5" />
-              Workforce CRM
+              <div className="flex items-center justify-between w-full mb-1">
+                <div
+                  className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0",
+                    portalTarget === "crm"
+                      ? "bg-emerald-600 text-white shadow-2xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  )}
+                >
+                  <UserCircle className="w-4 h-4" />
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold",
+                    portalTarget === "crm"
+                      ? "bg-emerald-600/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                  )}
+                >
+                  Workforce
+                </span>
+              </div>
+              <div className="font-bold text-xs truncate">Workforce CRM</div>
+              <div className="text-[10.5px] text-slate-500 dark:text-slate-400 truncate">
+                Staff &amp; Attendance
+              </div>
             </button>
           </div>
         )}
 
         <div className="rounded-2xl bg-white border border-slate-200 shadow-xl p-6 sm:p-8 relative overflow-hidden">
           {portalTarget === "crm" ? (
-            <div className="space-y-5 select-none" data-testid="crm-portal-panel">
+            <div className="space-y-4 select-none" data-testid="crm-portal-panel">
               {/* Card Header Lockup */}
-              <div className="flex items-start gap-3.5 p-4 rounded-xl border border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-950/30">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <UserCircle className="w-5.5 h-5.5" />
+              <div className="flex items-start gap-3 p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-50/60 dark:bg-emerald-950/30">
+                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <UserCircle className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                       Workforce CRM
                     </h3>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
                       Standalone Cloud
                     </span>
                   </div>
@@ -533,37 +664,149 @@ export default function Auth() {
               </div>
 
               {/* Informational Guidance */}
-              <div className="text-xs text-slate-600 dark:text-slate-300 space-y-2 leading-relaxed">
+              <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1 leading-relaxed">
                 <p>
                   Workforce CRM operates on its own dedicated authentication and onboarding portal. It provides staff 4-digit PIN authentication, real-time geofencing, shift clock-in, and automated payroll.
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Click below to open the CRM Command Center directly. If not yet signed in, the CRM authentication popup will open automatically.
-                </p>
               </div>
 
+              {/* CRM Sub-mode Toggle (Staff PIN vs Admin Sign-in) */}
+              <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setCrmSubMode("staff")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1",
+                    crmSubMode === "staff"
+                      ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                  )}
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  Staff PIN Sign-In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCrmSubMode("admin")}
+                  className={cn(
+                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1",
+                    crmSubMode === "admin"
+                      ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                  )}
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Company Admin Sign-In
+                </button>
+              </div>
+
+              {/* Form 1: Staff PIN Sign In */}
+              {crmSubMode === "staff" && (
+                <form onSubmit={handleStaffLogin} className="space-y-3 pt-1">
+                  <div className="relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={staffCompany}
+                      onChange={(e) => setStaffCompany(e.target.value)}
+                      placeholder="Company ID (e.g. CS-101)"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      value={staffMobile}
+                      onChange={(e) => setStaffMobile(e.target.value)}
+                      placeholder="Mobile number (10 digits)"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={staffPin}
+                      onChange={(e) => setStaffPin(e.target.value.replace(/\D/g, ""))}
+                      placeholder="4-digit PIN"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={crmBusy}
+                    className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    {crmBusy ? "Verifying..." : "Staff Clock-In & Sign In"}
+                    {!crmBusy && <ArrowRight className="w-3.5 h-3.5" />}
+                  </button>
+                </form>
+              )}
+
+              {/* Form 2: Admin Sign In */}
+              {crmSubMode === "admin" && (
+                <form onSubmit={handleAdminLogin} className="space-y-3 pt-1">
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="email"
+                      value={crmAdminEmail}
+                      onChange={(e) => setCrmAdminEmail(e.target.value)}
+                      placeholder="Admin email address"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="password"
+                      value={crmAdminPassword}
+                      onChange={(e) => setCrmAdminPassword(e.target.value)}
+                      placeholder="Admin password"
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={crmBusy}
+                    className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    {crmBusy ? "Signing in..." : "Sign In as Admin"}
+                    {!crmBusy && <ArrowRight className="w-3.5 h-3.5" />}
+                  </button>
+                </form>
+              )}
+
               {/* Feature Highlights Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-medium">
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
+              <div className="grid grid-cols-2 gap-1.5 pt-1 font-medium">
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Staff PIN &amp; Sign-In</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Geofenced Attendance</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Salary &amp; Payroll Engine</span>
                 </div>
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span>Enterprise Task Board</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-2 space-y-2">
+              <div className="pt-1.5 space-y-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -575,11 +818,11 @@ export default function Auth() {
                     navigate("/crm");
                   }}
                   data-testid="go-to-crm-btn"
-                  className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                  className="w-full h-8.5 rounded-xl border border-emerald-600/30 bg-emerald-50/70 hover:bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer shadow-2xs"
                 >
-                  <UserCircle className="w-4 h-4" />
+                  <UserCircle className="w-4 h-4 text-emerald-600" />
                   <span>Open Workforce CRM Portal</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
 
                 <button

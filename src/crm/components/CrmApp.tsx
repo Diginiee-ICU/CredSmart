@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
   MapPin,
@@ -23,7 +24,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import "@/crm/styles/crm.css";
-const logoFull = { url: "/logo.png" };
+const logoFull = { url: "/crm-logo.jpg" };
 const logoShield = { url: "/favicon.png" };
 import { OnboardingChecklist } from "./OnboardingChecklist";
 import { CredAlertNudge } from "./CredAlertNudge";
@@ -523,6 +524,13 @@ export function CrmApp() {
   const [staffGate, setStaffGate] = useState<string | null>(null);
   const [cloudBusy, setCloudBusy] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const navigate = useNavigate();
+  const goBackToSelection = () => {
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("credsmart_launch_portal_active");
+    }
+    navigate("/");
+  };
   const s = useStore((s) => s);
   const staff = staffUser ? s.employees.find((e) => e.id === s.me) : previewId ? s.employees.find((e) => e.id === previewId) : undefined;
   const tabs = TABS.filter((t) => !staff || t.id !== "payroll").map((t) => ({ ...t, label: staff ? ({ command: "Workspace", attendance: "Attendance", tasks: "Tasks", payroll: "My Pay", staff: "My Profile" }[t.id]) : t.label }));
@@ -754,9 +762,9 @@ export function CrmApp() {
             ))}
         </Sheet>
       )}{" "}
-      {(login || (authChecked && !signedIn && staffGate === null)) && <AuthSheet onClose={() => setLogin(false)} onStaff={() => { setLogin(false); setStaffGate(localStorage.getItem(STAFF_COMPANY_KEY) || (s.company ? s.companyId : "") || ""); }} />}
+      {(login || (authChecked && !signedIn && staffGate === null)) && <AuthSheet onClose={() => setLogin(false)} onStaff={() => { setLogin(false); setStaffGate(localStorage.getItem(STAFF_COMPANY_KEY) || (s.company ? s.companyId : "") || ""); }} onBack={goBackToSelection} />}
       {signedIn && !staffUser && !cloudBusy && !s.company && <CompanyOnboarding />}
-      {staffGate !== null && !staffUser && <StaffSignIn initialCompany={staffGate} onOwner={() => { setStaffGate(null); setLogin(true); }} />}
+      {staffGate !== null && !staffUser && <StaffSignIn initialCompany={staffGate} onOwner={() => { setStaffGate(null); setLogin(true); }} onBack={goBackToSelection} />}
     </div>
   );
 }

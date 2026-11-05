@@ -83,20 +83,23 @@ const queryClient = new QueryClient({
 
 export function SleekRouteLoader() {
   return (
-    <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
-      <div className="relative flex flex-col items-center justify-center max-w-sm w-full">
+    <div
+      className="min-h-[100dvh] w-full flex flex-col items-center justify-center select-none animate-in fade-in duration-300"
+      style={{ background: "#050c1a" }}
+    >
+      <div className="flex flex-col items-center justify-center gap-6">
         <img
-          src="/IMG_9301.GIF"
+          src="/logo-icon.png"
           alt="CredSmart"
-          className="w-72 sm:w-80 max-w-[85vw] h-auto object-contain select-none"
+          className="w-32 h-32 sm:w-40 sm:h-40 object-contain select-none drop-shadow-2xl"
           loading="eager"
         />
-        <div className="mt-4 flex flex-col items-center gap-2">
-          <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-600 to-amber-500 w-1/2 rounded-full animate-[ping_1.5s_infinite]" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-40 h-0.5 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-400 animate-[shimmer_1.8s_ease-in-out_infinite]" />
           </div>
-          <p className="text-[11px] font-mono font-semibold text-slate-500 tracking-wider uppercase">
-            Loading CredSmart...
+          <p className="text-[11px] font-mono font-medium text-slate-500 tracking-widest uppercase">
+            Starting CredSmart…
           </p>
         </div>
       </div>

@@ -19,7 +19,6 @@ import {
   BadgePercent,
   Lock,
   Radio,
-  Server,
   Cloud,
 } from "lucide-react";
 
@@ -103,10 +102,10 @@ export function ColdLaunchHub(): React.ReactElement {
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">CredSmart</span>
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                v1.1.8
+                v1.2.0
               </span>
             </div>
-            <p className="text-[11px] font-mono font-medium text-slate-500 uppercase tracking-wider">
+            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Enterprise Hybrid Platform
             </p>
           </div>
@@ -167,7 +166,7 @@ export function ColdLaunchHub(): React.ReactElement {
                   <span className="inline-flex items-center gap-1 bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20 text-[11px] font-semibold px-2 py-0.5 rounded-md">
                     ⚡ RETAIL POS & BILLING
                   </span>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 border border-blue-200/60 dark:border-blue-800/60">
                     <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
                     Ubuntu API
                   </span>
@@ -211,11 +210,11 @@ export function ColdLaunchHub(): React.ReactElement {
               </div>
             </div>
 
-            {/* Bottom Host & Action Bar */}
+            {/* Bottom Status & Action Bar */}
             <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 dark:text-slate-500">
-                <Server className="w-3.5 h-3.5" />
-                <span>api.credsmart.online</span>
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <Cloud className="w-3.5 h-3.5 text-blue-500" />
+                <span className="font-mono">api.credsmart.online</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -237,7 +236,7 @@ export function ColdLaunchHub(): React.ReactElement {
             </div>
           </div>
 
-          {/* Card 2: Lovable CRM */}
+          {/* Card 2: Workforce CRM */}
           <div
             onClick={launchCrm}
             data-testid="launch-crm-pod"
@@ -253,7 +252,7 @@ export function ColdLaunchHub(): React.ReactElement {
                   <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold px-2 py-0.5 rounded-md">
                     👥 WORKFORCE & HR
                   </span>
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Supabase Cloud
                   </span>
@@ -297,11 +296,11 @@ export function ColdLaunchHub(): React.ReactElement {
               </div>
             </div>
 
-            {/* Bottom Host & Action Bar */}
+            {/* Bottom Status & Action Bar */}
             <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 dark:text-slate-500">
-                <Cloud className="w-3.5 h-3.5" />
-                <span>wqllixoghlxvap...</span>
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="font-mono truncate max-w-[120px]">wqllix0ghlxvap…</span>
               </div>
 
               <div className="flex items-center gap-2">
