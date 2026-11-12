@@ -146,7 +146,7 @@ export default function EwayBillDashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-slate-50/50 dark:bg-slate-950 p-3 pb-6 sm:p-6 space-y-4 sm:space-y-5">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-slate-950 p-3 pb-24 sm:p-6 space-y-4 sm:space-y-5 font-sans">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
         <div className="flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto">
