@@ -263,9 +263,61 @@ export default function Dashboard() {
       }
 
       // 3. Calculate Accurate "TO COLLECT" (Customer Receivables by ledger)
+      const localSalesDocs = typeof documentsService?.getLocalDocuments === "function"
+        ? documentsService.getLocalDocuments(orgId, "sales_invoice") || []
+        : [];
+
+      // Collect identifiers of all paid sales so we never treat them as "To Collect"
+      const paidInvoiceNumbers = new Set<string>();
+      const paidSaleIds = new Set<string>();
+
+      localSalesDocs.forEach((d) => {
+        const payMethod = (d.paymentMethod || "").toLowerCase();
+        const isCredit = payMethod === "credit" || payMethod === "due" || payMethod === "udhar";
+        const isPaid =
+          d.status === "paid" ||
+          (d.balanceDue != null && Number(d.balanceDue) <= 0.01) ||
+          (!isCredit && d.status !== "unpaid" && d.status !== "partial");
+        if (isPaid) {
+          if (d.documentNumber) paidInvoiceNumbers.add(d.documentNumber.trim().toLowerCase());
+          if (d.id) paidSaleIds.add(d.id);
+        }
+      });
+
+      (salesData || []).forEach((s: any) => {
+        const payMethod = String(s.payment_method || "").toLowerCase();
+        const isCredit = payMethod === "credit" || payMethod === "due" || payMethod === "udhar";
+        const isPaid =
+          s.payment_status === "paid" ||
+          (Number(s.paid_amount || 0) >= Number(s.total_amount || s.total || 0) && Number(s.total_amount || s.total || 0) > 0) ||
+          (!isCredit && s.payment_status !== "partial" && s.payment_status !== "unpaid");
+        if (isPaid) {
+          if (s.invoice_number) paidInvoiceNumbers.add(String(s.invoice_number).trim().toLowerCase());
+          if (s.id) paidSaleIds.add(s.id);
+        }
+      });
+
       const customerBalanceMap: Record<string, number> = {};
+      const bogusCreditTxRefsToDelete: string[] = [];
+
       (creditData || []).forEach((c) => {
         if (c.party_type === "customer" && c.party_id) {
+          const refId = String(c.reference_id || "").toLowerCase().trim();
+          const desc = String(c.description || "").toLowerCase().trim();
+          const isSaleCredit = c.reference_type === "sale" || desc.startsWith("invoice") || desc.includes("credit sale invoice");
+
+          const isRefToPaidSale =
+            (refId && (paidSaleIds.has(c.reference_id) || Array.from(paidInvoiceNumbers).some((num) => refId.includes(num)))) ||
+            (isSaleCredit && Array.from(paidInvoiceNumbers).some((num) => desc.includes(num)));
+
+          if (isRefToPaidSale && c.type === "credit") {
+            // This is an erroneous credit entry created for a paid cash/settled sales invoice
+            if (c.reference_id) {
+              bogusCreditTxRefsToDelete.push(c.reference_id);
+            }
+            return;
+          }
+
           const amt = Number(c.amount) || 0;
           const cur = customerBalanceMap[c.party_id] || 0;
           customerBalanceMap[c.party_id] = c.type === "credit" ? cur + amt : cur - amt;
@@ -277,13 +329,20 @@ export default function Dashboard() {
 
       // Add unlinked unpaid customer sales invoices if any
       try {
-        const salesDocs = documentsService.getLocalDocuments(orgId, "sales_invoice");
-        salesDocs.forEach((d) => {
-          if (d.status !== "paid" && Number(d.balanceDue || 0) > 0 && !d.partyId) {
+        localSalesDocs.forEach((d) => {
+          const isPaid = d.status === "paid" || (d.balanceDue != null && Number(d.balanceDue) <= 0.01);
+          if (!isPaid && Number(d.balanceDue || 0) > 0 && !d.partyId) {
             collectSum += Number(d.balanceDue);
           }
         });
       } catch { /* empty */ }
+
+      // Cleanup bogus credit transactions asynchronously
+      if (bogusCreditTxRefsToDelete.length > 0) {
+        Array.from(new Set(bogusCreditTxRefsToDelete)).forEach((refId) => {
+          partiesApi.deleteCreditTransactionsByReference(refId, orgId).catch(() => {});
+        });
+      }
 
       // 4. Calculate Accurate "TO PAY" (Supplier Payables by ledger + Unpaid Purchase Bills)
       const supplierBalanceMap: Record<string, number> = {};
@@ -354,17 +413,38 @@ export default function Dashboard() {
 
       // Latest 10 for table
       const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => {  
-        // Derive status from actual DB payment_status field, not fake modulo patterns
-        let status: "PAID" | "PENDING" | "OVERDUE" = "PAID";
+        const localDoc = (localSalesDocs || []).find(
+          (d) => d.id === s?.id || (s?.invoice_number && d.documentNumber === s.invoice_number)
+        );
+
+        const payMethod = String(s?.payment_method || localDoc?.paymentMethod || "").toLowerCase();
+        const isCredit = payMethod === "credit" || payMethod === "due" || payMethod === "udhar";
         const dbPaymentStatus = String(s?.payment_status || "").toLowerCase();
-        if (dbPaymentStatus === "unpaid") {
-          status = "PENDING";
-        } else if (dbPaymentStatus === "partial") {
+
+        let status: "PAID" | "PENDING" | "OVERDUE" = "PAID";
+        if (localDoc) {
+          if (localDoc.status === "paid" || (localDoc.balanceDue != null && Number(localDoc.balanceDue) <= 0.01)) {
+            status = "PAID";
+          } else if (localDoc.status === "unpaid" || localDoc.status === "partial" || isCredit) {
+            status = "PENDING";
+          }
+        } else if (isCredit) {
           status = "PENDING";
         } else if (dbPaymentStatus === "paid") {
           status = "PAID";
-        } else if (s.payment_method === "credit" || s.payment_method === "due" || s.payment_method === "Credit") {
+        } else if (!isCredit) {
+          // Cash, UPI, Card, NetBanking sales are Paid in retail/sales invoices
+          status = "PAID";
+        } else if (dbPaymentStatus === "unpaid" || dbPaymentStatus === "partial") {
           status = "PENDING";
+        }
+
+        // Auto-heal DB status if localDoc is paid but DB had unpaid
+        if (s?.id && localDoc?.status === "paid" && dbPaymentStatus !== "paid") {
+          invoicesApi.updateSale(s.id, {
+            payment_status: "paid",
+            paid_amount: Number(s.total_amount || s.total || localDoc.grandTotal || 0)
+          }, orgId).catch(() => {});
         }
 
         const partyName = Array.isArray(s?.customers)
@@ -382,8 +462,8 @@ export default function Dashboard() {
             : "Today",
           type: "Sale Invoice",
           txnNo: s?.invoice_number || `INV-${new Date().getFullYear()}-${String(idx + 1).padStart(3, "0")}`,
-          partyName: partyName || s?.customer_name || "Walk-in Customer",
-          amount: Number(s?.total_amount || s?.total || 0),
+          partyName: partyName || s?.customer_name || localDoc?.partyName || "Walk-in Customer",
+          amount: Number(s?.total_amount || s?.total || localDoc?.grandTotal || 0),
           status,
         };
       });

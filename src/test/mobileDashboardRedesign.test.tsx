@@ -85,6 +85,7 @@ vi.mock("@/services/invoicesApi", () => ({
 vi.mock("@/services/documentsService", () => ({
   documentsService: {
     fetchPurchaseDocuments: vi.fn().mockResolvedValue([]),
+    getLocalDocuments: vi.fn().mockReturnValue([]),
   },
 }));
 

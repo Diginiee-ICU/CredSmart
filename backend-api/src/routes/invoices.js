@@ -126,7 +126,10 @@ router.post('/sales', async (req, res) => {
     const effectiveTotal = req.body.total_amount != null ? req.body.total_amount : (req.body.total != null ? req.body.total : (req.body.grand_total != null ? req.body.grand_total : 0));
     const effectiveTax = req.body.tax_amount != null ? req.body.tax_amount : (req.body.tax != null ? req.body.tax : 0);
     const effectiveDiscount = req.body.discount_amount != null ? req.body.discount_amount : (req.body.discount != null ? req.body.discount : 0);
-    const effectivePaid = req.body.paid_amount != null ? req.body.paid_amount : (req.body.amount_paid != null ? req.body.amount_paid : (req.body.payment_status === 'paid' ? effectiveTotal : 0));
+    const isCreditMethod = ['credit', 'due', 'udhar'].includes(String(req.body.payment_method || '').toLowerCase());
+    const isExplicitUnpaid = ['unpaid', 'partial'].includes(String(req.body.payment_status || '').toLowerCase());
+    const defaultPaid = (!isCreditMethod && !isExplicitUnpaid) ? effectiveTotal : 0;
+    const effectivePaid = req.body.paid_amount != null ? req.body.paid_amount : (req.body.amount_paid != null ? req.body.amount_paid : (req.body.payment_status === 'paid' ? effectiveTotal : defaultPaid));
 
     const rawStatus = String(req.body.payment_status || '').toLowerCase();
     const paymentStatus = ['paid', 'partial', 'unpaid'].includes(rawStatus)
@@ -477,7 +480,7 @@ router.post('/sales', async (req, res) => {
     }
 
     const unpaidAmount = Number(effectiveTotal) - Number(effectivePaid);
-    if (unpaidAmount > 0 && effCustomerId && orgId) {
+    if (unpaidAmount > 0 && effCustomerId && orgId && (isCreditMethod || isExplicitUnpaid)) {
       await client.query('SAVEPOINT credit_sp');
       try {
         await client.query(
@@ -726,7 +729,14 @@ router.put('/sales/:id', async (req, res) => {
     const effectiveTotal = req.body.total_amount != null ? req.body.total_amount : (req.body.total != null ? req.body.total : (req.body.grand_total != null ? req.body.grand_total : 0));
     const effectiveTax = req.body.tax_amount != null ? req.body.tax_amount : (req.body.tax != null ? req.body.tax : 0);
     const effectiveDiscount = req.body.discount_amount != null ? req.body.discount_amount : (req.body.discount != null ? req.body.discount : 0);
-    const effectivePaid = req.body.paid_amount != null ? req.body.paid_amount : (req.body.amount_paid != null ? req.body.amount_paid : 0);
+    const isCreditMethod = ['credit', 'due', 'udhar'].includes(String(req.body.payment_method || '').toLowerCase());
+    const isExplicitUnpaid = ['unpaid', 'partial'].includes(String(req.body.payment_status || '').toLowerCase());
+    const defaultPaid = (!isCreditMethod && !isExplicitUnpaid) ? effectiveTotal : 0;
+    const effectivePaid = req.body.paid_amount != null ? req.body.paid_amount : (req.body.amount_paid != null ? req.body.amount_paid : (req.body.payment_status === 'paid' ? effectiveTotal : defaultPaid));
+    const rawStatus = String(req.body.payment_status || '').toLowerCase();
+    const effectivePaymentStatus = ['paid', 'partial', 'unpaid'].includes(rawStatus)
+      ? rawStatus
+      : (Number(effectivePaid) >= Number(effectiveTotal) && Number(effectiveTotal) > 0 ? 'paid' : (Number(effectivePaid) > 0 ? 'partial' : 'unpaid'));
     const {
       invoice_number, customer_id, customer_name, customer_phone, customer_gstin,
       sale_date, subtotal, payment_method, payment_status, notes, items, sale_items
@@ -757,7 +767,7 @@ router.put('/sales/:id', async (req, res) => {
       [
         invoice_number, effCustomerId, customer_name, customer_phone, customer_gstin,
         sale_date, subtotal, effectiveDiscount, effectiveTax, effectiveTotal, effectivePaid,
-        payment_method, payment_status, notes, id, orgId
+        payment_method, effectivePaymentStatus, notes, id, orgId
       ]
     );
 
@@ -766,6 +776,18 @@ router.put('/sales/:id', async (req, res) => {
       return res.status(404).json({ error: 'Sale not found' });
     }
     const sale = updateRes.rows[0];
+
+    // If sale is now paid, clean up any credit_transactions linked to it
+    if (effectivePaymentStatus === 'paid' || Number(effectivePaid) >= Number(effectiveTotal)) {
+      try {
+        await client.query(
+          `DELETE FROM credit_transactions 
+           WHERE (reference_id = $1 OR description LIKE $2) 
+             AND (org_id = $3 OR organization_id = $3 OR $3 IS NULL)`,
+          [id, `%${sale.invoice_number || id}%`, orgId]
+        );
+      } catch (_delCreditErr) {}
+    }
 
     let insertedItems = [];
     if (lineItems && Array.isArray(lineItems)) {
