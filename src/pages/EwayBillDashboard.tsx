@@ -146,37 +146,37 @@ export default function EwayBillDashboard() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-slate-950 p-3 pb-24 sm:p-6 space-y-4 sm:space-y-5 font-sans">
+    <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto scrollbar-thin bg-slate-50/50 dark:bg-slate-950 p-2.5 sm:p-6 space-y-2.5 sm:space-y-4 font-sans pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs">
-        <div className="flex items-start sm:items-center gap-3 min-w-0 w-full sm:w-auto">
-          <div className="w-11 h-8.5 sm:w-12 sm:h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
-            <Truck className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 w-full sm:w-auto">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs shrink-0">
+            <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <h1 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white tracking-tight truncate">
                 GST E-Way Bill Hub
               </h1>
-              <span className="px-1.5 sm:px-2 py-0.5 rounded-full text-[11px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300">
-                Rule 138 Compliant
+              <span className="px-1.5 py-0.2 rounded-md text-[10px] sm:text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 shrink-0">
+                Rule 138
               </span>
             </div>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 leading-relaxed max-w-2xl">
+            <p className="hidden sm:block text-xs text-slate-500 mt-0.5 leading-relaxed max-w-2xl">
               Consignment transit slips, vehicle updates (Part-B), and Government NIC portal bulk exports.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto shrink-0">
+        <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-0.5 sm:pt-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportGovernmentJson}
-            className="h-10 sm:h-9 w-full sm:w-auto gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20"
+            className="h-8 px-2.5 rounded-lg flex-1 sm:flex-initial gap-1.5 text-xs font-semibold text-indigo-600 border-indigo-200 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-2xs"
           >
-            <Download className="w-4 h-4" />
-            <span>NIC JSON (v1.0.0421)</span>
+            <Download className="w-3.5 h-3.5" />
+            <span>NIC JSON</span>
           </Button>
 
           <a
@@ -185,9 +185,9 @@ export default function EwayBillDashboard() {
             rel="noopener noreferrer"
             className="hidden sm:inline-flex"
           >
-            <Button variant="ghost" size="sm" className="h-9 gap-1.5 text-xs text-slate-600">
+            <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs text-slate-600">
               <ExternalLink className="w-3.5 h-3.5" />
-              <span>Official Portal</span>
+              <span>Portal</span>
             </Button>
           </a>
 
@@ -197,74 +197,74 @@ export default function EwayBillDashboard() {
               setSelectedRecord(null);
               setIsGenerateOpen(true);
             }}
-            className="h-10 sm:h-9 w-full sm:w-auto gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex-1 sm:flex-initial"
+            className="h-8 px-3 rounded-lg flex-1 sm:flex-initial gap-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs cursor-pointer active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Generate E-Way Bill</span>
           </Button>
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
-        <div className="p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-            Total E-Way Bills
+      {/* Metric Cards - Swipeable Compact Strip on Mobile, 5-col Grid on Desktop */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible">
+        <div className="shrink-0 min-w-[110px] sm:min-w-0 p-2 sm:p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+            Total Bills
           </span>
-          <span className="text-xl font-black text-slate-900 dark:text-white font-mono mt-1 block">
+          <span className="text-base sm:text-xl font-black text-slate-900 dark:text-white font-mono mt-0.5 block">
             {metrics.total}
           </span>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl border border-emerald-200 dark:border-emerald-950 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block">
-              Active In-Transit
+        <div className="shrink-0 min-w-[110px] sm:min-w-0 p-2 sm:p-3 rounded-xl border border-emerald-200/80 dark:border-emerald-950 bg-emerald-50/30 dark:bg-emerald-950/10 shadow-2xs">
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block truncate">
+              In-Transit
             </span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           </div>
-          <span className="text-xl font-black text-emerald-700 dark:text-emerald-300 font-mono mt-1 block">
+          <span className="text-base sm:text-xl font-black text-emerald-700 dark:text-emerald-300 font-mono mt-0.5 block">
             {metrics.active}
           </span>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl border border-blue-200 dark:border-blue-950 bg-blue-50/30 dark:bg-blue-950/10 shadow-2xs">
-          <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider block">
-            Part-A (Awaiting Vehicle)
+        <div className="shrink-0 min-w-[110px] sm:min-w-0 p-2 sm:p-3 rounded-xl border border-blue-200/80 dark:border-blue-950 bg-blue-50/30 dark:bg-blue-950/10 shadow-2xs">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider block truncate">
+            Part-A
           </span>
-          <span className="text-xl font-black text-blue-700 dark:text-blue-300 font-mono mt-1 block">
+          <span className="text-base sm:text-xl font-black text-blue-700 dark:text-blue-300 font-mono mt-0.5 block">
             {metrics.partAOnly}
           </span>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl border border-amber-200 dark:border-amber-950 bg-amber-50/30 dark:bg-amber-950/10 shadow-2xs">
-          <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider block">
+        <div className="shrink-0 min-w-[110px] sm:min-w-0 p-2 sm:p-3 rounded-xl border border-amber-200/80 dark:border-amber-950 bg-amber-50/30 dark:bg-amber-950/10 shadow-2xs">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider block truncate">
             Expired
           </span>
-          <span className="text-xl font-black text-amber-700 dark:text-amber-300 font-mono mt-1 block">
+          <span className="text-base sm:text-xl font-black text-amber-700 dark:text-amber-300 font-mono mt-0.5 block">
             {metrics.expired}
           </span>
         </div>
 
-        <div className="p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs col-span-2 sm:col-span-1">
-          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
-            Total Transit Value
+        <div className="shrink-0 min-w-[130px] sm:min-w-0 p-2 sm:p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block truncate">
+            Transit Value
           </span>
-          <span className="text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono mt-1 block">
+          <span className="text-base sm:text-xl font-black text-indigo-600 dark:text-indigo-400 font-mono mt-0.5 block">
             ₹{metrics.totalValue.toLocaleString("en-IN")}
           </span>
         </div>
       </div>
 
       {/* Toolbar & Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-2xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-2 sm:p-2.5 shadow-2xs">
         {/* Status Filter Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 sm:pb-0 scrollbar-none">
           {(
             [
               { id: "all", label: "All Bills" },
               { id: "active", label: "Active" },
-              { id: "part_a_only", label: "Part-A Only" },
+              { id: "part_a_only", label: "Part-A" },
               { id: "expired", label: "Expired" },
               { id: "cancelled", label: "Cancelled" },
             ] as const
@@ -272,9 +272,9 @@ export default function EwayBillDashboard() {
             <button
               key={t.id}
               onClick={() => setStatusFilter(t.id)}
-              className={`min-h-10 sm:min-h-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`h-7 px-2.5 rounded-md text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
                 statusFilter === t.id
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-2xs"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
               }`}
             >
@@ -284,13 +284,13 @@ export default function EwayBillDashboard() {
         </div>
 
         {/* Search */}
-        <div className="relative w-full sm:w-72">
+        <div className="relative w-full sm:w-64">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <Input
-            placeholder="Search by EWB, doc no, customer, vehicle..."
+            placeholder="Search EWB, party, vehicle..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-10 sm:h-8 text-xs bg-slate-50 dark:bg-slate-800/60"
+            className="pl-8 h-7.5 text-xs bg-slate-50 dark:bg-slate-800/60 rounded-md"
           />
         </div>
       </div>
@@ -541,47 +541,131 @@ export default function EwayBillDashboard() {
               </tbody>
             </table>
           </div>
-          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800/80">
             {filteredRecords.map((r) => {
               const isExp =
                 r.status === "expired" ||
                 (r.validUpto && new Date(r.validUpto).getTime() < Date.now());
-              const statusLabel = r.status === "cancelled" ? "Cancelled" : isExp ? "Expired" : r.status === "part_a_only" ? "Part-A Only" : "Active";
+              const statusLabel = r.status === "cancelled" ? "Cancelled" : isExp ? "Expired" : r.status === "part_a_only" ? "Part-A" : "Active";
               const statusClass = r.status === "cancelled"
-                ? "bg-rose-100 text-rose-700 border-rose-300"
+                ? "bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-900/40"
                 : isExp
-                ? "bg-amber-100 text-amber-700 border-amber-300"
+                ? "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-900/40"
                 : r.status === "part_a_only"
-                ? "bg-blue-100 text-blue-700 border-blue-300"
-                : "bg-emerald-100 text-emerald-700 border-emerald-300";
+                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-900/40"
+                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/40";
 
               return (
-                <article key={r.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-mono text-sm font-black text-slate-900 dark:text-white truncate">{r.ewayBillNo}</p>
-                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{formatDateTime(r.ewayBillDate)}</p>
+                <article key={r.id} className="p-3 sm:p-3.5 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                  {/* Top row: EWB No + Status + Value */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {r.ewayBillNo}
+                      </span>
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold border shrink-0 ${statusClass}`}>
+                        {statusLabel}
+                      </span>
                     </div>
-                    <span className={`shrink-0 px-2 py-1 rounded-full text-[11px] font-bold border ${statusClass}`}>{statusLabel}</span>
+                    <span className="font-mono text-xs sm:text-sm font-black text-slate-900 dark:text-white shrink-0">
+                      ₹{r.totInvValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
-                    <div className="min-w-0"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Recipient</span><span className="block font-bold text-slate-800 dark:text-slate-200 truncate">{r.toTrdName}</span><span className="block text-[11px] text-slate-500 font-mono truncate">{r.toGstin || "URP"}</span></div>
-                    <div className="text-right"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Invoice Value</span><span className="block font-mono font-black text-slate-900 dark:text-white">₹{r.totInvValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span></div>
-                    <div className="min-w-0"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Route</span><span className="block font-medium text-slate-700 dark:text-slate-300 truncate">{r.fromPlace} to {r.toPlace}</span><span className="block text-[11px] text-slate-500 font-mono">{r.transDistance} KM</span></div>
-                    <div className="text-right"><span className="block text-[11px] uppercase tracking-wide text-slate-500">Vehicle</span><span className="block font-mono font-bold text-slate-800 dark:text-slate-200 truncate">{r.vehicleNo || "Awaiting Vehicle"}</span></div>
+                  {/* Second row: Recipient name & GSTIN + Date */}
+                  <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                    <div className="min-w-0 flex items-center gap-1.5 truncate">
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {r.toTrdName}
+                      </span>
+                      <span className="font-mono text-[10px] sm:text-[11px] text-slate-400 shrink-0">
+                        ({r.toGstin || "URP"})
+                      </span>
+                    </div>
+                    <span className="font-mono text-[10px] sm:text-[11px] shrink-0 text-slate-400">
+                      {formatDateTime(r.ewayBillDate)}
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="text-[11px] text-slate-500">Valid until {formatDateTime(r.validUpto)}</span>
-                    <div className="flex items-center gap-1">
-                      <Button variant="outline" size="sm" onClick={() => { setSelectedRecord(r); setIsPrintSlipOpen(true); }} className="h-10 px-3 gap-1.5 text-xs font-semibold"><Printer className="w-3.5 h-3.5" />View</Button>
+                  {/* Third row: Route & Distance + Vehicle */}
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                    <div className="min-w-0 flex items-center gap-1 truncate">
+                      <span className="truncate">{r.fromPlace} → {r.toPlace}</span>
+                      <span className="font-mono text-slate-400 shrink-0">({r.transDistance} km)</span>
+                    </div>
+                    {r.vehicleNo ? (
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] shrink-0">
+                        {r.vehicleNo}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 italic shrink-0">
+                        Awaiting Vehicle
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Bottom Action bar: Validity + View / Print + Dropdown Actions */}
+                  <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                    <span className="text-[10px] font-mono text-slate-400 truncate">
+                      Valid: {formatDateTime(r.validUpto)}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRecord(r);
+                          setIsPrintSlipOpen(true);
+                        }}
+                        className="h-7 px-2.5 rounded-md gap-1 text-[11px] font-semibold bg-white dark:bg-slate-800 hover:bg-slate-50 cursor-pointer shadow-2xs"
+                      >
+                        <Printer className="w-3 h-3" />
+                        <span>View</span>
+                      </Button>
+
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="h-10 w-10 p-0" aria-label={`Actions for ${r.ewayBillNo}`}><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 w-7 p-0 rounded-md cursor-pointer shadow-2xs"
+                            aria-label={`Actions for ${r.ewayBillNo}`}
+                          >
+                            <MoreVertical className="w-3.5 h-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52 text-xs">
-                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsUpdatePartBOpen(true); }} className="min-h-8.5 gap-2"><Truck className="w-3.5 h-3.5 text-blue-600" />Update Vehicle (Part-B)</DropdownMenuItem>}
-                          <DropdownMenuItem onClick={() => handleExportSingleJson(r)} className="min-h-8.5 gap-2"><Download className="w-3.5 h-3.5 text-amber-600" />Export Government JSON</DropdownMenuItem>
-                          {r.status !== "cancelled" && <DropdownMenuItem onClick={() => { setSelectedRecord(r); setIsCancelOpen(true); }} className="min-h-8.5 gap-2 text-rose-600"><Ban className="w-3.5 h-3.5" />Cancel E-Way Bill</DropdownMenuItem>}
+                          {r.status !== "cancelled" && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRecord(r);
+                                setIsUpdatePartBOpen(true);
+                              }}
+                              className="h-8 gap-2 cursor-pointer"
+                            >
+                              <Truck className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Update Vehicle (Part-B)</span>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => handleExportSingleJson(r)}
+                            className="h-8 gap-2 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Export Government JSON</span>
+                          </DropdownMenuItem>
+                          {r.status !== "cancelled" && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRecord(r);
+                                setIsCancelOpen(true);
+                              }}
+                              className="h-8 gap-2 text-rose-600 cursor-pointer"
+                            >
+                              <Ban className="w-3.5 h-3.5" />
+                              <span>Cancel E-Way Bill</span>
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
