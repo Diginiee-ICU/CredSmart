@@ -21,8 +21,8 @@ Write-Host "=== 4. Copying to Releases Directory ==="
 Set-Location "c:\Users\bishn\OneDrive\Documents\GitHub\CredSmart"
 $apkSrc = "android\app\build\outputs\apk\release\app-release.apk"
 $aabSrc = "android\app\build\outputs\bundle\release\app-release.aab"
-$apkDest = "releases\CredSmart-v1.2.0-release.apk"
-$aabDest = "releases\CredSmart-v1.2.0-release.aab"
+$apkDest = "releases\CredSmart-v1.2.1-release.apk"
+$aabDest = "releases\CredSmart-v1.2.1-release.aab"
 
 if (-not (Test-Path "releases")) {
     New-Item -ItemType Directory -Path "releases" -Force

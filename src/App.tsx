@@ -323,6 +323,8 @@ const App = () => (
                     </Route>
 
                       {/* 36 Universal Legacy Redirects with Parameter & Query Preservation */}
+                      <Route path="/bill" element={<LegacyRedirect to="/billing/pos" />} />
+                      <Route path="/billing/bill" element={<LegacyRedirect to="/billing/pos" />} />
                       <Route path="/dashboard" element={<LegacyRedirect to="/billing/dashboard" />} />
                       <Route path="/pos" element={<LegacyRedirect to="/billing/pos" />} />
                       <Route path="/checkout" element={<LegacyRedirect to="/billing/pos" />} />

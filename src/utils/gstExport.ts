@@ -133,6 +133,8 @@ export interface GSTR1DocCategory {
   }[];
 }
 
+export type GSTR1DocDetails = GSTR1DocCategory["docs"][number];
+
 export interface GSTR1Data {
   gstin: string;
   fp: string; // MMYYYY e.g. "042026"

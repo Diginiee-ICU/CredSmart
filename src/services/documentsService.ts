@@ -1,5 +1,5 @@
 import { invoicesApi } from "@/services/invoicesApi";
-import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentType, DocumentStatus } from "@/types/documents";
+import { BusinessDocument, DocumentMetrics, SalesDocumentType, PurchaseDocumentType, DocumentStatus, DocumentLineItem } from "@/types/documents";
 import { stockService } from "@/services/stockService";
 import { productsApi } from "@/services/productsApi";
 import { partiesApi } from "@/services/partiesApi";

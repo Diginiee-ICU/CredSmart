@@ -124,6 +124,7 @@ export default function Items() {
   const location = useLocation();
   const { orgId, loading: orgLoading } = useOrganization();
   const { user } = useAuth();
+  const { products = [], refreshProducts, addOrUpdateProduct } = useProducts();
 
   // Keep local view in-sync for filtering/sorting UI when products update
 

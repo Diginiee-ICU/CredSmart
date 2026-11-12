@@ -220,6 +220,17 @@ export default function Auth() {
     return urlData.publicUrl;
   };
 
+  interface OnboardingProductSeed {
+    name: string;
+    barcode?: string;
+    brand?: string;
+    category?: string;
+    costPrice: number;
+    mrp: number;
+    stock: number;
+    batchNumber: string;
+  }
+
   const seedOrgProducts = async (orgId: string, payload: PendingOnboardingData) => {
     const baseSeeds = seedProductsByBusinessType[payload.businessType] || seedProductsByBusinessType["Other"] || [];
 

@@ -33,7 +33,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { Party, PartyType, PartyCategory, PartyCustomItem } from "@/types/parties";
-import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier } from "@/utils/gstinLookup";
+import { lookupGSTIN, isValidGSTIN, isValidPAN, lookupTaxIdentifier, GSTLookupResult } from "@/utils/gstinLookup";
 import { CompanySearchAutocomplete } from "@/components/CompanySearchAutocomplete";
 import { TallyGstSearchModal } from "@/components/settings/TallyGstSearchModal";
 import { PartyCustomItemsImportModal } from "@/components/parties/PartyCustomItemsImportModal";

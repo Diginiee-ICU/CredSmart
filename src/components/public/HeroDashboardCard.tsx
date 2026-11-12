@@ -705,7 +705,7 @@ export function HeroDashboardCard({
           <span className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
             {activeSuite === "pos" ? "🛒 POS Active" : "👥 CRM Active"}
           </span>
-          <span className="font-mono text-slate-400">CredSmart v1.2.0</span>
+          <span className="font-mono text-slate-400">CredSmart v1.2.1</span>
         </div>
       </div>
     </div>

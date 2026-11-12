@@ -696,7 +696,7 @@ export default function TallyImport() {
         // Upsert products in batches of 1000
         for (let i = 0; i < productsToUpsert.length; i += 1000) {
           const slice = productsToUpsert.slice(i, i + 1000);
-          const { data, error } = await productsApi.bulkImport(slice, itemConflictResolution, orgId);
+          const { data, error } = await productsApi.bulkImport(slice, conflictMode, orgId);
           if (error) {
             toast.error(`Failed to upsert products: ${error.message}`);
             throw error;
@@ -1233,9 +1233,9 @@ export default function TallyImport() {
            if (res.error) { toast.error(`Failed to insert purchases: ${res.error.message}`); throw res.error; }
            const insertedPurchases: any[] = Array.isArray(res.data) ? res.data : (res.data?.data || cleanBatch);
            if (insertedPurchases) {
-              vouchersCount += data.length;
+              vouchersCount += insertedPurchases.length;
               const piItemsToInsert = [];
-              for (const d of data) {
+              for (const d of insertedPurchases) {
                  const p = batch.find(x => x.invoice_number === d.invoice_number);
                  if (p && p._items) {
                     for (const it of p._items) {

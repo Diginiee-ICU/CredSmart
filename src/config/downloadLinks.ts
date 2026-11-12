@@ -11,9 +11,9 @@ export const APP_DOWNLOAD_LINKS = {
   windowsExe:
     "https://drive.usercontent.google.com/download?id=1mRjsoNGlQ5v5CLHSzX7Pk8Ev2k9zLwl2&export=download&authuser=0&confirm=t&uuid=7741efcb-6437-428b-8fb2-efcfe3d9d8cd&at=AMrWOn3MnsTQBL6t3Eo9iYMUPlh8:1790408483892",
 
-  version: "1.2.0",
-  versionCode: 22,
-  apkFilename: "CredSmart-v1.2.0-release.apk",
+  version: "1.2.1",
+  versionCode: 23,
+  apkFilename: "CredSmart-v1.2.1-release.apk",
   exeFilename: "CredSmart-Setup-1.1.5-x64.exe",
   apkSize: "18 MB",
   exeSize: "128 MB",

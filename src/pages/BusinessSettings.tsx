@@ -25,6 +25,7 @@ import {
 import { SettingsNavSidebar } from "@/components/settings/SettingsNavSidebar";
 import { SignaturePad } from "@/components/settings/SignaturePad";
 import { useOrganization, saveLocalOrgRegistry } from "@/hooks/useOrganization";
+import { ROUTE_PATHS } from "@/config/routes";
 import { supabase } from "@/integrations/supabase/client";
 import { settingsApi } from "@/services/settingsApi";
 import { toast } from "@/hooks/use-toast";

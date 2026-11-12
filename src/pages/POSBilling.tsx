@@ -418,7 +418,7 @@ export default function POSBilling() {
   const [voiceFeedback, setVoiceFeedback] = useState("");
   const [voiceLang, setVoiceLang] = useState<string>("en-IN");
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const speechRecognizerRef = useRef<SpeechRecognition | null>(null);
+  const speechRecognizerRef = useRef<any | null>(null);
 
   // Price/Qty/Discount Modal Form States
   const [modalPriceValue, setModalPriceValue] = useState("");

@@ -102,7 +102,7 @@ export function ColdLaunchHub(): React.ReactElement {
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">CredSmart</span>
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                v1.2.0
+                v1.2.1
               </span>
             </div>
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">

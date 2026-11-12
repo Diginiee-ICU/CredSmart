@@ -229,6 +229,8 @@ export const stockService = {
           const qtyToDeduct = Math.max(1, Number(item.quantity) || 1);
           const productId = await resolveProductId(orgId, item);
           if (!productId) return;
+        const costVal = Number(item.costPrice || item.rate || 0);
+        const mrpVal = Number(item.mrp || item.rate || 0);
 
           try {
             // Fetch existing batches for this product
@@ -353,6 +355,7 @@ export const stockService = {
           const pId = item.productId || generateSafeUuid();
           const rateVal = Number(item.costPrice || item.rate || 0);
           const mrpVal = Number(item.mrp || item.rate || 0);
+
           addOrUpdateLocalCachedProduct(orgId, {
             id: pId,
             name: cleanName,
@@ -455,11 +458,13 @@ export const stockService = {
         }
 
         if (!productId) return;
+        const costVal = Number(item.costPrice || item.rate || 0);
+        const mrpVal = Number(item.mrp || item.rate || 0);
 
         try {
           const batchNum = item.batchNumber?.trim() || "BATCH-01";
-          const costVal = Number(item.costPrice || item.rate || 0);
-          const mrpVal = Number(item.mrp || item.rate || 0);
+
+
 
           // Check if batch already exists
           const { data: existingBatches } = await productsApi.getBatches([productId], orgId);
