@@ -686,7 +686,7 @@ export default function Customers() {
       </div>
 
       {/* Customer List Container */}
-      <div className="rounded-2xl overflow-hidden shadow-xs">
+      <div className="flex-1 min-h-0 rounded-2xl overflow-hidden shadow-xs flex flex-col">
         {filtered.length === 0 ? (
           <div className="py-12 text-center px-4 bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
             <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-2 text-muted-foreground">
@@ -707,7 +707,7 @@ export default function Customers() {
         ) : (
           <>
             {/* Mobile View: High-Density Swipeable Cards */}
-            <div className="block md:hidden space-y-2 pb-36 overscroll-y-contain">
+            <div className="block md:hidden flex-1 min-h-0 overflow-y-auto space-y-2 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] overscroll-y-contain scrollbar-thin">
               {paginatedCustomers.map((c) => {
                 const hasDue = c.balance > 0;
                 return (
@@ -829,9 +829,9 @@ export default function Customers() {
 
             {/* Desktop View: Split-Screen Khata Workspace or Full Table */}
             {desktopLayoutMode === "split" ? (
-              <div className="hidden md:grid grid-cols-12 gap-5 items-start min-h-[580px]">
+              <div className="hidden md:grid grid-cols-12 gap-5 items-start flex-1 min-h-0 overflow-hidden">
                 {/* LEFT PANE: Customer Selection List (4 of 12 cols) */}
-                <div className="col-span-5 lg:col-span-4 max-h-[720px] overflow-y-auto space-y-2 pr-1 rounded-2xl flex flex-col justify-between">
+                <div className="col-span-5 lg:col-span-4 h-full max-h-full overflow-y-auto space-y-2 pr-1 rounded-2xl flex flex-col justify-between scrollbar-thin">
                   <div className="space-y-2">
                     {paginatedCustomers.map((c) => {
                       const isSelected = selectedCustomerId === c.id;
@@ -1067,7 +1067,7 @@ export default function Customers() {
               </div>
             ) : (
               /* Traditional Full Table View */
-              <div className="hidden md:block overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl">
+              <div className="hidden md:flex flex-1 min-h-0 flex-col justify-between overflow-y-auto overflow-x-auto bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl scrollbar-thin">
                 <table className="w-full min-w-[780px] text-sm">
                   <thead>
                     <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-xs uppercase tracking-wider">

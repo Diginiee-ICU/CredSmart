@@ -245,15 +245,15 @@ export default function EInvoicing() {
       </header>
 
       {/* Main Content Area - Fits Screen */}
-      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6 flex flex-col justify-between scrollbar-thin">
         {/* 3 Feature Cards - 3D Frosted Glass */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {/* CARD 1: Automatic e-invoice generation */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-7 flex flex-col items-center justify-between text-center min-h-[160px] sm:min-h-[260px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 via-blue-500 to-indigo-600 rounded-l-2xl shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with QR & lines */}
-              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
+              <div className="relative w-24 sm:w-28 h-28 sm:h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-2.5 sm:p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Header fold simulation */}
                 <div className="space-y-1.5">
                   <div className="h-2 w-12 bg-teal-400/80 rounded" />
@@ -276,8 +276,8 @@ export default function EInvoicing() {
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-200/80 rounded" />
               </div>
             </div>
-            <div className="pt-5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+            <div className="pt-3 sm:pt-5">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Automatic e-invoice generation
               </h3>
             </div>
@@ -286,12 +286,12 @@ export default function EInvoicing() {
           {/* CARD 2: Hassle e-way bill generation using IRN */}
           <Link
             to={ROUTE_PATHS.ewayBill}
-            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none cursor-pointer hover:border-amber-400/60 transition-all"
+            className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-7 flex flex-col items-center justify-between text-center min-h-[160px] sm:min-h-[260px] relative overflow-hidden group select-none cursor-pointer hover:border-amber-400/60 transition-all"
           >
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-amber-400 via-orange-500 to-rose-600 rounded-l-2xl shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Document Illustration with Truck */}
-              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
+              <div className="relative w-24 sm:w-28 h-28 sm:h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-2.5 sm:p-3 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Top lines */}
                 <div className="space-y-1.5">
                   <div className="h-2 w-14 bg-amber-300 rounded" />
@@ -305,14 +305,14 @@ export default function EInvoicing() {
                 </div>
                 {/* Delivery Truck icon badge */}
                 <div className="self-end p-1 rounded bg-white dark:bg-card border border-slate-600 text-slate-800 dark:text-slate-200">
-                  <Truck className="w-6 h-6" />
+                  <Truck className="w-5 sm:w-6 h-5 sm:h-6" />
                 </div>
                 {/* Underline base stand */}
                 <div className="absolute -bottom-2 left-0 right-0 h-1 bg-amber-200/80 rounded" />
               </div>
             </div>
-            <div className="pt-5 flex flex-col items-center gap-1">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+            <div className="pt-3 sm:pt-5 flex flex-col items-center gap-1">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Hassle e-way bill generation using IRN
               </h3>
               <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">
@@ -322,13 +322,13 @@ export default function EInvoicing() {
           </Link>
 
           {/* CARD 3: Easy GSTR1 reconciliation */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs rounded-2xl p-6 sm:p-7 flex flex-col items-center justify-between text-center min-h-[260px] relative overflow-hidden group select-none">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-4 sm:p-7 flex flex-col items-center justify-between text-center min-h-[160px] sm:min-h-[260px] relative overflow-hidden group select-none">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-green-600 rounded-l-2xl shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
             <div className="w-full flex-1 flex items-center justify-center">
               {/* Stylized Report Illustration with Charts */}
-              <div className="relative w-28 h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-2.5 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
+              <div className="relative w-24 sm:w-28 h-28 sm:h-36 bg-white/90 dark:bg-slate-950/80 border-2 border-slate-700 dark:border-slate-400 rounded-xl p-2 sm:p-2.5 shadow-md flex flex-col justify-between group-hover:scale-105 transition-transform">
                 {/* Upper line chart container */}
-                <div className="w-full h-12 bg-amber-300/80 border border-slate-700 rounded p-1 flex items-end justify-between">
+                <div className="w-full h-10 sm:h-12 bg-amber-300/80 border border-slate-700 rounded p-1 flex items-end justify-between">
                   <div className="w-1.5 h-3 bg-slate-800 rounded-full" />
                   <div className="w-1.5 h-6 bg-slate-800 rounded-full" />
                   <div className="w-1.5 h-4 bg-slate-800 rounded-full" />
@@ -342,13 +342,13 @@ export default function EInvoicing() {
                   <div className="h-1 w-full bg-slate-300 dark:bg-slate-600 rounded" />
                 </div>
                 {/* Pie Chart Icon */}
-                <div className="w-7 h-7 rounded-full border-2 border-slate-700 bg-amber-400 flex items-center justify-center self-end overflow-hidden">
-                  <div className="w-3.5 h-3.5 bg-slate-800 rounded-tl-full self-start" />
+                <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-full border-2 border-slate-700 bg-amber-400 flex items-center justify-center self-end overflow-hidden">
+                  <div className="w-3 sm:w-3.5 h-3 sm:h-3.5 bg-slate-800 rounded-tl-full self-start" />
                 </div>
               </div>
             </div>
-            <div className="pt-5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+            <div className="pt-3 sm:pt-5">
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
                 Easy GSTR1 reconciliation
               </h3>
             </div>
@@ -356,17 +356,17 @@ export default function EInvoicing() {
         </div>
 
         {/* Bottom Headline & Primary CTA Button matching Capture8.PNG */}
-        <div className="text-center py-10 sm:py-12 space-y-4">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+        <div className="text-center py-6 sm:py-12 space-y-3 sm:space-y-4">
+          <h2 className="text-sm sm:text-xl font-bold text-slate-900 dark:text-white">
             Try India's easiest and fastest e-invoicing solution today
           </h2>
           <div>
             <button
               type="button"
               onClick={() => setIsGeneratorOpen(true)}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
+              className="h-8.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
-              <Zap className="w-4 h-4 stroke-[2.5]" />
+              <Zap className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Start Generating e-Invoices</span>
             </button>
           </div>
@@ -378,9 +378,9 @@ export default function EInvoicing() {
         type="button"
         onClick={() => setIsHelpOpen(true)}
         title="Help & FAQ"
-        className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-30 font-bold"
+        className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-30 font-bold"
       >
-        <span className="text-base font-bold">?</span>
+        <span className="text-sm sm:text-base font-bold">?</span>
       </button>
 
       {/* MODAL 1: What is e-Invoicing Dialog */}
@@ -444,8 +444,8 @@ export default function EInvoicing() {
 
       {/* MODAL 2: Interactive Generator & E-Invoice Management */}
       <Dialog open={isGeneratorOpen} onOpenChange={setIsGeneratorOpen}>
-        <DialogContent className="max-w-5xl sm:max-w-6xl w-[95vw] bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-xl max-h-[92vh] overflow-y-auto">
-          <DialogHeader className="border-b border-border/70 pb-3">
+        <DialogContent className="max-w-5xl sm:max-w-6xl w-[95vw] bg-white dark:bg-card border border-border p-4 sm:p-6 rounded-2xl shadow-xl flex flex-col max-h-[88dvh] sm:max-h-[92vh] overflow-hidden">
+          <DialogHeader className="border-b border-border/70 pb-3 shrink-0">
             <DialogTitle className="text-base font-bold text-foreground flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-[#5046E5]" />
@@ -797,8 +797,8 @@ export default function EInvoicing() {
       {/* MODAL 3: Live Preview of Signed E-Invoice & IRN QR */}
       {selectedInvoice && (
         <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
-          <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card border border-border p-6 rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto">
-            <DialogHeader className="border-b border-border/70 pb-3">
+          <DialogContent className="max-w-2xl sm:max-w-3xl bg-white dark:bg-card border border-border p-4 sm:p-6 rounded-2xl shadow-2xl flex flex-col max-h-[88dvh] sm:max-h-[92vh] overflow-hidden">
+            <DialogHeader className="border-b border-border/70 pb-3 shrink-0">
               <DialogTitle className="text-base font-bold text-foreground flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-emerald-600" />
@@ -810,7 +810,7 @@ export default function EInvoicing() {
               </DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-4 mt-2">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 mt-2 pr-1 scrollbar-thin">
               {/* QR Code & Basic Meta */}
               <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-slate-50 dark:bg-muted/40 rounded-xl border border-slate-200 dark:border-border">
                 <img

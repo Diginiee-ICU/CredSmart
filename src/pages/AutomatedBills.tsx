@@ -233,7 +233,7 @@ export default function AutomatedBills() {
       </header>
 
       {/* Main Content Area - Fits Screen */}
-      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 flex flex-col justify-between scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto max-w-6xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6 flex flex-col justify-between scrollbar-thin">
         {/* 3 Feature Cards - 3D Frosted Glass */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {/* CARD 1: Creating repeated bills? */}
@@ -378,17 +378,17 @@ export default function AutomatedBills() {
         </div>
 
         {/* Bottom Headline & Primary CTA Button matching Capture9.PNG */}
-        <div className="text-center py-10 sm:py-12 space-y-4">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+        <div className="text-center py-6 sm:py-12 space-y-3 sm:space-y-4">
+          <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white">
             Schedule your repeated bills hassle-free
           </h2>
           <div>
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
+              className="h-8.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Create Automated Bill</span>
             </button>
           </div>

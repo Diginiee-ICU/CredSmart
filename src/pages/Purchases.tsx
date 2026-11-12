@@ -1073,7 +1073,7 @@ export default function Purchases() {
           </div>
 
           {/* Mobile Pagination */}
-          <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 p-2">
+          <div className="md:hidden border-t border-slate-200/80 dark:border-slate-800 p-2 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))]">
             <PaginationBar
               page={page}
               totalPages={totalPages}

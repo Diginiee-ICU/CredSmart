@@ -631,7 +631,7 @@ export default function Suppliers() {
       </div>
 
       {/* Supplier List / Table */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="flex-1 min-h-0 rounded-2xl border border-border bg-card shadow-sm flex flex-col overflow-hidden">
         {filtered.length === 0 ? (
           <div className="py-16 text-center px-4">
             <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
@@ -652,7 +652,7 @@ export default function Suppliers() {
         ) : (
           <>
             {/* Mobile View: Cards */}
-            <div className="block md:hidden divide-y divide-border pb-24">
+            <div className="block md:hidden flex-1 min-h-0 overflow-y-auto divide-y divide-border pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] scrollbar-thin">
               {paginatedItems.map((s) => (
                 <div key={s.id} className="p-4 space-y-3 hover:bg-muted/20 transition-colors">
                   <div className="flex items-start justify-between gap-3">

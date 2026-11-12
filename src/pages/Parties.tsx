@@ -1562,7 +1562,7 @@ setSortDirection("asc");
         </div>
 
         {/* Mobile Pagination */}
-        <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 pb-[calc(3.75rem+env(safe-area-inset-bottom,0px))]">
           <PaginationBar
             page={partiesPage}
             totalPages={partiesTotalPages}
