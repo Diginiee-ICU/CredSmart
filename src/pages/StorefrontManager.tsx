@@ -55,7 +55,7 @@ export default function StorefrontManager() {
   const pendingOrdersCount = orders.filter((o) => o.status === "pending").length;
 
   return (
-    <div className="flex-1 w-full pb-16 px-4 sm:px-8 pt-6 max-w-7xl mx-auto">
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto font-sans scrollbar-thin pb-24 px-4 sm:px-8 pt-6 max-w-7xl mx-auto">
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 gap-4">
         <div>
