@@ -392,5 +392,6 @@ export default function PrintSettings() {
         </main>
       </div>
     </div>
+  </div>
   );
 }
