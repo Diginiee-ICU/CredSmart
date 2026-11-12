@@ -87,8 +87,9 @@ export default function VendorDiscovery() {
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
-      {/* Hero Search Banner */}
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto font-sans scrollbar-thin">
+      <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 pb-24">
+        {/* Hero Search Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary to-slate-900 text-white p-6 sm:p-10 shadow-xl border border-primary/20">
         {/* Glow & background patterns */}
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
@@ -298,5 +299,6 @@ export default function VendorDiscovery() {
         ) : null}
       </div>
     </div>
+  </div>
   );
 }
