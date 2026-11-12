@@ -208,8 +208,9 @@ export default function PrintSettings() {
   );
 
   return (
-    <div className="w-full max-w-[1550px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6 font-sans">
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto font-sans scrollbar-thin">
+      <div className="w-full max-w-[1550px] mx-auto p-3 sm:p-6 lg:p-8 space-y-6 font-sans pb-24">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Navigation Sidebar */}
         <SettingsNavSidebar activeItem="print" />
 
