@@ -121,6 +121,17 @@ export default function Auth() {
       const { data: memberships } = await settingsApi.getMemberships(undefined, data.user.id);
       const membership = memberships && memberships.length > 0 ? memberships[0] : null;
 
+      // Sync localStorage active suite to the portal the user is currently logging into.
+      // Without this, a stale "crm" value from a previous session would redirect a POS
+      // login to the CRM screen even though portalTarget is "billing".
+      try {
+        localStorage.setItem("credsmart_active_suite", portalTarget);
+        if (portalTarget === "billing") {
+          // Clear any stale CRM session flag so the entry-route resolver sees billing
+          sessionStorage.removeItem("credsmart_launch_portal_active");
+        }
+      } catch { /* noop */ }
+
       const targetRoute = resolvePostLoginRoute(membership?.role);
       navigate(targetRoute);
     } catch (setupErr) {
@@ -545,6 +556,9 @@ export default function Auth() {
       localStorage.setItem("credsmart_suite_preference", target);
       if (target === "crm") {
         sessionStorage.setItem("credsmart_launch_portal_active", "crm");
+      } else {
+        // Clear stale CRM session flag when switching back to billing
+        sessionStorage.removeItem("credsmart_launch_portal_active");
       }
     } catch { /* noop */ }
   };
