@@ -212,8 +212,9 @@ export default function CustomerLedger() {
   };
 
   return (
-    <div className="w-full max-w-[1100px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6">
-      {/* Top Navigation & Actions Bar */}
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto font-sans scrollbar-thin">
+      <div className="w-full max-w-[1100px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 pb-24">
+        {/* Top Navigation & Actions Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
         <div className="flex items-center gap-3">
           <Button
@@ -628,5 +629,6 @@ export default function CustomerLedger() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
