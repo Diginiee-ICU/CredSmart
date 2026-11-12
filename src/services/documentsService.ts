@@ -1162,12 +1162,26 @@ export const documentsService = {
         cancelledCount++;
       } else {
         totalAmount += doc.grandTotal;
-        paidAmount += doc.paidAmount || (doc.status === "paid" ? doc.grandTotal : 0);
-        const unpaid = (doc.grandTotal || 0) - (doc.paidAmount || (doc.status === "paid" ? doc.grandTotal : 0));
-        unpaidAmount += Math.max(0, unpaid);
 
-        if (doc.status === "paid") paidCount++;
-        else unpaidCount++;
+        // If the invoice is explicitly marked as "paid", the entire grandTotal is
+        // settled — regardless of what paidAmount field says (handles partial→paid
+        // transitions where paidAmount was not updated alongside the status).
+        if (doc.status === "paid") {
+          paidAmount += doc.grandTotal;
+          // balanceDue is zero — do NOT add to unpaidAmount
+          paidCount++;
+        } else {
+          // For unpaid / partial invoices use balanceDue if available,
+          // otherwise fall back to grandTotal minus any recorded paidAmount.
+          const effectivePaid = Number(doc.paidAmount || 0);
+          paidAmount += effectivePaid;
+          const unpaid = Math.max(
+            0,
+            Number(doc.balanceDue ?? (doc.grandTotal - effectivePaid))
+          );
+          unpaidAmount += unpaid;
+          unpaidCount++;
+        }
       }
     }
 
