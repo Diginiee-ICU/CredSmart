@@ -155,8 +155,9 @@ export default function ActivityLog() {
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans">
-      {/* Header */}
+    <div className="flex-1 w-full min-w-0 h-full overflow-y-auto font-sans scrollbar-thin">
+      <div className="w-full max-w-[1400px] mx-auto px-4 py-6 sm:px-8 sm:py-8 space-y-6 font-sans pb-24">
+        {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -402,5 +403,6 @@ export default function ActivityLog() {
         )}
       </div>
     </div>
+  </div>
   );
 }
