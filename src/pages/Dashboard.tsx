@@ -354,9 +354,17 @@ export default function Dashboard() {
 
       // Latest 10 for table
       const rows: TransactionRow[] = (salesData || []).slice(0, 10).map((s: any /* eslint-disable-line @typescript-eslint/no-explicit-any */, idx: number) => {  
+        // Derive status from actual DB payment_status field, not fake modulo patterns
         let status: "PAID" | "PENDING" | "OVERDUE" = "PAID";
-        if (s.payment_method === "credit" || s.payment_method === "due") {
-          status = idx % 3 === 0 ? "OVERDUE" : "PENDING";
+        const dbPaymentStatus = String(s?.payment_status || "").toLowerCase();
+        if (dbPaymentStatus === "unpaid") {
+          status = "PENDING";
+        } else if (dbPaymentStatus === "partial") {
+          status = "PENDING";
+        } else if (dbPaymentStatus === "paid") {
+          status = "PAID";
+        } else if (s.payment_method === "credit" || s.payment_method === "due" || s.payment_method === "Credit") {
+          status = "PENDING";
         }
 
         const partyName = Array.isArray(s?.customers)
@@ -374,8 +382,8 @@ export default function Dashboard() {
             : "Today",
           type: "Sale Invoice",
           txnNo: s?.invoice_number || `INV-${new Date().getFullYear()}-${String(idx + 1).padStart(3, "0")}`,
-          partyName: partyName || "Walk-in Customer",
-          amount: s?.total || 0,
+          partyName: partyName || s?.customer_name || "Walk-in Customer",
+          amount: Number(s?.total_amount || s?.total || 0),
           status,
         };
       });
