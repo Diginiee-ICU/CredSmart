@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { ArrowLeft, User, Phone, MapPin, Building2, Mail, IndianRupee, Check, RotateCw } from "lucide-react";
+import { ArrowLeft, User, Phone, MapPin, Building2, Mail, IndianRupee, Check, RotateCw, Search, CheckCircle2 } from "lucide-react";
 import { partiesApi } from "@/services/partiesApi";
 import { useOrganization } from "@/hooks/useOrganization";
 import { toast } from "sonner";
 import { INDIAN_STATES_AND_CODES } from "@/utils/suggestionData";
+import { lookupTaxIdentifier, isValidGSTIN, isValidPAN } from "@/utils/gstinLookup";
 
 export interface MobileCreatedPartyResult {
   id: string;
@@ -42,6 +43,10 @@ export function CreatePartyModal({
   );
   const [isSaving, setIsSaving] = useState(false);
 
+  // GST Lookup state
+  const [isLookingUpGst, setIsLookingUpGst] = useState(false);
+  const [gstLookupSuccess, setGstLookupSuccess] = useState<string | null>(null);
+
   // Auto state detection from GSTIN
   const detectedState = React.useMemo(() => {
     if (gstin && gstin.length >= 2) {
@@ -50,6 +55,56 @@ export function CreatePartyModal({
     }
     return null;
   }, [gstin]);
+
+  const triggerGstAutoFill = async (targetId: string, showToast = true) => {
+    const clean = targetId.trim().toUpperCase();
+    if (!clean) {
+      if (showToast) toast.error("Please enter a valid 15-character GSTIN or 10-character PAN.");
+      return;
+    }
+    if (!isValidGSTIN(clean) && !isValidPAN(clean)) {
+      if (showToast) toast.error("Invalid format. Enter 15-char GSTIN (e.g. 27AAPFU0939F1ZV) or 10-char PAN.");
+      return;
+    }
+
+    setIsLookingUpGst(true);
+    setGstLookupSuccess(null);
+    try {
+      const result = await lookupTaxIdentifier(clean);
+      if (result.legalName) {
+        setName(result.legalName);
+      }
+      if (result.address) {
+        setAddress(result.address);
+      }
+      if (result.legalName) {
+        setGstLookupSuccess(`✓ ${result.legalName}${result.state ? " • " + result.state : ""}${result.category ? " (" + result.category + ")" : ""}`);
+        if (showToast) toast.success(`Verified: ${result.legalName}`);
+      } else if (result.state) {
+        setGstLookupSuccess(`State: ${result.state}${result.pan ? " • PAN: " + result.pan : ""}`);
+        if (showToast) toast.info(`State: ${result.state} detected`);
+      }
+    } catch (err: any) {
+      if (showToast) toast.error(err?.message || "Failed to fetch GST details.");
+    } finally {
+      setIsLookingUpGst(false);
+    }
+  };
+
+  const handleGstinChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^0-9A-Z]/g, "").slice(0, 15);
+    setGstin(clean);
+    setGstLookupSuccess(null);
+
+    // Auto-trigger on full 15-char GSTIN
+    if (clean.length === 15 && isValidGSTIN(clean)) {
+      triggerGstAutoFill(clean, false);
+    }
+  };
+
+  const handleGSTLookup = () => {
+    triggerGstAutoFill(gstin, true);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,7 +280,7 @@ export function CreatePartyModal({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-              GSTIN (Optional)
+              GSTIN / PAN (Optional)
             </label>
             {detectedState && (
               <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-mono">
@@ -233,17 +288,38 @@ export function CreatePartyModal({
               </span>
             )}
           </div>
-          <div className="flex items-center border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
-            <Building2 className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
-            <input
-              type="text"
-              maxLength={15}
-              placeholder="e.g. 27ABCDE1234F1Z5"
-              value={gstin}
-              onChange={(e) => setGstin(e.target.value.toUpperCase())}
-              className="w-full bg-transparent text-sm font-mono font-bold text-slate-900 uppercase outline-none placeholder:text-slate-400"
-            />
+          <div className="flex gap-2">
+            <div className="flex items-center flex-1 border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50/50 focus-within:bg-white focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
+              <Building2 className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
+              <input
+                type="text"
+                maxLength={15}
+                placeholder="e.g. 27ABCDE1234F1Z5"
+                value={gstin}
+                onChange={(e) => handleGstinChange(e.target.value)}
+                className="w-full bg-transparent text-sm font-mono font-bold text-slate-900 uppercase outline-none placeholder:text-slate-400"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleGSTLookup}
+              disabled={isLookingUpGst || gstin.length < 10}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-blue-500/40 bg-blue-50 text-blue-600 text-xs font-bold hover:bg-blue-500 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all"
+            >
+              {isLookingUpGst ? (
+                <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Search className="w-3.5 h-3.5" />
+              )}
+              Verify
+            </button>
           </div>
+          {gstLookupSuccess && (
+            <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-emerald-600 font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span className="line-clamp-1">{gstLookupSuccess}</span>
+            </div>
+          )}
         </div>
 
         {/* Billing Address */}
