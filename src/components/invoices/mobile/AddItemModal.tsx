@@ -7,9 +7,10 @@ interface AddItemModalProps {
   onClose: () => void;
   catalog: any[];
   onAddSelectedItems: (items: DocumentLineItem[], keepOpen?: boolean) => void;
+  priceMode?: "sales" | "purchase";
 }
 
-export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemModalProps) {
+export function AddItemModal({ onClose, catalog, onAddSelectedItems, priceMode = "sales" }: AddItemModalProps) {
   const [search, setSearch] = useState("");
   const [isCreateItemOpen, setIsCreateItemOpen] = useState(false);
   
@@ -19,17 +20,25 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
   );
 
   const handleAdd = (item: any) => {
-    // Convert catalog item to DocumentLineItem format roughly
+    const itemRate = priceMode === "purchase"
+      ? (item.costPrice !== undefined ? item.costPrice : (item.purchasePrice !== undefined ? item.purchasePrice : (item.rate || item.sellingPrice || 0)))
+      : (item.sellingPrice || item.rate || 0);
+
+    // Convert catalog item to DocumentLineItem format
     const newLineItem: DocumentLineItem = {
       id: crypto.randomUUID(),
       productId: item.id,
       productName: item.name,
       quantity: 1,
-      rate: item.sellingPrice || item.rate || 0,
-      taxRate: item.gstRate || 0,
+      rate: Number(itemRate) || 0,
+      taxRate: Number(item.taxRate ?? item.gstRate ?? 18) || 0,
       discountPercent: 0,
       discountAmount: 0,
       unit: item.unit || "PCS",
+      hsn: item.hsn || item.hsnCode || "",
+      barcode: item.barcode || undefined,
+      altUnit: item.altUnit || undefined,
+      altUnitConversion: item.altUnitConversion || undefined,
     };
     onAddSelectedItems([newLineItem]);
     onClose();
@@ -78,7 +87,15 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
               <span className="text-[15px] font-bold text-slate-900">{item.name}</span>
               {item.category && <span className="text-xs text-slate-500">{item.category}</span>}
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-[13px] font-semibold text-slate-700">₹ {(item.sellingPrice || item.rate || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}/{item.unit || "BOX"}</span>
+                <span className="text-[13px] font-semibold text-slate-700">
+                  ₹ {Number(priceMode === "purchase"
+                    ? (item.costPrice !== undefined ? item.costPrice : (item.purchasePrice !== undefined ? item.purchasePrice : (item.rate || item.sellingPrice || 0)))
+                    : (item.sellingPrice || item.rate || 0)
+                  ).toLocaleString('en-IN', {minimumFractionDigits:2})}/{item.unit || "BOX"}
+                </span>
+                {priceMode === "purchase" && (
+                  <span className="text-[10px] text-slate-400 font-medium">(Purchase)</span>
+                )}
               </div>
               <span className="text-[11px] text-slate-500 mt-0.5 font-medium tracking-wide">Stock: {item.stock || 0} {item.unit || "BOX"}</span>
             </div>
@@ -95,6 +112,7 @@ export function AddItemModal({ onClose, catalog, onAddSelectedItems }: AddItemMo
       {isCreateItemOpen && (
         <CreateNewItemModal
           onClose={() => setIsCreateItemOpen(false)}
+          priceMode={priceMode}
           onSave={(item, saveAndNew) => {
             onAddSelectedItems([item], saveAndNew);
             if (!saveAndNew) setIsCreateItemOpen(false);

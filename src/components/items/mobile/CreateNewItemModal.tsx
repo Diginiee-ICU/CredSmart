@@ -7,6 +7,7 @@ import { ItemImageUpload } from "../ItemImageUpload";
 interface CreateNewItemModalProps {
   onClose: () => void;
   onSave: (item: DocumentLineItem, saveAndNew: boolean) => void;
+  priceMode?: "sales" | "purchase";
 }
 
 const UNIT_OPTIONS = [
@@ -14,7 +15,7 @@ const UNIT_OPTIONS = [
   "MTR", "CM", "IN", "FT", "SQFT", "BTL", "CAN", "BAG", "ROLL"
 ];
 
-export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps) {
+export function CreateNewItemModal({ onClose, onSave, priceMode = "sales" }: CreateNewItemModalProps) {
   const [isProduct, setIsProduct] = useState(true);
   const [activeTab, setActiveTab] = useState<'pricing' | 'stock' | 'other' | 'party'>('pricing');
   const [lowStockAlert, setLowStockAlert] = useState(false);
@@ -38,22 +39,26 @@ export function CreateNewItemModal({ onClose, onSave }: CreateNewItemModalProps)
       return;
     }
 
+    const finalRate = priceMode === "purchase"
+      ? (Number(purchasePrice) || Number(salesPrice) || 0)
+      : (Number(salesPrice) || Number(purchasePrice) || 0);
+
     onSave({
       id: crypto.randomUUID(),
       productName: name,
       quantity: 1,
-      rate: Number(salesPrice) || 0,
+      rate: finalRate,
       taxRate: Number(gstRate) || 0,
       discountPercent: 0,
       discountAmount: 0,
       unit,
       hsn: hsn.trim() || undefined,
       imageUrl: imageUrl.trim() || undefined,
-      taxableAmount: Number(salesPrice) || 0,
+      taxableAmount: finalRate,
       cgstAmount: 0,
       sgstAmount: 0,
       igstAmount: 0,
-      lineTotal: Number(salesPrice) || 0,
+      lineTotal: finalRate,
     }, saveAndNew);
 
     if (saveAndNew) {
