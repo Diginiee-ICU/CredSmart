@@ -2229,243 +2229,206 @@ export default function POSBilling() {
 
   return (
     <div className="flex-1 flex flex-col w-full h-full min-h-0 bg-[#F8FAFC] text-slate-900 font-sans overflow-hidden relative select-none">
-      {/* ========================================================================= */}
-      {/* DEDICATED SINGLE-COLUMN MOBILE POS TERMINAL (< 768px) */}
-      {/* ========================================================================= */}
-      {isMobile ? (
-        <MobilePOSTerminal
-          products={activePartyProducts}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          currentTab={currentTab}
-          updateCurrentTab={updateCurrentTab}
-          onAddProduct={handleAddProduct}
-          onRemoveItem={handleRemoveCartItem}
-          grandTotal={grandTotal}
-          subTotal={subTotal}
-          taxAmount={taxAmount}
-          itemDiscountsTotal={itemDiscountsTotal}
-          billDiscountAmount={billDiscountAmount}
-          totalItemsCount={totalItemsCount}
-          receivedNum={receivedNum}
-          changeDue={changeDue}
-          balanceRemaining={balanceRemaining}
-          onSaveBill={handleSaveBill}
-          isProcessingSave={isProcessingSave}
-          onExitPOS={handleExitPOS}
-          onOpenCustomerModal={() => setShowCustomerModal(true)}
-          onOpenSettingsModal={() => setShowSettingsModal(true)}
-          onOpenReturnModal={() => setShowReturnModal(true)}
-          onOpenCameraScanner={() => setShowCameraScannerModal(true)}
-          isListening={isListening}
-          onToggleVoice={toggleVoiceRecognition}
-          org={org}
-          settings={settings}
-        />
-      ) : (
-        <div className="flex flex-1 flex-col min-h-0 w-full h-full overflow-hidden">
-          {/* ========================================================================= */}
-          {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
-          {/* ========================================================================= */}
-      <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2.5 sm:px-5 flex items-center justify-between shrink-0 shadow-xs z-30">
-        {/* Left: Exit POS & Terminal Identity */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={handleExitPOS}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs active:scale-95 group"
-            title="Exit POS Terminal [CTRL + ESC]"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-900 transition-colors" />
-            <span className="hidden sm:inline">Exit POS</span>
-            <span className="sm:hidden">Exit</span>
-            <kbd className="hidden sm:inline text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
-              CTRL + ESC
-            </kbd>
-          </button>
-
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-
-          <div className="hidden md:flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-black text-xs shadow-xs">
-              <Zap className="w-4 h-4 fill-current" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-900 tracking-tight leading-none">
-                {settings.storeName || org?.name || "CredSmart POS"}
-              </span>
-              <span className="text-[11px] font-mono text-slate-500 leading-tight">
-                Terminal #01
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Quick Hotkeys & Help */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => setShowReturnModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer shrink-0"
-            title="Process Customer Return or Credit Note"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
-            <span className="hidden sm:inline">Return / Credit</span>
-            <span className="sm:hidden">Return</span>
-          </button>
-
-          <button
-            onClick={() => setShowTutorialModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer hover-3d-glow shrink-0"
-            title="View Hotkey Guide & Tutorial"
-          >
-            <PlayCircle className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">Shortcuts</span>
-            <span className="sm:hidden">Help</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ========================================================================= */}
-      {/* 2. MULTI-TAB HELD BILLS BAR + SHIFTED CONTROLS (TIME, FULLSCREEN, SETTINGS) */}
-      {/* ========================================================================= */}
-      <div className="h-10 sm:h-11 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20 gap-2">
-        <div className="flex items-center gap-1.5 h-full py-1 shrink-0">
-          {tabs.map((tab) => {
-            const isActive = tab.id === activeTabId;
-            const itemsCount = tab.items.reduce((acc, it) => acc + it.quantity, 0);
-
-            return (
-              <div
-                key={tab.id}
-                onClick={() => handleSwitchTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 h-7 sm:h-8 px-2.5 sm:px-3.5 rounded-lg text-xs font-semibold cursor-pointer border transition-all select-none relative group",
-                  isActive
-                    ? "bg-white border-slate-300 text-slate-900 shadow-xs ring-1 ring-indigo-500/20"
-                    : "bg-slate-200/50 hover:bg-slate-200 border-transparent text-slate-600 hover:text-slate-900"
-                )}
-              >
-                <div className="flex items-center gap-1 sm:gap-1.5">
-                  <span className={cn("w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full", isActive ? "bg-indigo-600" : "bg-slate-400")} />
-                  <span className="hidden sm:inline">{tab.title}</span>
-                  <span className="sm:hidden">Bill {tab.tabIndex}</span>
-                </div>
-
-                <kbd className="hidden lg:inline text-[11px] font-mono opacity-60 bg-slate-100 px-1 rounded border border-slate-200">
-                  CTRL + {tab.tabIndex}
-                </kbd>
-
-                {itemsCount > 0 && (
-                  <span className="px-1.5 py-0.2 sm:py-0.5 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] sm:text-[11px] font-bold font-mono">
-                    {itemsCount}
-                  </span>
-                )}
-
-                <button
-                  onClick={(e) => handleCloseTab(tab.id, e)}
-                  className="hover:bg-slate-200 rounded-md p-0.5 text-slate-400 hover:text-red-500 transition-colors ml-0.5"
-                  title="Close Tab"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            );
-          })}
-
-          {/* + Hold Bill & Create Another [CTRL + B] */}
-          {tabs.length < 5 && (
+      <div className="flex flex-1 flex-col min-h-0 w-full h-full overflow-hidden">
+        {/* ========================================================================= */}
+        {/* 1. TOP HEADER: Clean Light & Professional FinTech Aesthetic */}
+        {/* ========================================================================= */}
+        <header className="pt-[env(safe-area-inset-top,0px)] h-[calc(2.75rem+env(safe-area-inset-top,0px))] sm:h-[calc(3rem+env(safe-area-inset-top,0px))] bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-2 sm:px-4 flex items-center justify-between shrink-0 shadow-2xs z-30">
+          {/* Left: Exit POS & Terminal Identity */}
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <button
-              onClick={handleHoldBillAndCreate}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-dashed border-indigo-300 rounded-lg transition-all ml-1 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
-              title="Hold Current Bill and Start New One [CTRL + B]"
+              onClick={handleExitPOS}
+              className="flex items-center gap-1 sm:gap-1.5 h-7.5 px-2 sm:px-3 rounded-lg border border-slate-200 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all shadow-2xs active:scale-95 group shrink-0"
+              title="Exit POS Terminal [CTRL + ESC]"
             >
-              <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span className="hidden sm:inline">+ Hold Bill</span>
-              <span className="sm:hidden">+ Hold</span>
-              <kbd className="hidden lg:inline text-[11px] font-mono text-indigo-700/80 font-normal bg-indigo-100 px-1 rounded border border-indigo-200">
-                CTRL + B
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-900 transition-colors" />
+              <span className="hidden sm:inline">Exit POS</span>
+              <span className="sm:hidden">Exit</span>
+              <kbd className="hidden sm:inline text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1 py-0.5 rounded font-normal">
+                CTRL + ESC
               </kbd>
             </button>
-          )}
-        </div>
 
-        {/* Right Section in 2nd Line: Bill stats + Shifted Time, Fullscreen, and Settings buttons */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          <div className="hidden lg:flex items-center gap-2.5 text-xs text-slate-500 font-mono">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-slate-800 font-semibold">{currentTab.title}</span>
-            </span>
-            <span className="text-slate-300">•</span>
-            <span>{currentTab.items.length} Line(s)</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+            <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+              <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
+                <Zap className="w-3.5 h-3.5 fill-current" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-slate-900 tracking-tight leading-none truncate max-w-[100px] sm:max-w-[180px] md:max-w-none">
+                  {settings.storeName || org?.name || "CredSmart POS"}
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-mono text-slate-500 leading-tight">
+                  Terminal #01
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="h-4 w-px bg-slate-200 hidden lg:block" />
+          {/* Right: Quick Hotkeys & Help */}
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button
+              onClick={() => setShowReturnModal(true)}
+              className="flex items-center gap-1 sm:gap-1.5 h-7.5 px-2 sm:px-2.5 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 transition-all text-[11px] sm:text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer shrink-0"
+              title="Process Customer Return or Credit Note"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden sm:inline">Return / Credit</span>
+              <span className="sm:hidden">Return</span>
+            </button>
 
-          {/* Shifted Live Time Clock */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-mono text-slate-700 shadow-2xs shrink-0">
-            <Clock className="w-3 h-3 text-indigo-600" />
-            <span>{currentTime}</span>
+            <button
+              onClick={() => setShowTutorialModal(true)}
+              className="flex items-center gap-1 sm:gap-1.5 h-7.5 px-2 sm:px-2.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 transition-all text-[11px] sm:text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer hover-3d-glow shrink-0"
+              title="View Hotkey Guide & Tutorial"
+            >
+              <PlayCircle className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="hidden sm:inline">Shortcuts</span>
+              <span className="sm:hidden">Help</span>
+            </button>
+          </div>
+        </header>
+
+        {/* ========================================================================= */}
+        {/* 2. MULTI-TAB HELD BILLS BAR + SHIFTED CONTROLS (TIME, FULLSCREEN, SETTINGS) */}
+        {/* ========================================================================= */}
+        <div className="h-8.5 sm:h-9 bg-slate-100/90 border-b border-slate-200 px-2 sm:px-3 flex items-center justify-between shrink-0 overflow-x-auto scrollbar-none z-20 gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 h-full py-0.5 shrink-0">
+            {tabs.map((tab) => {
+              const isActive = tab.id === activeTabId;
+              const itemsCount = tab.items.reduce((acc, it) => acc + it.quantity, 0);
+
+              return (
+                <div
+                  key={tab.id}
+                  onClick={() => handleSwitchTab(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1 sm:gap-1.5 h-6.5 sm:h-7 px-2 sm:px-2.5 rounded-md text-[11px] sm:text-xs font-semibold cursor-pointer border transition-all select-none relative group shrink-0",
+                    isActive
+                      ? "bg-white border-slate-300 text-slate-900 shadow-2xs ring-1 ring-blue-500/20"
+                      : "bg-slate-200/50 hover:bg-slate-200 border-transparent text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <div className="flex items-center gap-1 sm:gap-1.5">
+                    <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", isActive ? "bg-blue-600" : "bg-slate-400")} />
+                    <span className="hidden sm:inline">{tab.title}</span>
+                    <span className="sm:hidden">Bill {tab.tabIndex}</span>
+                  </div>
+
+                  <kbd className="hidden lg:inline text-[10px] font-mono opacity-60 bg-slate-100 px-1 rounded border border-slate-200">
+                    CTRL + {tab.tabIndex}
+                  </kbd>
+
+                  {itemsCount > 0 && (
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-bold font-mono">
+                      {itemsCount}
+                    </span>
+                  )}
+
+                  <button
+                    onClick={(e) => handleCloseTab(tab.id, e)}
+                    className="hover:bg-slate-200 rounded p-0.5 text-slate-400 hover:text-red-500 transition-colors ml-0.5"
+                    title="Close Tab"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* + Hold Bill & Create Another [CTRL + B] */}
+            {tabs.length < 5 && (
+              <button
+                onClick={handleHoldBillAndCreate}
+                className="flex items-center gap-1 h-6.5 sm:h-7 px-2 text-[11px] font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-dashed border-blue-300 rounded-md transition-all shrink-0 cursor-pointer shadow-2xs"
+                title="Hold Current Bill and Start New One [CTRL + B]"
+              >
+                <Plus className="w-3 h-3" />
+                <span className="hidden sm:inline">+ Hold Bill</span>
+                <span className="sm:hidden">+ Hold</span>
+                <kbd className="hidden lg:inline text-[10px] font-mono text-blue-700/80 font-normal bg-blue-100 px-1 rounded border border-blue-200">
+                  CTRL + B
+                </kbd>
+              </button>
+            )}
           </div>
 
-          {/* Shifted Fullscreen Toggle Button */}
+          {/* Right Section in 2nd Line: Bill stats + Shifted Time, Fullscreen, and Settings buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="hidden lg:flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-slate-800 font-semibold">{currentTab.title}</span>
+              </span>
+              <span className="text-slate-300">•</span>
+              <span>{currentTab.items.length} Line(s)</span>
+              <span className="text-slate-300">•</span>
+              <span className="text-emerald-700 font-bold">{totalItemsCount} Unit(s)</span>
+            </div>
+
+            <div className="h-3.5 w-px bg-slate-200 hidden lg:block" />
+
+            {/* Shifted Live Time Clock */}
+            <div className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[11px] font-mono text-slate-700 shadow-2xs shrink-0">
+              <Clock className="w-3 h-3 text-blue-600" />
+              <span>{currentTime}</span>
+            </div>
+
+            {/* Shifted Fullscreen Toggle Button */}
+            <button
+              onClick={toggleFullscreen}
+              className="w-7 h-7 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95 shadow-2xs shrink-0 cursor-pointer"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
+            >
+              {isFullscreen ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}
+            </button>
+
+            {/* Shifted POS Settings Button */}
+            <button
+              onClick={() => setShowSettingsModal(true)}
+              className="flex items-center gap-1 h-7 px-2 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-[11px] font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95 shadow-2xs shrink-0 cursor-pointer"
+              title="POS Settings [CTRL + S]"
+            >
+              <Settings className="w-3 h-3 text-slate-500" />
+              <span className="hidden sm:inline">Settings</span>
+              <kbd className="hidden xl:inline text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded font-normal">
+                CTRL+S
+              </kbd>
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE VIEW TOGGLE BAR (Cart vs Checkout) */}
+        <div className="flex lg:hidden items-center border-b border-slate-200/90 bg-white shrink-0 px-2 py-1 gap-1.5 z-20 shadow-2xs">
           <button
-            onClick={toggleFullscreen}
-            className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-slate-600 hover:text-slate-900 transition-all hidden sm:flex items-center justify-center active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen Mode"}
+            type="button"
+            onClick={() => setMobileActiveView("cart")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 h-7.5 rounded-lg text-xs font-semibold transition-all",
+              mobileActiveView === "cart"
+                ? "bg-blue-600 text-white shadow-2xs"
+                : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/80"
+            )}
           >
-            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            <ShoppingBag className="w-3.5 h-3.5" />
+            <span>Cart ({currentTab.items.length})</span>
           </button>
 
-          {/* Shifted POS Settings Button */}
           <button
-            onClick={() => setShowSettingsModal(true)}
-            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-200/80 text-xs font-semibold text-slate-700 hover:text-slate-900 transition-all active:scale-95 shadow-2xs shrink-0 cursor-pointer hover-3d-glow"
-            title="POS Settings [CTRL + S]"
+            type="button"
+            onClick={() => setMobileActiveView("checkout")}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1.5 h-7.5 rounded-lg text-xs font-semibold transition-all",
+              mobileActiveView === "checkout"
+                ? "bg-emerald-600 text-white shadow-2xs"
+                : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/80"
+            )}
           >
-            <Settings className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Settings</span>
-            <kbd className="hidden xl:inline text-[11px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1 py-0.5 rounded font-normal">
-              CTRL+S
-            </kbd>
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Pay (₹{grandTotal.toFixed(2)})</span>
           </button>
         </div>
-      </div>
-
-      {/* MOBILE VIEW TOGGLE BAR (Cart vs Checkout) */}
-      <div className="flex lg:hidden items-center border-b border-slate-200 bg-white/95 shrink-0 px-2.5 py-2 gap-2 z-20">
-        <button
-          type="button"
-          onClick={() => setMobileActiveView("cart")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
-            mobileActiveView === "cart"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400"
-              : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200"
-          )}
-        >
-          <ShoppingBag className="w-3.5 h-3.5" />
-          <span>Cart ({currentTab.items.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setMobileActiveView("checkout")}
-          className={cn(
-            "flex-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold transition-all",
-            mobileActiveView === "checkout"
-              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-1 ring-emerald-400"
-              : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200"
-          )}
-        >
-          <CreditCard className="w-3.5 h-3.5" />
-          <span>Pay (₹{grandTotal.toLocaleString("en-IN")})</span>
-        </button>
-      </div>
 
       {/* ========================================================================= */}
       {/* 3. MAIN TERMINAL WORKSPACE (LEFT WORKBENCH + RIGHT SUMMARY) */}
@@ -2481,7 +2444,7 @@ export default function POSBilling() {
           )}
         >
           {/* QUICK ACTION HOTKEY RIBBON */}
-          <div className="p-2 border-b border-slate-200/80 bg-slate-50/80 flex items-center gap-1.5 flex-wrap shrink-0 overflow-x-auto scrollbar-none select-none">
+          <div className="h-8.5 px-2 py-1 border-b border-slate-200/80 bg-slate-50/80 flex items-center gap-1.5 flex-nowrap overflow-x-auto scrollbar-none shrink-0 select-none">
             {/* Search [F1] */}
             <button
               type="button"
@@ -2489,7 +2452,7 @@ export default function POSBilling() {
                 searchInputRef.current?.focus();
                 searchInputRef.current?.select();
               }}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Focus Search Bar [F1]"
             >
               <Search className="w-3 h-3 text-slate-400" />
@@ -2503,7 +2466,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={() => setShowNewItemModal(true)}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Add New Stock Item [CTRL+I]"
             >
               <Plus className="w-3 h-3 text-slate-400" />
@@ -2518,7 +2481,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={handleHoldBillAndCreate}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Hold Current Bill & Start New [CTRL+B]"
             >
               <Split className="w-3 h-3 text-slate-400" />
@@ -2533,7 +2496,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={handleOpenChangePrice}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Change Price of Selected Item [P]"
             >
               <Tag className="w-3 h-3 text-slate-400" />
@@ -2547,7 +2510,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={handleOpenChangeQty}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Change Quantity of Selected Item [Q]"
             >
               <Hash className="w-3 h-3 text-slate-400" />
@@ -2561,7 +2524,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={handleOpenChangeDiscount}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Change Discount on Selected Item [D]"
             >
               <Percent className="w-3 h-3 text-slate-400" />
@@ -2577,7 +2540,7 @@ export default function POSBilling() {
               type="button"
               onClick={toggleVoiceRecognition}
               className={cn(
-                "h-7 px-2.5 rounded-md border text-[11px] font-medium flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer",
+                "h-7 px-2.5 rounded-md border text-[11px] font-medium flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0",
                 isListening
                   ? "bg-rose-50 border-rose-300 text-rose-600 animate-pulse"
                   : "border-slate-200/80 bg-white hover:bg-slate-100 text-slate-700"
@@ -2600,7 +2563,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={handleDeleteSelectedItem}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
               title="Delete Selected Item [DEL]"
             >
               <Trash2 className="w-3 h-3 text-slate-400 group-hover:text-rose-500" />
@@ -2614,7 +2577,7 @@ export default function POSBilling() {
             <button
               type="button"
               onClick={() => setShowCameraScannerModal(true)}
-              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors ml-auto active:scale-95 cursor-pointer"
+              className="h-7 px-2.5 rounded-md border border-slate-200/80 bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 flex items-center gap-1 shadow-2xs transition-colors ml-auto whitespace-nowrap shrink-0 active:scale-95 cursor-pointer"
               title="Open Camera Barcode Scanner"
             >
               <Camera className="w-3 h-3 text-slate-400" />
@@ -2624,14 +2587,14 @@ export default function POSBilling() {
           </div>
 
           {/* SEARCH & BARCODE INPUT BAR */}
-          <div className="p-3 border-b border-slate-200 bg-white shrink-0 relative">
-            <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-indigo-500/30 focus-within:border-indigo-500 transition-all bg-slate-50/70 shadow-inner">
+          <div className="p-2 sm:p-2.5 border-b border-slate-200 bg-white shrink-0 relative">
+            <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all bg-slate-50/70 shadow-inner h-8 sm:h-8.5">
               {/* Category Dropdown */}
-              <div className="relative border-r border-slate-200 shrink-0">
+              <div className="relative border-r border-slate-200 shrink-0 h-full">
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="appearance-none bg-transparent hover:bg-slate-100 py-2.5 pl-3 pr-7 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                  className="h-full appearance-none bg-transparent hover:bg-slate-100 py-1 pl-2.5 pr-6 text-[11px] sm:text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer max-w-[95px] sm:max-w-none truncate"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat} className="bg-white text-slate-900">
@@ -2639,16 +2602,16 @@ export default function POSBilling() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Barcode Icon Indicator */}
-              <div className="pl-3 text-slate-400 flex items-center">
-                <ScanLine className="w-4 h-4 text-indigo-600 animate-pulse" />
+              <div className="pl-2 text-slate-400 flex items-center">
+                <ScanLine className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
               </div>
 
               {/* Main Search Input */}
-              <div className="relative flex-1 flex items-center">
+              <div className="relative flex-1 flex items-center h-full">
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -2661,7 +2624,7 @@ export default function POSBilling() {
                   onFocus={() => setSearchFocused(true)}
                   onKeyDown={handleSearchKeyDown}
                   placeholder="Search item / barcode / SKU / HSN / category or Scan Barcode..."
-                  className="w-full py-2.5 px-3 text-xs bg-transparent focus:outline-none text-slate-900 placeholder:text-slate-400 font-medium"
+                  className="w-full h-full py-1 px-2.5 text-xs bg-transparent focus:outline-none text-slate-900 placeholder:text-slate-400 font-medium"
                 />
 
                 {searchQuery && (
@@ -2670,9 +2633,9 @@ export default function POSBilling() {
                       setSearchQuery("");
                       searchInputRef.current?.focus();
                     }}
-                    className="p-1 hover:bg-slate-200 rounded-md text-slate-500 hover:text-slate-800 mr-2 transition-colors"
+                    className="p-1 hover:bg-slate-200 rounded text-slate-500 hover:text-slate-800 mr-1 transition-colors"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-3 h-3" />
                   </button>
                 )}
 
@@ -2681,10 +2644,10 @@ export default function POSBilling() {
                   type="button"
                   onClick={toggleVoiceRecognition}
                   className={cn(
-                    "p-1.5 rounded-lg mr-1.5 transition-all flex items-center justify-center",
+                    "p-1 rounded mr-1 transition-all flex items-center justify-center",
                     isListening
                       ? "bg-rose-500 text-white animate-pulse shadow-xs"
-                      : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                      : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                   )}
                   title="Voice Command & Search [V]"
                 >
@@ -2692,8 +2655,8 @@ export default function POSBilling() {
                 </button>
 
                 {/* [F1] Shortcut Badge (Hidden on mobile) */}
-                <div className="pr-3 hidden sm:flex items-center">
-                  <kbd className="px-1.5 py-0.5 text-[11px] font-mono font-semibold text-slate-600 bg-white border border-slate-200 rounded shadow-2xs">
+                <div className="pr-2 hidden sm:flex items-center">
+                  <kbd className="px-1 py-0.2 text-[10px] font-mono font-semibold text-slate-600 bg-white border border-slate-200 rounded shadow-2xs">
                     F1
                   </kbd>
                 </div>
@@ -2701,16 +2664,16 @@ export default function POSBilling() {
             </div>
 
             {/* Mobile Category Chips Carousel */}
-            <div className="flex lg:hidden items-center gap-1.5 pt-2.5 overflow-x-auto scrollbar-none pb-0.5">
+            <div className="flex lg:hidden items-center gap-1 pt-1.5 overflow-x-auto scrollbar-none pb-0.5">
               {categories.map((cat) => (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
-                    "px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95",
+                    "h-6 px-2.5 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95",
                     selectedCategory === cat
-                      ? "bg-indigo-600 text-white shadow-xs"
+                      ? "bg-blue-600 text-white shadow-2xs"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   )}
                 >
@@ -3033,21 +2996,21 @@ export default function POSBilling() {
             </div>
 
             {/* 2. MOBILE CART ITEMS CARDS LIST (Optimized for Mobile Touch UX & Swipe-to-Delete) */}
-            <div className="block lg:hidden p-3 space-y-2.5 pb-28 touch-pan-y overscroll-contain">
+            <div className="block lg:hidden p-2 space-y-1.5 pb-20 touch-pan-y overscroll-contain">
               {currentTab.items.length === 0 ? (
-                <div className="py-12 text-center text-slate-500 space-y-3">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 mx-auto shadow-sm">
-                    <ScanLine className="w-8 h-8 animate-pulse" />
+                <div className="py-8 text-center text-slate-500 space-y-2">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mx-auto shadow-2xs">
+                    <ScanLine className="w-6 h-6 animate-pulse" />
                   </div>
                   <p className="text-xs font-bold text-slate-800">Cart is empty</p>
                   <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
-                    Search item above, scan barcode, or speak command via 🎤 Voice button
+                    Search item above, scan barcode, or speak via 🎤 Voice button
                   </p>
                   <button
                     onClick={toggleVoiceRecognition}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-2xs active:scale-95"
                   >
-                    <Mic className="w-4 h-4" />
+                    <Mic className="w-3.5 h-3.5" />
                     <span>Try Voice Billing</span>
                   </button>
                 </div>
@@ -3068,7 +3031,7 @@ export default function POSBilling() {
                     <SwipeableListItem
                       key={item.id}
                       leftAction={{
-                        icon: <Trash2 className="w-5 h-5" />,
+                        icon: <Trash2 className="w-4 h-4" />,
                         label: "Delete",
                         color: "bg-rose-600",
                         onTrigger: () => handleRemoveCartItem(idx),
@@ -3077,22 +3040,22 @@ export default function POSBilling() {
                       <div
                         onClick={() => updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }))}
                         className={cn(
-                          "p-3 rounded-xl border transition-all bg-white shadow-2xs w-full",
+                          "p-2.5 rounded-lg border transition-all bg-white shadow-2xs w-full",
                           isSelected
-                            ? "border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/30"
-                            : "border-slate-200 hover:border-slate-300"
+                            ? "border-blue-500 ring-1 ring-blue-500/20 bg-blue-50/30"
+                            : "border-slate-200/90 hover:border-slate-300"
                         )}
                       >
                         {/* Header: Item Name + Delete Button */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-[11px] font-mono font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                              <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-1 py-0.2 rounded">
                                 #{idx + 1}
                               </span>
                               <h4 className="text-xs font-bold text-slate-900 truncate">{item.product.name}</h4>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 text-[11px] font-mono text-slate-500">
+                            <div className="flex items-center gap-1.5 mt-0.5 text-[11px] font-mono text-slate-500">
                               <span>{item.itemCode}</span>
                               {item.batch.batchNumber && <span>• Batch: {item.batch.batchNumber}</span>}
                             </div>
@@ -3104,15 +3067,15 @@ export default function POSBilling() {
                               e.stopPropagation();
                               handleRemoveCartItem(idx);
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors active:scale-95"
                             title="Remove item (or swipe left)"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
                         {/* Price, Steppers, & Line Amount */}
-                        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
                           {/* Selling Price & Discount */}
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
@@ -3122,23 +3085,26 @@ export default function POSBilling() {
                                   updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
                                   handleOpenChangePrice();
                                 }}
-                                className="text-xs font-bold text-slate-900 font-mono hover:text-indigo-600 cursor-pointer underline decoration-dotted"
+                                className="text-xs font-bold text-slate-900 font-mono hover:text-blue-600 cursor-pointer underline decoration-dotted"
+                                title="Click or press [P] to edit price"
                               >
                                 ₹{item.sp.toFixed(2)}
                               </span>
                               {item.discountPercent > 0 && (
-                                <span className="text-[11px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="text-[10px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
                                   -{item.discountPercent}{item.discountType === "percent" ? "%" : "₹"}
                                 </span>
                               )}
                             </div>
-                            <span className="text-[11px] text-slate-400 font-mono line-through">
-                              MRP: ₹{item.mrp.toFixed(2)}
-                            </span>
+                            {item.mrp > item.sp && (
+                              <span className="text-[10px] text-slate-400 font-mono line-through">
+                                MRP: ₹{item.mrp.toFixed(2)}
+                              </span>
+                            )}
                           </div>
 
                           {/* Touch-Friendly Quantity Stepper */}
-                          <div className="flex items-center border border-slate-300 rounded-lg bg-white overflow-hidden shadow-2xs" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center border border-slate-300 rounded-md bg-white overflow-hidden shadow-2xs h-7" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
                               onClick={() => {
@@ -3152,16 +3118,17 @@ export default function POSBilling() {
                                   return { ...tab, items: newItems };
                                 });
                               }}
-                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                              className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
                             >
-                              <Minus className="w-3.5 h-3.5" />
+                              <Minus className="w-3 h-3" />
                             </button>
                             <span
                               onClick={() => {
                                 updateCurrentTab((tab) => ({ ...tab, selectedItemIndex: idx }));
                                 handleOpenChangeQty();
                               }}
-                              className="w-9 h-8 flex items-center justify-center text-xs font-mono font-black text-slate-900 cursor-pointer hover:bg-slate-50"
+                              className="w-8 h-7 flex items-center justify-center text-xs font-mono font-bold text-slate-900 cursor-pointer hover:bg-slate-50"
+                              title="Click or press [Q] to change quantity"
                             >
                               {item.quantity}
                             </span>
@@ -3178,15 +3145,15 @@ export default function POSBilling() {
                                   return { ...tab, items: newItems };
                                 });
                               }}
-                              className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                              className="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors"
                             >
-                              <Plus className="w-3.5 h-3.5" />
+                              <Plus className="w-3 h-3" />
                             </button>
                           </div>
 
                           {/* Line Total */}
                           <div className="text-right">
-                            <span className="text-sm font-black font-mono text-emerald-600">
+                            <span className="text-xs sm:text-sm font-bold font-mono text-emerald-600 tabular-nums">
                               ₹{lineAmount.toFixed(2)}
                             </span>
                           </div>
@@ -3201,13 +3168,13 @@ export default function POSBilling() {
 
           {/* MOBILE STICKY CHECKOUT BAR (When in Cart View) */}
           {mobileActiveView === "cart" && (
-            <div className="flex lg:hidden items-center justify-between p-3 border-t border-slate-200 bg-white shrink-0 gap-3 z-20 shadow-xs">
+            <div className="flex lg:hidden items-center justify-between p-2.5 border-t border-slate-200 bg-white shrink-0 gap-2 z-20 shadow-xs pb-[max(0.625rem,env(safe-area-inset-bottom))]">
               <div className="flex flex-col">
-                <span className="text-[11px] text-slate-500 uppercase font-mono tracking-wider">
+                <span className="text-[10px] text-slate-500 uppercase font-mono tracking-wider">
                   Total ({totalItemsCount} Qty)
                 </span>
-                <span className="text-xl font-black font-mono text-emerald-600 leading-none">
-                  ₹{grandTotal.toLocaleString("en-IN")}
+                <span className="text-base sm:text-lg font-bold font-mono text-slate-900 leading-none tabular-nums">
+                  ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
 
@@ -3215,10 +3182,10 @@ export default function POSBilling() {
                 type="button"
                 onClick={() => setMobileActiveView("checkout")}
                 disabled={currentTab.items.length === 0}
-                className="flex items-center gap-1.5 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md disabled:opacity-50 active:scale-95 transition-all"
+                className="h-8.5 px-3.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs flex items-center gap-1.5 disabled:opacity-50 active:scale-95 transition-all cursor-pointer"
               >
                 <span>Proceed to Pay</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
