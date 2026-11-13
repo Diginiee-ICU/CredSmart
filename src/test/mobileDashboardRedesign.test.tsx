@@ -161,36 +161,15 @@ describe("Mobile Dashboard Redesign Unit Tests", () => {
     });
   });
 
-  describe("Requirement 2 & 3: High-Density 2x2 Financial Grid & Stripe/Square Retail Aesthetic", () => {
-    it("renders the 4 core financial cards with bold monospaced Indian Rupee numerals and clean labels", async () => {
+  describe("Requirement 2 & 3: Financial Overview Cards Removed from POS Dashboard", () => {
+    it("does not render the financial overview cards or header", async () => {
       renderDashboard();
 
-      // Card 1: TO COLLECT
-      const toCollectLabels = await screen.findAllByText("TO COLLECT");
-      expect(toCollectLabels.length).toBeGreaterThanOrEqual(1);
-
-      // Card 2: TO PAY
-      const toPayLabels = await screen.findAllByText("TO PAY");
-      expect(toPayLabels.length).toBeGreaterThanOrEqual(1);
-
-      // Card 3: CASH & BANK
-      const cashBankLabels = await screen.findAllByText("CASH & BANK");
-      expect(cashBankLabels.length).toBeGreaterThanOrEqual(1);
-
-      // Card 4: TODAY'S SALES
-      expect(screen.getByText("TODAY'S SALES")).toBeInTheDocument();
-    });
-
-    it("navigates to the appropriate ledger when financial cards are tapped", async () => {
-      renderDashboard();
-
-      const toCollectCard = (await screen.findAllByText("TO COLLECT"))[0];
-      fireEvent.click(toCollectCard.closest("div[class*='cursor-pointer']")!);
-      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/parties"));
-
-      const toPayCard = (await screen.findAllByText("TO PAY"))[0];
-      fireEvent.click(toPayCard.closest("div[class*='cursor-pointer']")!);
-      expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/purchases"));
+      expect(screen.queryByText("FINANCIAL OVERVIEW")).not.toBeInTheDocument();
+      expect(screen.queryByText("TO COLLECT")).not.toBeInTheDocument();
+      expect(screen.queryByText("TO PAY")).not.toBeInTheDocument();
+      expect(screen.queryByText("CASH & BANK")).not.toBeInTheDocument();
+      expect(screen.queryByText("TODAY'S SALES")).not.toBeInTheDocument();
     });
   });
 
