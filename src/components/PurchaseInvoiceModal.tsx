@@ -1546,10 +1546,48 @@ export function PurchaseInvoiceModal({
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
                 }}
-                onEdit={() => setMobileSuccessInvoice(null)}
-                onDelete={() => {
+                onEdit={() => {
+                  setMobileSuccessInvoice(null);
+                }}
+                onDelete={async () => {
+                  if (mobileSuccessInvoice) {
+                    try {
+                      await documentsService.deleteDocument(orgId, mobileSuccessInvoice.docType, mobileSuccessInvoice.id);
+                      toast.success(`Purchase Bill #${mobileSuccessInvoice.documentNumber} deleted`);
+                    } catch (err) {
+                      console.error("Delete failed:", err);
+                      toast.error("Failed to delete purchase bill");
+                    }
+                  }
                   setMobileSuccessInvoice(null);
                   onOpenChange(false);
+                }}
+                onDuplicate={() => {
+                  if (!mobileSuccessInvoice) return;
+                  const parsed = parseInt(billNumberSeq, 10);
+                  const nextSeq = !isNaN(parsed)
+                    ? String(parsed + 1).padStart(billNumberSeq.length, "0")
+                    : Math.floor(100 + Math.random() * 900).toString();
+                  setBillNumberSeq(nextSeq);
+                  setAmountPaid(0);
+                  setMarkAsFullyPaid(false);
+                  setMobileSuccessInvoice(null);
+                  toast.success(`Purchase bill duplicated! New bill #${nextSeq}`);
+                }}
+                onVoid={async () => {
+                  if (!mobileSuccessInvoice) return;
+                  try {
+                    const voidedDoc: BusinessDocument = {
+                      ...mobileSuccessInvoice,
+                      status: "cancelled",
+                    };
+                    await documentsService.saveDocument(voidedDoc, user?.id);
+                    setMobileSuccessInvoice(voidedDoc);
+                    toast.success(`Purchase bill #${mobileSuccessInvoice.documentNumber} marked as Cancelled`);
+                  } catch (err) {
+                    console.error("Void failed:", err);
+                    toast.error("Failed to cancel bill");
+                  }
                 }}
                 onGenerateEwayBill={() => {}}
                 storeInfo={{
@@ -1577,6 +1615,7 @@ export function PurchaseInvoiceModal({
               recalculatedItems={recalculatedItems}
               totals={totals}
               defaultTaxType={defaultTaxType}
+              saving={saving}
               onToggleDefaultTaxType={(newType) => {
                 setDefaultTaxType(newType);
                 setItems((prev) => prev.map((it) => ({ ...it, taxType: newType })));
@@ -1590,6 +1629,11 @@ export function PurchaseInvoiceModal({
                   setPartyPhone(newSupp.phone || "");
                   setPartyGstin(newSupp.gstin || "");
                   setPartyAddress(newSupp.address || "");
+                  if (newSupp.gstin && newSupp.gstin.length >= 2) {
+                    const statePrefix = newSupp.gstin.slice(0, 2);
+                    const match = INDIAN_STATES_AND_CODES.find((s) => s.startsWith(statePrefix));
+                    if (match) setPlaceOfSupply(match);
+                  }
                   return;
                 }
                 const supp = suppliers.find((s) => s.id === id);
@@ -1599,6 +1643,11 @@ export function PurchaseInvoiceModal({
                   setPartyPhone(supp.phone || "");
                   setPartyGstin(supp.gstin || "");
                   setPartyAddress(supp.address || "");
+                  if (supp.gstin && supp.gstin.length >= 2) {
+                    const statePrefix = supp.gstin.slice(0, 2);
+                    const match = INDIAN_STATES_AND_CODES.find((s) => s.startsWith(statePrefix));
+                    if (match) setPlaceOfSupply(match);
+                  }
                 }
               }}
               onSupplierCreated={(newSupp) => {
@@ -1609,8 +1658,14 @@ export function PurchaseInvoiceModal({
                 setPartyPhone(newSupp.phone || "");
                 setPartyGstin(newSupp.gstin || "");
                 setPartyAddress(newSupp.address || "");
+                if (newSupp.gstin && newSupp.gstin.length >= 2) {
+                  const statePrefix = newSupp.gstin.slice(0, 2);
+                  const match = INDIAN_STATES_AND_CODES.find((s) => s.startsWith(statePrefix));
+                  if (match) setPlaceOfSupply(match);
+                }
               }}
               onUpdateItem={handleUpdateItem}
+              onUpdateItemFields={handleUpdateItemFields}
               onRemoveItem={handleRemoveRow}
               onSave={handleSave}
               catalog={billItemOptions}
@@ -1620,12 +1675,48 @@ export function PurchaseInvoiceModal({
               partyAddress={partyAddress}
               placeOfSupply={placeOfSupply}
               amountReceived={amountPaid}
+              markAsFullyPaid={markAsFullyPaid}
               paymentMethod={paymentMethod}
               notes={notes}
               terms={terms}
               ewayBillNo={ewayBillNo}
               vehicleNumber={vehicleNumber}
               poReference={poReference}
+              onUpdateAdditionalCharges={(amount, reason) => {
+                setShowAdditionalCharges(amount > 0);
+                setAdditionalChargesAmount(amount);
+                setAdditionalChargesReason(reason || "Freight / Cartage");
+              }}
+              onUpdateDiscount={(type, val) => {
+                setShowDiscount(val > 0);
+                setOverallDiscountType(type);
+                setOverallDiscountValue(val);
+              }}
+              onUpdateOverallDiscount={(type, val) => {
+                setShowDiscount(val > 0);
+                setOverallDiscountType(type);
+                setOverallDiscountValue(val);
+              }}
+              onUpdateRoundOff={(auto, manual) => {
+                setAutoRoundOff(auto);
+                setManualRoundOff(manual);
+              }}
+              onUpdateNotes={(n) => {
+                setShowNotes(Boolean(n && n.trim()));
+                setNotes(n);
+              }}
+              onUpdatePayment={(amt, full, method) => {
+                setAmountPaid(amt);
+                setMarkAsFullyPaid(full);
+                if (method) setPaymentMethod(method);
+              }}
+              onUpdateDocDetails={({ invoicePrefix, invoiceNumberSeq, docDate: dDate, dueDate: dDueDate, showDueDate: sDueDate }) => {
+                if (invoicePrefix !== undefined) setBillPrefix(invoicePrefix);
+                if (invoiceNumberSeq !== undefined) setBillNumberSeq(invoiceNumberSeq);
+                if (dDate !== undefined) setDocDate(dDate);
+                if (dDueDate !== undefined) setDueDate(dDueDate);
+                if (sDueDate !== undefined) setShowDueDate(sDueDate);
+              }}
               storeInfo={{
                 name: org?.name || "CredSmart Store",
                 phone: org?.phone,
