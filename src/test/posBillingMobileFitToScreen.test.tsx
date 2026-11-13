@@ -239,13 +239,15 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     expect(screen.getByTitle(/Open Camera Barcode Scanner/i)).toBeInTheDocument();
 
     // 4. Verify Mobile View Switcher (Cart vs Pay)
-    expect(screen.getByRole("button", { name: /Cart \(0\)/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Pay \(₹0\.00\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Cart \(0\)$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Pay \(₹0\.00\)$/i })).toBeInTheDocument();
 
     // 5. Verify Search and Category chips
     expect(screen.getByPlaceholderText(/Search item \/ barcode \/ SKU \/ HSN/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Grocery" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "All" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Grocery" })).toBeInTheDocument();
+    });
   });
 
   it("allows switching between held bill tabs on mobile", async () => {
@@ -293,15 +295,15 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     expect(screen.getByTitle(/Change Price of Selected Item \[P\]/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Change Quantity of Selected Item \[Q\]/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Change Discount on Selected Item \[D\]/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Click or press \[P\] to edit price/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Click or press \[Q\] to change quantity/i)).toBeInTheDocument();
+    expect(screen.getAllByTitle(/Click or press \[P\] to edit price/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle(/Click or press \[Q\] to change quantity/i).length).toBeGreaterThan(0);
 
     // Verify Mobile Cart Bottom Dock is visible and displays Net Payable
     const proceedBtn = screen.getByRole("button", { name: /Proceed to Pay/i });
     expect(proceedBtn).toBeInTheDocument();
 
     // View switcher badge should update to Cart (1)
-    expect(screen.getByRole("button", { name: /Cart \(1\)/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Cart \(1\)$/i })).toBeInTheDocument();
   });
 
   it("switches to checkout view on mobile and displays 3-region payment layout", async () => {
@@ -321,7 +323,7 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     });
 
     // Click 'Pay' view switcher button
-    const paySwitcherBtn = screen.getByRole("button", { name: /Pay \(₹/i });
+    const paySwitcherBtn = screen.getByRole("button", { name: /^Pay \(₹/i });
     fireEvent.click(paySwitcherBtn);
 
     // In checkout view, verify Region 1: Net Payable header
@@ -340,7 +342,7 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     expect(screen.getByTitle(/Save bill and dispatch WhatsApp receipt/i)).toBeInTheDocument();
 
     // Switch back to Cart view
-    const cartSwitcherBtn = screen.getByRole("button", { name: /Cart \(1\)/i });
+    const cartSwitcherBtn = screen.getByRole("button", { name: /^Cart \(1\)$/i });
     fireEvent.click(cartSwitcherBtn);
 
     // Item card should be visible again
