@@ -71,15 +71,15 @@ export function StoreProductCard({
 
             {/* Price line */}
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-sm font-bold text-slate-900">
+              <span className="text-sm font-bold text-slate-900 font-mono tabular-nums">
                 ₹{product.selling_price}
               </span>
               {hasDiscount && (
                 <>
-                  <span className="text-xs text-slate-400 line-through">
+                  <span className="text-xs text-slate-400 line-through font-mono tabular-nums">
                     ₹{product.mrp}
                   </span>
-                  <span className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded-sm">
+                  <span className="text-[11px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-sm font-mono tabular-nums">
                     {discountPercent}% OFF
                   </span>
                 </>
@@ -203,11 +203,11 @@ export function StoreProductCard({
         {/* Pricing & Add to Cart button */}
         <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
           <div>
-            <div className="text-base font-bold text-slate-900 leading-none">
+            <div className="text-base font-bold text-slate-900 leading-none font-mono tabular-nums">
               ₹{product.selling_price}
             </div>
             {hasDiscount && (
-              <div className="text-[11px] text-slate-400 line-through mt-0.5 leading-none">
+              <div className="text-[11px] text-slate-400 line-through mt-0.5 leading-none font-mono tabular-nums">
                 ₹{product.mrp}
               </div>
             )}

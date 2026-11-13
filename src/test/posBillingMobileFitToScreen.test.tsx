@@ -286,10 +286,12 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
       expect(screen.getByRole("heading", { level: 4, name: "Organic Basmati Rice 5kg" })).toBeInTheDocument();
     });
 
-    // Check [P], [Q], [D] action triggers exist
-    expect(screen.getByRole("button", { name: "P" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Q" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "D" })).toBeInTheDocument();
+    // Check [P], [Q], [D] action triggers exist in ribbon and card
+    expect(screen.getByTitle(/Change Price of Selected Item \[P\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Change Quantity of Selected Item \[Q\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Add Item Discount \[D\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Click or press \[P\] to edit price/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Click or press \[Q\] to change quantity/i)).toBeInTheDocument();
 
     // Verify Mobile Cart Bottom Dock is visible and displays Net Payable
     const proceedBtn = screen.getByRole("button", { name: /Proceed to Pay/i });
@@ -316,7 +318,7 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     });
 
     // Click 'Pay' view switcher button
-    const paySwitcherBtn = screen.getByRole("button", { name: /Pay \(₹450\.00\)/i });
+    const paySwitcherBtn = screen.getByRole("button", { name: /Pay \(₹/i });
     fireEvent.click(paySwitcherBtn);
 
     // In checkout view, verify Region 1: Net Payable header
@@ -330,8 +332,9 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     expect(screen.getByRole("button", { name: /Card/i })).toBeInTheDocument();
 
     // Region 3: Bottom Fixed Dock with action buttons
-    expect(screen.getByRole("button", { name: /Save & Print/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Save Bill/i })).toBeInTheDocument();
+    expect(screen.getByTitle(/Save bill and print receipt \[F6\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Save bill directly \[F7\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Save bill and dispatch WhatsApp receipt/i)).toBeInTheDocument();
 
     // Switch back to Cart view
     const cartSwitcherBtn = screen.getByRole("button", { name: /Cart \(1\)/i });

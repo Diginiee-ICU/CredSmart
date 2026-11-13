@@ -80,10 +80,10 @@ export function StoreHeader({ store }: StoreHeaderProps) {
 
       {/* Store Identity & Actions Bar */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-12 sm:-mt-14 pb-4 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between pb-3 sm:pb-4 gap-3 sm:gap-4">
           {/* Logo & Store Title */}
-          <div className="flex items-start sm:items-end gap-3.5 sm:gap-4">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+          <div className="flex items-start gap-3.5 sm:gap-4 min-w-0">
+            <div className="-mt-10 sm:-mt-12 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 z-10">
               {store.logo_url ? (
                 <img
                   src={store.logo_url}
@@ -100,19 +100,19 @@ export function StoreHeader({ store }: StoreHeaderProps) {
               )}
             </div>
 
-            <div className="pt-2 sm:pt-0">
+            <div className="pt-2 sm:pt-3.5 min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
                   {store.store_name}
                 </h1>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Verified Store
                 </span>
               </div>
 
               {store.tagline && (
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 max-w-md font-medium">
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md font-medium">
                   {store.tagline}
                 </p>
               )}
@@ -128,7 +128,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
           </div>
 
           {/* Action Buttons (Call / WhatsApp) */}
-          <div className="flex items-center gap-2 sm:gap-2.5 self-stretch sm:self-auto pt-2 sm:pt-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 self-stretch sm:self-auto pt-1 sm:pt-3.5">
             {cleanPhone && (
               <a
                 href={`tel:${cleanPhone}`}
@@ -137,7 +137,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full sm:w-auto h-9 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto h-9 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs"
                 >
                   <Phone className="w-3.5 h-3.5 text-slate-600" />
                   <span>Call Store</span>
@@ -154,7 +154,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
               >
                 <Button
                   size="sm"
-                  className="w-full sm:w-auto h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-2xs flex items-center justify-center gap-1.5"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>Chat on WhatsApp</span>
@@ -188,7 +188,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
           {store.free_delivery_above && store.free_delivery_above > 0 ? (
             <div className="flex items-center gap-1 flex-shrink-0 text-amber-600 font-medium">
               <span>⚡</span>
-              <span>Free Delivery above ₹{store.free_delivery_above}</span>
+              <span>Free Delivery above <strong className="font-mono tabular-nums font-semibold">₹{store.free_delivery_above}</strong></span>
             </div>
           ) : null}
         </div>

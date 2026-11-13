@@ -204,7 +204,7 @@ export default function PublicStorefront() {
                 <span className="text-[11px] font-normal block leading-none text-white/80">
                   Total
                 </span>
-                <span className="text-base font-extrabold leading-tight block">
+                <span className="text-base font-extrabold leading-tight block font-mono tabular-nums">
                   ₹{grandTotal}
                 </span>
               </div>
