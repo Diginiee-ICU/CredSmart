@@ -1443,14 +1443,39 @@ export default function POSBilling() {
           const pTags = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).tags || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
           const altU = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnit || pTags.alt_unit || undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
           const altConv = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+          const itemRate = Number(
+            (ci.sp && Number(ci.sp) > 0 ? ci.sp : null) ||
+            (ci.mrp && Number(ci.mrp) > 0 ? ci.mrp : null) ||
+            (ci.batch?.mrp && Number(ci.batch.mrp) > 0 ? ci.batch.mrp : null) ||
+            (ci.product?.batches?.[0]?.mrp && Number(ci.product.batches[0].mrp) > 0 ? ci.product.batches[0].mrp : null) ||
+            (ci.product as any)?.selling_price ||
+            (ci.product as any)?.sellingPrice ||
+            (ci.product as any)?.mrp ||
+            0
+          );
+          const itemMrp = Number(
+            (ci.mrp && Number(ci.mrp) > 0 ? ci.mrp : null) ||
+            (ci.batch?.mrp && Number(ci.batch.mrp) > 0 ? ci.batch.mrp : null) ||
+            itemRate
+          );
+          const lineTot = Number((itemRate * ci.quantity).toFixed(2));
           return {
             product: {
               ...ci.product,
               altUnit: altU,
               altUnitConversion: altConv ? Number(altConv) : undefined,
             },
-            batch: ci.batch,
+            batch: {
+              ...ci.batch,
+              mrp: itemMrp,
+            },
             quantity: ci.quantity,
+            rate: itemRate,
+            sp: itemRate,
+            mrp: itemMrp,
+            unitPrice: itemRate,
+            lineTotal: lineTot,
+            total: lineTot,
             altUnit: altU,
             altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
             altUnitConversion: altConv ? Number(altConv) : undefined,
@@ -1510,23 +1535,37 @@ export default function POSBilling() {
               discount_label: currentTab.discountReason || (billDiscountAmount > 0 ? "Bill Discount" : null),
               tax: taxAmount,
               total: grandTotal,
+              total_amount: grandTotal,
+              paid_amount: currentTab.paymentMode === "Credit" ? 0 : grandTotal,
+              payment_status: currentTab.paymentMode === "Credit" ? "unpaid" : "paid",
               payment_method: currentTab.paymentMode,
               created_by: user.id,
               customer_id: currentTab.customer?.id || null,
-            }, orgId);
+            } as any, orgId);
 
             if (!saleErr && sale) {
               // Insert Sale Items
-              const saleItems = currentTab.items.map((ci) => ({
-                sale_id: sale.id,
-                product_name: ci.product.name,
-                product_id: ci.product.id,
-                batch_id: ci.batch.id,
-                batch_number: ci.batch.batchNumber || null,
-                mrp: ci.mrp,
-                quantity: ci.quantity,
-                line_total: Number((ci.sp * ci.quantity).toFixed(2)),
-              }));
+              const saleItems = currentTab.items.map((ci) => {
+                const itemRate = Number(
+                  (ci.sp && Number(ci.sp) > 0 ? ci.sp : null) ||
+                  (ci.mrp && Number(ci.mrp) > 0 ? ci.mrp : null) ||
+                  ci.batch?.mrp ||
+                  (ci.product as any)?.selling_price ||
+                  0
+                );
+                return {
+                  sale_id: sale.id,
+                  product_name: ci.product.name,
+                  product_id: ci.product.id,
+                  batch_id: ci.batch.id,
+                  batch_number: ci.batch.batchNumber || null,
+                  mrp: ci.mrp || ci.batch.mrp || itemRate,
+                  rate: itemRate,
+                  unit_price: itemRate,
+                  quantity: ci.quantity,
+                  line_total: Number((itemRate * ci.quantity).toFixed(2)),
+                };
+              });
 
               await invoicesApi.createSaleItems(saleItems, orgId);
 
@@ -1564,65 +1603,80 @@ export default function POSBilling() {
                 customer: currentTab.customer?.name || "Walk-in",
               });
 
+              // Persist POS Document to documentsService for unified sales ledger & B2B
+              const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => {
+                const pTags = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).tags || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
+                const altU = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnit || pTags.alt_unit || undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+                const altConv = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+                const itemRate = Number(
+                  (ci.sp && Number(ci.sp) > 0 ? ci.sp : null) ||
+                  (ci.mrp && Number(ci.mrp) > 0 ? ci.mrp : null) ||
+                  ci.batch?.mrp ||
+                  (ci.product as any)?.selling_price ||
+                  0
+                );
+                const lineTot = Number((itemRate * ci.quantity).toFixed(2));
+                return {
+                  id: `pos-item-${Date.now()}-${idx}`,
+                  productName: ci.product.name,
+                  productId: ci.product.id,
+                  barcode: ci.product.barcode || undefined,
+                  batchNumber: ci.batch.batchNumber || undefined,
+                  expiryDate: ci.batch.expiryDate,
+                  quantity: ci.quantity,
+                  unit: ci.product.unit || "PCS",
+                  altUnit: altU,
+                  altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
+                  altUnitConversion: altConv ? Number(altConv) : undefined,
+                  rate: itemRate,
+                  discountPercent: ci.discountPercent || 0,
+                  discountAmount: ci.discountAmount || 0,
+                  taxRate: ci.product.gstRate || 0,
+                  taxableAmount: ci.taxableAmount || lineTot,
+                  cgstAmount: (ci.gstAmount || 0) / 2,
+                  sgstAmount: (ci.gstAmount || 0) / 2,
+                  igstAmount: 0,
+                  lineTotal: lineTot,
+                };
+              });
+
+              const posDoc: BusinessDocument = {
+                id: sale.id,
+                organizationId: orgId,
+                docType: "sales_invoice",
+                documentNumber: invoiceNumber,
+                partyId: currentTab.customer?.id,
+                partyName: currentTab.customer?.name || "Walk-in Customer",
+                partyPhone: currentTab.customer?.phone || undefined,
+                partyGstin: currentTab.customer?.gstin || undefined,
+                partyAddress: currentTab.customer?.address || undefined,
+                docDate: new Date().toISOString().split("T")[0],
+                paymentMethod: currentTab.paymentMode,
+                items: mappedItems,
+                subtotal: subTotal,
+                discountTotal: itemDiscountsTotal + billDiscountAmount,
+                taxableTotal: subTotal - (itemDiscountsTotal + billDiscountAmount),
+                cgstTotal: taxAmount / 2,
+                sgstTotal: taxAmount / 2,
+                igstTotal: 0,
+                taxTotal: taxAmount,
+                roundOff: 0,
+                grandTotal: grandTotal,
+                paidAmount: currentTab.paymentMode === "Credit" ? 0 : grandTotal,
+                balanceDue: currentTab.paymentMode === "Credit" ? grandTotal : 0,
+                status: currentTab.paymentMode === "Credit" ? "unpaid" : "paid",
+                created_at: new Date().toISOString(),
+              };
+
+              try {
+                await documentsService.saveDocument(posDoc, user.id);
+              } catch (docSaveErr) {
+                console.warn("documentsService POS save notice:", docSaveErr);
+              }
+
               // B2B Network Sync: Auto-dispatch to buyer if customer matches a CredSmart business
               if (currentTab.customer && org) {
                 try {
-                  const mappedItems: DocumentLineItem[] = currentTab.items.map((ci, idx) => {
-                    const pTags = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).tags || {}; // eslint-disable-line @typescript-eslint/no-explicit-any
-                    const altU = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnit || pTags.alt_unit || undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
-                    const altConv = (ci.product as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).altUnitConversion ?? pTags.alt_unit_conversion ?? undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
-                    return {
-                      id: `pos-item-${Date.now()}-${idx}`,
-                      productName: ci.product.name,
-                      productId: ci.product.id,
-                      barcode: ci.product.barcode || undefined,
-                      batchNumber: ci.batch.batchNumber || undefined,
-                      expiryDate: ci.batch.expiryDate,
-                      quantity: ci.quantity,
-                      unit: ci.product.unit || "PCS",
-                      altUnit: altU,
-                      altQty: (altU && altConv && Number(altConv) > 1 && (ci.unit === altU || ci.product.unit === altU)) ? ci.quantity : undefined,
-                      altUnitConversion: altConv ? Number(altConv) : undefined,
-                      rate: ci.sp,
-                      discountPercent: ci.discountPercent || 0,
-                      discountAmount: ci.discountAmount || 0,
-                      taxRate: ci.product.gstRate || 0,
-                      taxableAmount: ci.taxableAmount || (ci.sp * ci.quantity),
-                      cgstAmount: (ci.gstAmount || 0) / 2,
-                      sgstAmount: (ci.gstAmount || 0) / 2,
-                      igstAmount: 0,
-                      lineTotal: Number((ci.sp * ci.quantity).toFixed(2)),
-                    };
-                  });
-
-                  const posDoc: BusinessDocument = {
-                    id: sale.id,
-                    organizationId: orgId,
-                    docType: "sales_invoice",
-                    documentNumber: invoiceNumber,
-                    partyId: currentTab.customer.id,
-                    partyName: currentTab.customer.name,
-                    partyPhone: currentTab.customer.phone || undefined,
-                    partyGstin: currentTab.customer.gstin || undefined,
-                    partyAddress: currentTab.customer.address || undefined,
-                    docDate: new Date().toISOString().split("T")[0],
-                    paymentMethod: currentTab.paymentMode,
-                    items: mappedItems,
-                    subtotal: subTotal,
-                    discountTotal: itemDiscountsTotal + billDiscountAmount,
-                    taxableTotal: subTotal - (itemDiscountsTotal + billDiscountAmount),
-                    cgstTotal: taxAmount / 2,
-                    sgstTotal: taxAmount / 2,
-                    igstTotal: 0,
-                    taxTotal: taxAmount,
-                    roundOff: 0,
-                    grandTotal: grandTotal,
-                    paidAmount: currentTab.paymentMode === "Credit" ? 0 : grandTotal,
-                    balanceDue: currentTab.paymentMode === "Credit" ? grandTotal : 0,
-                    status: currentTab.paymentMode === "Credit" ? "unpaid" : "paid",
-                    created_at: new Date().toISOString(),
-                  };
-
                   networkInvoicingService.sendSalesInvoiceToNetwork(posDoc, org, user.id);
                 } catch (netErr) {
                   console.warn("POS network dispatch notice:", netErr);
@@ -1655,12 +1709,21 @@ export default function POSBilling() {
               totalAmount: grandTotal,
               date: new Date().toISOString(),
               isEstimate: false,
-              items: currentTab.items.map((ci) => ({
-                name: ci.product.name,
-                quantity: ci.quantity,
-                rate: ci.sp,
-                total: Number((ci.sp * ci.quantity).toFixed(2)),
-              })),
+              items: currentTab.items.map((ci) => {
+                const itemRate = Number(
+                  (ci.sp && Number(ci.sp) > 0 ? ci.sp : null) ||
+                  (ci.mrp && Number(ci.mrp) > 0 ? ci.mrp : null) ||
+                  ci.batch?.mrp ||
+                  (ci.product as any)?.selling_price ||
+                  0
+                );
+                return {
+                  name: ci.product.name,
+                  quantity: ci.quantity,
+                  rate: itemRate,
+                  total: Number((itemRate * ci.quantity).toFixed(2)),
+                };
+              }),
             });
           } catch (waErr) {
             console.warn("WhatsApp share notice:", waErr);
@@ -1818,12 +1881,31 @@ export default function POSBilling() {
         );
 
         if (match) {
-          const batch = match.batches?.[0] || {
+          const rawBatch = match.batches?.[0] || {
             id: `batch-${match.id}`,
             mrp: 100,
             costPrice: 0,
             stock: 99,
             batchNumber: "Default",
+          };
+
+          const productBasePrice = Number(
+            (match as any).selling_price ??
+            (match as any).sellingPrice ??
+            (match as any).mrp ??
+            (match as any).price ??
+            (match as any).tags?.selling_price ??
+            (match as any).tags?.mrp ??
+            0
+          );
+
+          const resolvedMrp = Number(rawBatch.mrp) > 0
+            ? Number(rawBatch.mrp)
+            : (productBasePrice > 0 ? productBasePrice : 100);
+
+          const batch = {
+            ...rawBatch,
+            mrp: resolvedMrp,
           };
 
           soundService.playScanBeep();
@@ -2760,7 +2842,7 @@ export default function POSBilling() {
                       <div className="flex items-center gap-4 text-right">
                         <div className="flex flex-col">
                           <span className="font-extrabold text-base font-mono text-emerald-600">
-                            ₹{p.batches?.[0]?.mrp || 100}
+                            ₹{p.batches?.[0]?.mrp || (p as any).selling_price || (p as any).sellingPrice || (p as any).mrp || 100}
                           </span>
                           <span className="text-[11px] text-emerald-700 font-mono">
                             Stock: {p.batches?.[0]?.stock || 0}
@@ -2864,7 +2946,17 @@ export default function POSBilling() {
                   ) : (
                     (currentTab.items || []).map((item, idx) => {
                       const isSelected = idx === currentTab.selectedItemIndex;
-                      const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+                      const itemSp = Number(
+                        (item.sp && Number(item.sp) > 0 ? item.sp : null) ||
+                        (item.mrp && Number(item.mrp) > 0 ? item.mrp : null) ||
+                        (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+                        (item.product?.batches?.[0]?.mrp && Number(item.product.batches[0].mrp) > 0 ? item.product.batches[0].mrp : null) ||
+                        (item.product as any)?.selling_price ||
+                        (item.product as any)?.sellingPrice ||
+                        (item.product as any)?.mrp ||
+                        (item.product as any)?.price ||
+                        0
+                      ) || 0;
                       const itemQty = Number(item.quantity) || 1;
                       const itemDiscPct = Number(item.discountPercent) || 0;
                       const lineAmount =
@@ -2932,7 +3024,7 @@ export default function POSBilling() {
                               className="hover:underline hover:text-indigo-600 cursor-pointer bg-white px-2 py-1 rounded border border-slate-200 inline-block shadow-2xs"
                               title="Click or press [P] to edit price"
                             >
-                              ₹{item.sp.toFixed(2)}
+                              ₹{itemSp.toFixed(2)}
                             </span>
                           </td>
 
@@ -3051,7 +3143,17 @@ export default function POSBilling() {
               ) : (
                 (currentTab.items || []).map((item, idx) => {
                   const isSelected = idx === currentTab.selectedItemIndex;
-                  const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+                  const itemSp = Number(
+                    (item.sp && Number(item.sp) > 0 ? item.sp : null) ||
+                    (item.mrp && Number(item.mrp) > 0 ? item.mrp : null) ||
+                    (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+                    (item.product?.batches?.[0]?.mrp && Number(item.product.batches[0].mrp) > 0 ? item.product.batches[0].mrp : null) ||
+                    (item.product as any)?.selling_price ||
+                    (item.product as any)?.sellingPrice ||
+                    (item.product as any)?.mrp ||
+                    (item.product as any)?.price ||
+                    0
+                  ) || 0;
                   const itemQty = Number(item.quantity) || 1;
                   const itemDiscPct = Number(item.discountPercent) || 0;
                   const lineAmount =
@@ -3122,7 +3224,7 @@ export default function POSBilling() {
                                 className="text-xs font-bold text-slate-900 font-mono hover:text-blue-600 cursor-pointer underline decoration-dotted"
                                 title="Click or press [P] to edit price"
                               >
-                                ₹{item.sp.toFixed(2)}
+                                ₹{itemSp.toFixed(2)}
                               </span>
                               {item.discountPercent > 0 && (
                                 <span className="text-[10px] font-bold px-1 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">

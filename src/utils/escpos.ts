@@ -572,8 +572,25 @@ export function buildReceiptEscPos(data: ReceiptData, options?: EscPosOptions): 
 
   // 6. Items List
   data.items.forEach((item) => {
-    const rate = item.batch.mrp;
-    const lineTotal = rate * item.quantity;
+    const itemData = item as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+    const rate = Number(
+      (itemData.sp && Number(itemData.sp) > 0 ? itemData.sp : null) ||
+      (itemData.rate && Number(itemData.rate) > 0 ? itemData.rate : null) ||
+      (itemData.unitPrice && Number(itemData.unitPrice) > 0 ? itemData.unitPrice : null) ||
+      (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+      (itemData.mrp && Number(itemData.mrp) > 0 ? itemData.mrp : null) ||
+      (item.product as any)?.selling_price ||
+      (item.product as any)?.sellingPrice ||
+      (item.product as any)?.mrp ||
+      0
+    );
+    const lineTotal = Number(
+      (itemData.total !== undefined && itemData.total !== null && Number(itemData.total) > 0)
+        ? itemData.total
+        : ((itemData.lineTotal !== undefined && itemData.lineTotal !== null && Number(itemData.lineTotal) > 0)
+            ? itemData.lineTotal
+            : (rate * item.quantity))
+    );
     const name = item.product.name;
 
     if (is80mm) {
@@ -591,7 +608,7 @@ export function buildReceiptEscPos(data: ReceiptData, options?: EscPosOptions): 
       ]);
     }
 
-    if (item.batch.batchNumber && item.batch.batchNumber !== "Default" && item.batch.batchNumber !== "Main") {
+    if (item.batch?.batchNumber && item.batch.batchNumber !== "Default" && item.batch.batchNumber !== "Main") {
       builder.textLine(`  (Batch: ${item.batch.batchNumber})`);
     }
   });
@@ -599,8 +616,26 @@ export function buildReceiptEscPos(data: ReceiptData, options?: EscPosOptions): 
   builder.hr("-");
 
   // 7. Totals & Tax Calculation
+  const itemsSum = data.items.reduce((sum, it) => {
+    const itAny = it as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+    const r = Number(
+      (itAny.sp && Number(itAny.sp) > 0 ? itAny.sp : null) ||
+      (itAny.rate && Number(itAny.rate) > 0 ? itAny.rate : null) ||
+      (itAny.unitPrice && Number(itAny.unitPrice) > 0 ? itAny.unitPrice : null) ||
+      (it.batch?.mrp && Number(it.batch.mrp) > 0 ? it.batch.mrp : null) ||
+      (itAny.mrp && Number(itAny.mrp) > 0 ? itAny.mrp : null) ||
+      (it.product as any)?.selling_price ||
+      0
+    );
+    const line = Number(itAny.total ?? itAny.lineTotal ?? (r * it.quantity));
+    return sum + (isNaN(line) ? 0 : line);
+  }, 0);
+
+  const subtotalVal = data.subtotal > 0 ? data.subtotal : itemsSum;
+  const grandTotalVal = data.total > 0 ? data.total : (subtotalVal - (data.discountAmount || 0) + (data.tax || 0));
+
   builder.align("left");
-  builder.twoColumns("Subtotal", `Rs.${data.subtotal.toFixed(2)}`);
+  builder.twoColumns("Subtotal", `Rs.${subtotalVal.toFixed(2)}`);
 
   if (data.discountAmount > 0) {
     builder.twoColumns(`Discount (${data.discountLabel || "Promo"})`, `-Rs.${data.discountAmount.toFixed(2)}`);
@@ -628,7 +663,7 @@ export function buildReceiptEscPos(data: ReceiptData, options?: EscPosOptions): 
   // Grand Total in Bold / Large
   builder.bold(true);
   builder.size("double-height");
-  builder.twoColumns("GRAND TOTAL", `Rs.${data.total.toFixed(2)}`);
+  builder.twoColumns("GRAND TOTAL", `Rs.${grandTotalVal.toFixed(2)}`);
   builder.size("normal");
   builder.bold(false);
 

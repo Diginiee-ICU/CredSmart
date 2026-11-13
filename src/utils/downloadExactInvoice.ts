@@ -87,7 +87,18 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
     const docType: UniversalDocType =
       payload.docType || (payload.isEstimate ? "quotation" : "sales_invoice");
 
-    const subtotal = payload.subtotal ?? payload.totalAmount;
+    const calculatedItemsTotal = (payload.items || []).reduce((sum, it) => {
+      const line = Number(it.total !== undefined && it.total !== null ? it.total : (Number(it.rate || 0) * Number(it.quantity || 1)));
+      return sum + (isNaN(line) ? 0 : line);
+    }, 0);
+
+    const resolvedTotal = (payload.totalAmount && payload.totalAmount > 0)
+      ? payload.totalAmount
+      : (calculatedItemsTotal > 0 ? calculatedItemsTotal : 0);
+
+    const subtotal = (payload.subtotal && payload.subtotal > 0)
+      ? payload.subtotal
+      : (calculatedItemsTotal > 0 ? calculatedItemsTotal : resolvedTotal);
     const discountTotal = payload.discountAmount ?? 0;
     const tax = payload.tax ?? 0;
     const roundOff = payload.roundOff ?? 0;
@@ -95,22 +106,26 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
     const cgst = tax / 2;
     const sgst = tax / 2;
 
-    const invoiceItems: InvoiceItemData[] = (payload.items || []).map((it) => ({
-      name: it.name,
-      description: it.description,
-      hsn: it.hsn,
-      qty: it.quantity,
-      unit: it.unit,
-      altUnit: it.altUnit,
-      altQty: it.altQty,
-      altUnitConversion: it.altUnitConversion,
-      rate: it.rate,
-      mrp: it.mrp ?? it.rate,
-      taxRate: it.taxRate ?? 0,
-      total: it.total,
-      batchNo: it.batchNo,
-      expDate: it.expDate,
-    }));
+    const invoiceItems: InvoiceItemData[] = (payload.items || []).map((it) => {
+      const lineRate = Number(it.rate || (it.total && it.quantity ? it.total / it.quantity : 0));
+      const lineTotal = Number(it.total !== undefined ? it.total : (lineRate * Number(it.quantity || 1)));
+      return {
+        name: it.name,
+        description: it.description,
+        hsn: it.hsn,
+        qty: it.quantity,
+        unit: it.unit,
+        altUnit: it.altUnit,
+        altQty: it.altQty,
+        altUnitConversion: it.altUnitConversion,
+        rate: lineRate,
+        mrp: it.mrp ?? lineRate,
+        taxRate: it.taxRate ?? 0,
+        total: lineTotal,
+        batchNo: it.batchNo,
+        expDate: it.expDate,
+      };
+    });
 
     // Create off-screen container for high-fidelity capture
     const captureContainer = document.createElement("div");
@@ -167,9 +182,11 @@ export async function downloadExactInvoicePdf(payload: ExactInvoicePayload): Pro
             sgst,
             taxTotal: tax,
             roundOff,
-            grandTotal: payload.totalAmount,
-            paidAmount: payload.paymentMethod === "Credit" ? 0 : payload.totalAmount,
-            balanceDue: payload.paymentMethod === "Credit" ? payload.totalAmount : 0,
+            grandTotal: resolvedTotal,
+            total: resolvedTotal,
+            total_amount: resolvedTotal,
+            paidAmount: payload.paymentMethod === "Credit" ? 0 : resolvedTotal,
+            balanceDue: payload.paymentMethod === "Credit" ? resolvedTotal : 0,
           },
           paymentMethod: payload.paymentMethod,
           notes: payload.notes,

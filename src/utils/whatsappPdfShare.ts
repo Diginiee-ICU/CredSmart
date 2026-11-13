@@ -153,23 +153,32 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
   doc.setFont("helvetica", "normal");
   doc.setTextColor(15, 23, 42);
 
+  const itemsSum = (payload.items || []).reduce((sum, it) => {
+    const r = Number(it.rate || 0);
+    const tot = Number(it.total !== undefined ? it.total : (r * (it.quantity || 1)));
+    return sum + (isNaN(tot) ? 0 : tot);
+  }, 0);
+  const resolvedTotal = payload.totalAmount > 0 ? payload.totalAmount : (itemsSum > 0 ? itemsSum : 0);
+
   if (payload.items && payload.items.length > 0) {
     payload.items.forEach((it, idx) => {
       if (curY > 270) {
         doc.addPage();
         curY = 20;
       }
+      const safeRate = Number(it.rate || (it.total && it.quantity ? it.total / it.quantity : 0));
+      const safeTotal = Number(it.total !== undefined ? it.total : (safeRate * (it.quantity || 1)));
       doc.text(`${idx + 1}. ${it.name}`, 18, curY);
       doc.text(String(it.quantity), 120, curY, { align: "right" });
-      doc.text(`INR ${it.rate.toFixed(2)}`, 155, curY, { align: "right" });
-      doc.text(`INR ${it.total.toFixed(2)}`, 190, curY, { align: "right" });
+      doc.text(`INR ${safeRate.toFixed(2)}`, 155, curY, { align: "right" });
+      doc.text(`INR ${safeTotal.toFixed(2)}`, 190, curY, { align: "right" });
       curY += 7;
     });
   } else {
     doc.text("1. Commercial Store Purchase", 18, curY);
     doc.text("1", 120, curY, { align: "right" });
-    doc.text(`INR ${payload.totalAmount.toFixed(2)}`, 155, curY, { align: "right" });
-    doc.text(`INR ${payload.totalAmount.toFixed(2)}`, 190, curY, { align: "right" });
+    doc.text(`INR ${resolvedTotal.toFixed(2)}`, 155, curY, { align: "right" });
+    doc.text(`INR ${resolvedTotal.toFixed(2)}`, 190, curY, { align: "right" });
     curY += 7;
   }
 
@@ -186,7 +195,7 @@ export async function generateInvoicePdfBlob(payload: InvoiceSharePayload): Prom
   doc.setFontSize(11);
   doc.setTextColor(15, 23, 42);
   doc.text("Grand Total:", 116, curY + 9);
-  doc.text(`INR ${payload.totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, 190, curY + 9, { align: "right" });
+  doc.text(`INR ${resolvedTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`, 190, curY + 9, { align: "right" });
 
   // Footer
   doc.setFontSize(8);

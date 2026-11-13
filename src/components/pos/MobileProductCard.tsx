@@ -23,7 +23,10 @@ export const MobileProductCard: React.FC<MobileProductCardProps> = ({
   const tags = product.tags || {};
   
   const sellingPrice = Number(
-    primaryBatch?.mrp ??
+    (primaryBatch?.mrp && Number(primaryBatch.mrp) > 0 ? primaryBatch.mrp : null) ??
+    (product as any).selling_price ??
+    (product as any).sellingPrice ??
+    (product as any).mrp ??
     tags.selling_price ??
     tags.sp ??
     tags.mrp ??
@@ -32,7 +35,8 @@ export const MobileProductCard: React.FC<MobileProductCardProps> = ({
 
   const mrp = Number(
     tags.mrp ??
-    primaryBatch?.mrp ??
+    (primaryBatch?.mrp && Number(primaryBatch.mrp) > 0 ? primaryBatch.mrp : null) ??
+    (product as any).mrp ??
     sellingPrice
   );
 

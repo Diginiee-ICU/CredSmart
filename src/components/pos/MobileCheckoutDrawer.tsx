@@ -161,7 +161,17 @@ export const MobileCheckoutDrawer: React.FC<MobileCheckoutDrawerProps> = ({
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto">
               {currentTab.items.map((item, idx) => {
-                const lineTotal = item.sp * item.quantity;
+                const itemRate = Number(
+                  (item.sp && Number(item.sp) > 0 ? item.sp : null) ||
+                  (item.mrp && Number(item.mrp) > 0 ? item.mrp : null) ||
+                  (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+                  (item.product?.batches?.[0]?.mrp && Number(item.product.batches[0].mrp) > 0 ? item.product.batches[0].mrp : null) ||
+                  (item.product as any)?.selling_price ||
+                  (item.product as any)?.sellingPrice ||
+                  (item.product as any)?.mrp ||
+                  0
+                ) || 0;
+                const lineTotal = itemRate * item.quantity;
                 return (
                   <div
                     key={item.id || idx}
@@ -173,7 +183,7 @@ export const MobileCheckoutDrawer: React.FC<MobileCheckoutDrawerProps> = ({
                         {item.product.name}
                       </div>
                       <div className="flex items-center gap-1.5 mt-0.5 text-[11px] font-mono text-slate-500">
-                        <span>₹{item.sp.toFixed(2)} each</span>
+                        <span>₹{itemRate.toFixed(2)} each</span>
                         <span>•</span>
                         <span className="font-bold text-slate-900 dark:text-white">
                           ₹{lineTotal.toFixed(2)}
