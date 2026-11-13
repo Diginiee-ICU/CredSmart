@@ -3201,27 +3201,27 @@ export default function POSBilling() {
           )}
         >
           {/* Mobile Top Back-to-Cart Trigger */}
-          <div className="flex lg:hidden items-center justify-between p-2.5 bg-slate-100 border-b border-slate-200 shrink-0">
+          <div className="flex lg:hidden items-center justify-between p-2 bg-slate-100 border-b border-slate-200 shrink-0">
             <button
               type="button"
               onClick={() => setMobileActiveView("cart")}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold active:scale-95"
+              className="flex items-center gap-1.5 h-7 px-2.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-semibold active:scale-95 shadow-2xs"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Cart ({currentTab.items.length})</span>
             </button>
             <span className="text-xs font-mono font-bold text-slate-700">
-              {currentTab.items.length} items
+              {currentTab.items.length} items ({totalItemsCount} units)
             </span>
           </div>
 
           {/* Region 1: Fixed Top Net Payable Total (shrink-0) */}
-          <div className="shrink-0 p-3.5 bg-blue-600 text-white flex items-center justify-between shadow-2xs">
+          <div className="shrink-0 p-2.5 sm:p-3.5 bg-blue-600 text-white flex items-center justify-between shadow-2xs">
             <div>
               <span className="text-[11px] font-mono uppercase tracking-wider text-blue-100 block">
                 Net Payable
               </span>
-              <span className="text-2xl font-bold font-mono tabular-nums">
+              <span className="text-xl sm:text-2xl font-bold font-mono tabular-nums">
                 ₹{grandTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
             </div>
@@ -3236,7 +3236,7 @@ export default function POSBilling() {
           </div>
 
           {/* Region 2: Bounded Middle Scroll Area (flex-1 min-h-0 overflow-y-auto space-y-3 p-3) */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3 scrollbar-thin">
+          <div className="flex-1 min-h-0 overflow-y-auto p-2.5 sm:p-3 space-y-2.5 sm:space-y-3 scrollbar-thin">
             {/* Quick Actions: Bill Discount [F2], Add Charge [F3] */}
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -3507,18 +3507,18 @@ export default function POSBilling() {
           </div>
 
           {/* Region 3: Fixed Bottom Checkout Action Dock (shrink-0 border-t bg-white) */}
-          <div className="shrink-0 p-3 border-t border-slate-200/80 bg-white grid grid-cols-3 gap-2 shadow-xs">
+          <div className="shrink-0 p-2 sm:p-2.5 border-t border-slate-200/80 bg-white grid grid-cols-3 gap-1.5 sm:gap-2 shadow-xs pb-[max(0.625rem,env(safe-area-inset-bottom))]">
             {/* Save & Print [F6] */}
             <button
               type="button"
               onClick={() => handleSaveBill(true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="h-9 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Save bill and print receipt [F6]"
             >
               <Printer className="w-3.5 h-3.5 shrink-0" />
               <span>Print</span>
-              <kbd className="font-mono text-[11px] bg-emerald-700/90 text-emerald-100 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[10px] bg-emerald-700/90 text-emerald-100 px-1 py-0.5 rounded font-normal hidden sm:inline">
                 F6
               </kbd>
             </button>
@@ -3528,12 +3528,12 @@ export default function POSBilling() {
               type="button"
               onClick={() => handleSaveBill(false)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="h-9 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center justify-center gap-1 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Save bill directly [F7]"
             >
               <Check className="w-3.5 h-3.5 shrink-0" />
               <span>Save</span>
-              <kbd className="font-mono text-[11px] bg-blue-700/90 text-blue-100 px-1 py-0.5 rounded font-normal">
+              <kbd className="font-mono text-[10px] bg-blue-700/90 text-blue-100 px-1 py-0.5 rounded font-normal hidden sm:inline">
                 F7
               </kbd>
             </button>
@@ -3543,7 +3543,7 @@ export default function POSBilling() {
               type="button"
               onClick={() => handleSaveBill(false, true)}
               disabled={isProcessingSave || currentTab.items.length === 0}
-              className="h-9 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-200/80 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-8.5 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center justify-center gap-1 border border-slate-200/80 shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               title="Save bill and dispatch WhatsApp receipt"
             >
               <Send className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
