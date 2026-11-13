@@ -1,8 +1,38 @@
 import { useState } from "react";
 import { KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { actions, isStaffSession, money, monthKey, payrollRow, useStore, type Employee } from "@/crm/lib/store";
+import { actions, forceCloudSync, isStaffSession, money, monthKey, payrollRow, useStore, type Employee } from "@/crm/lib/store";
 import { Avatar, Button, Field, inputCls } from "./primitives";
+
+export function CloudSyncSection() {
+  const [syncing, setSyncing] = useState(false);
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await forceCloudSync();
+      if (res.ok) {
+        toast.success("Workspace synced with Supabase Cloud");
+      } else {
+        toast.error(res.error || "Cloud sync failed. Changes remain on this device.");
+      }
+    } catch {
+      toast.error("Cloud sync failed. Changes remain on this device.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+  return (
+    <div className="glass p-3 rounded-2xl flex items-center justify-between">
+      <div>
+        <p className="text-xs font-semibold">Cloud Sync</p>
+        <p className="text-[10px] text-muted-foreground">Local storage active & preserved</p>
+      </div>
+      <Button size="sm" variant="outline" className="h-7 text-[11px] rounded-lg" disabled={syncing} onClick={handleSync}>
+        {syncing ? "Syncing..." : "Sync Now"}
+      </Button>
+    </div>
+  );
+}
 
 /** Change a 4-digit passcode after confirming the current one. */
 export function ChangePasscode({ employee: e }: { employee: Employee }) {
