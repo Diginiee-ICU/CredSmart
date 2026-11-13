@@ -3586,7 +3586,6 @@ export default function POSBilling() {
         </div>
       </div>
     </div>
-  )}
 
       {/* ========================================================================= */}
       {/* 4. MODALS AND DIALOGS (HIGH-END FINTECH POLISHED) */}
