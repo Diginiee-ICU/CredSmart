@@ -127,6 +127,13 @@ describe("POS Auth Page CRM Option & Navigation Suite", () => {
     expect(screen.getByText(/Staff PIN & Sign-In/i)).toBeInTheDocument();
     expect(screen.getByText(/Geofenced Attendance/i)).toBeInTheDocument();
     expect(screen.getByText(/Salary & Payroll Engine/i)).toBeInTheDocument();
+
+    // No embedded staff or admin login forms
+    expect(screen.queryByText(/Company Admin Sign-In/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/Mobile number/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/4-digit PIN/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Staff Clock-In & Sign In/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Sign In as Admin/i })).not.toBeInTheDocument();
   });
 
   it("navigates to /crm when Open Workforce CRM Portal button is clicked", () => {
