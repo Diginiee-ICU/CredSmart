@@ -231,9 +231,12 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
 
     // 3. Verify Hotkey Ribbon with compact buttons
     expect(screen.getByTitle(/Focus Search Bar \[F1\]/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Add Bill Discount \[F2\]/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Add Extra Charge \[F3\]/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Checkout and Print \[F6\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Add New Stock Item \[CTRL\+I\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Hold Current Bill & Start New \[CTRL\+B\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Change Price of Selected Item \[P\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Change Quantity of Selected Item \[Q\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Change Discount on Selected Item \[D\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Open Camera Barcode Scanner/i)).toBeInTheDocument();
 
     // 4. Verify Mobile View Switcher (Cart vs Pay)
     expect(screen.getByRole("button", { name: /Cart \(0\)/i })).toBeInTheDocument();
@@ -289,7 +292,7 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
     // Check [P], [Q], [D] action triggers exist in ribbon and card
     expect(screen.getByTitle(/Change Price of Selected Item \[P\]/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Change Quantity of Selected Item \[Q\]/i)).toBeInTheDocument();
-    expect(screen.getByTitle(/Add Item Discount \[D\]/i)).toBeInTheDocument();
+    expect(screen.getByTitle(/Change Discount on Selected Item \[D\]/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Click or press \[P\] to edit price/i)).toBeInTheDocument();
     expect(screen.getByTitle(/Click or press \[Q\] to change quantity/i)).toBeInTheDocument();
 
@@ -323,7 +326,7 @@ describe("POS Billing Universal Workbench Mobile & Compact Device Verification",
 
     // In checkout view, verify Region 1: Net Payable header
     await waitFor(() => {
-      expect(screen.getByText("NET PAYABLE")).toBeInTheDocument();
+      expect(screen.getByText(/Net Payable/i)).toBeInTheDocument();
     });
 
     // Region 2: Payment modes (Cash, UPI, Card)
