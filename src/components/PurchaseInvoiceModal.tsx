@@ -779,8 +779,8 @@ export function PurchaseInvoiceModal({
         altQty: (ni as unknown).altQty !== undefined ? Number((ni as unknown).altQty) : undefined,
         altUnitConversion: (ni as unknown).altUnitConversion ? Number((ni as unknown).altUnitConversion) : undefined,
         rate: Number((ni as unknown).rate) || Number((ni as unknown).costPrice) || 0,
-        discountPercent: 0,
-        discountAmount: 0,
+        discountPercent: Number((ni as unknown).discountPercent) || 0,
+        discountAmount: Number((ni as unknown).discountAmount) || 0,
         taxType: (ni as unknown).taxType || defaultTaxType,
         taxRate: Number((ni as unknown).taxRate) || 18,
         taxableAmount: Number((ni as unknown).taxableAmount) || 0,
@@ -791,19 +791,29 @@ export function PurchaseInvoiceModal({
       } as DocumentLineItem));
 
       let insertAt = copy.length;
+      let replaceCount = 0;
+
       if (typeof target === "number" && target >= 0 && target < copy.length) {
         insertAt = target;
-      }
-
-      if (typeof target === "number" && target >= 0 && target < copy.length && (!copy[target].productName || copy[target].productName.trim() === "")) {
-        copy.splice(target, 1, ...mapped);
+        if (!copy[target].productName || copy[target].productName.trim() === "") {
+          replaceCount = 1;
+        }
       } else {
-        copy.splice(insertAt, 0, ...mapped);
+        // If no specific target, but the last/only row is blank, replace it
+        if (copy.length > 0 && (!copy[copy.length - 1].productName || copy[copy.length - 1].productName.trim() === "")) {
+          insertAt = copy.length - 1;
+          replaceCount = 1;
+        }
       }
 
-      const last = copy[copy.length - 1];
-      if (!last || (last.productName && last.productName.trim() !== "")) {
-        copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+      copy.splice(insertAt, replaceCount, ...mapped);
+
+      // On desktop, ensure trailing empty row if last is populated
+      if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+        const last = copy[copy.length - 1];
+        if (!last || (last.productName && last.productName.trim() !== "")) {
+          copy.push(createNewRow(`row-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`));
+        }
       }
 
       return copy;
@@ -818,12 +828,19 @@ export function PurchaseInvoiceModal({
     }, 80);
   };
 
-  const handleRemoveRow = (index: number) => {
-    if (items.length <= 1) {
-      setItems([createNewRow(`row-${Date.now()}`)]);
-      return;
+  const handleRemoveRow = (indexOrId: number | string) => {
+    setItems((prev) => {
+      const idx = typeof indexOrId === "number" ? indexOrId : prev.findIndex((it) => it.id === indexOrId);
+      if (idx < 0) return prev;
+      if (prev.length <= 1) {
+        return [createNewRow(`row-${Date.now()}`)];
+      }
+      const filtered = prev.filter((_, i) => i !== idx);
+      return filtered.length === 0 ? [createNewRow(`row-${Date.now()}`)] : filtered;
+    });
+    if (typeof indexOrId === "number") {
+      focusItemInput(Math.max(0, indexOrId - 1));
     }
-    setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Interstate Check
@@ -837,6 +854,7 @@ export function PurchaseInvoiceModal({
   const { recalculatedItems, totals } = useMemo(() => {
     return calculateInvoiceBreakdown({
       items: items.map((item) => ({
+        ...item,
         quantity: Number(item.quantity) || 0,
         rate: Number(item.rate) || 0,
         discountPercent: Number(item.discountPercent) || 0,
@@ -864,18 +882,24 @@ export function PurchaseInvoiceModal({
     }
   }, [markAsFullyPaid, totals.grandTotal]);
 
-  const handleUpdateItem = (index: number, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
+  const handleUpdateItem = (indexOrId: number | string, field: keyof DocumentLineItem, value: DocumentLineItem[keyof DocumentLineItem]) => {
     setItems((prev) => {
       const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: value };
+      const idx = typeof indexOrId === "number" ? indexOrId : copy.findIndex((it) => it.id === indexOrId);
+      if (idx >= 0 && idx < copy.length) {
+        copy[idx] = { ...copy[idx], [field]: value };
+      }
       return copy;
     });
   };
 
-  const handleUpdateItemFields = (index: number, fields: Partial<DocumentLineItem>) => {
+  const handleUpdateItemFields = (indexOrId: number | string, fields: Partial<DocumentLineItem>) => {
     setItems((prev) => {
       const copy = [...prev];
-      copy[index] = { ...copy[index], ...fields };
+      const idx = typeof indexOrId === "number" ? indexOrId : copy.findIndex((it) => it.id === indexOrId);
+      if (idx >= 0 && idx < copy.length) {
+        copy[idx] = { ...copy[idx], ...fields };
+      }
       return copy;
     });
   };
@@ -1084,7 +1108,7 @@ export function PurchaseInvoiceModal({
       return;
     }
 
-    const validItems = recalculatedItems.filter((it) => it.productName.trim() !== "");
+    const validItems = recalculatedItems.filter((it) => it.productName && it.productName.trim() !== "");
     if (validItems.length === 0) {
       toast.error("Please add at least one line item");
       return;
@@ -1184,7 +1208,7 @@ export function PurchaseInvoiceModal({
       return;
     }
 
-    const validItems = recalculatedItems.filter((it) => it.productName.trim() !== "");
+    const validItems = recalculatedItems.filter((it) => it.productName && it.productName.trim() !== "");
     if (validItems.length === 0) {
       toast.error("Please add at least one line item");
       return;
@@ -1297,9 +1321,7 @@ export function PurchaseInvoiceModal({
         }
       }
 
-      if (window.innerWidth < 1024) {
-        setMobileSuccessInvoice(saved);
-      } else if (saveAndNew) {
+      if (saveAndNew) {
         const nextSeq = (parseInt(billNumberSeq, 10) + 1 || Math.floor(200 + Math.random() * 800)).toString();
         setBillNumberSeq(nextSeq);
         setPartyName("");
@@ -1311,6 +1333,16 @@ export function PurchaseInvoiceModal({
         setItems([createNewRow("row-1")]);
         setAmountPaid(0);
         setMarkAsFullyPaid(false);
+        setAdditionalChargesAmount(0);
+        setShowAdditionalCharges(false);
+        setOverallDiscountValue(0);
+        setShowDiscount(false);
+        setNotes("");
+        setShowNotes(false);
+        setMobileSuccessInvoice(null);
+        toast.success(`Purchase Bill ${fullDocumentNumber} saved! Ready for next bill.`);
+      } else if (window.innerWidth < 1024) {
+        setMobileSuccessInvoice(saved);
       } else {
         onOpenChange(false);
       }
