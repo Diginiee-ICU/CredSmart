@@ -72,6 +72,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { networkInvoicingService } from "@/services/networkInvoicingService";
+import { documentsService } from "@/services/documentsService";
 import { BusinessDocument, DocumentLineItem } from "@/types/documents";
 import { PartyCustomItem } from "@/types/parties";
 import { toast } from "@/hooks/use-toast";
@@ -606,7 +607,17 @@ export default function POSBilling() {
       const itemsList = Array.isArray(currentTab?.items) ? currentTab.items : [];
       itemsList.forEach((item) => {
         if (!item) return;
-        const itemSp = Number(item.sp ?? item.product?.batches?.[0]?.mrp ?? (item as any /* eslint-disable-line @typescript-eslint/no-explicit-any */)?.mrp ?? 0) || 0; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const itemSp = Number(
+          (item.sp && Number(item.sp) > 0 ? item.sp : null) ||
+          (item.mrp && Number(item.mrp) > 0 ? item.mrp : null) ||
+          (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+          (item.product?.batches?.[0]?.mrp && Number(item.product.batches[0].mrp) > 0 ? item.product.batches[0].mrp : null) ||
+          (item.product as any)?.selling_price ||
+          (item.product as any)?.sellingPrice ||
+          (item.product as any)?.mrp ||
+          (item.product as any)?.price ||
+          0
+        ) || 0;
         const itemQty = Number(item.quantity) || 1;
         const itemDiscPct = Number(item.discountPercent) || 0;
         const lineSpTotal = itemSp * itemQty;
@@ -799,7 +810,20 @@ export default function POSBilling() {
         batchNumber: "Default",
       };
 
-      let effectiveMrp = rawBatch.mrp;
+      const productBasePrice = Number(
+        (product as any).selling_price ??
+        (product as any).sellingPrice ??
+        (product as any).mrp ??
+        (product as any).price ??
+        (product as any).tags?.selling_price ??
+        (product as any).tags?.mrp ??
+        0
+      );
+
+      let effectiveMrp = Number(rawBatch.mrp) > 0
+        ? Number(rawBatch.mrp)
+        : (productBasePrice > 0 ? productBasePrice : 100);
+
       if (cust && cust.keepSamePrice === false && cust.customItems && cust.customItems.length > 0) {
         const matched = cust.customItems.find(
           (ci) =>
@@ -807,8 +831,8 @@ export default function POSBilling() {
             (ci.barcode && product.barcode && ci.barcode.trim() === product.barcode.trim()) ||
             (ci.productName && product.name && ci.productName.toLowerCase().trim() === product.name.toLowerCase().trim())
         );
-        if (matched && matched.customPrice !== undefined) {
-          effectiveMrp = matched.customPrice;
+        if (matched && matched.customPrice !== undefined && Number(matched.customPrice) >= 0) {
+          effectiveMrp = Number(matched.customPrice);
         }
       }
 
@@ -1063,7 +1087,17 @@ export default function POSBilling() {
       return;
     }
     const item = currentTab.items[selIdx];
-    setModalPriceValue(String(item.sp));
+    const resolvedSp = Number(
+      (item.sp && Number(item.sp) > 0 ? item.sp : null) ||
+      (item.mrp && Number(item.mrp) > 0 ? item.mrp : null) ||
+      (item.batch?.mrp && Number(item.batch.mrp) > 0 ? item.batch.mrp : null) ||
+      (item.product?.batches?.[0]?.mrp && Number(item.product.batches[0].mrp) > 0 ? item.product.batches[0].mrp : null) ||
+      (item.product as any)?.selling_price ||
+      (item.product as any)?.sellingPrice ||
+      (item.product as any)?.mrp ||
+      0
+    ) || 0;
+    setModalPriceValue(String(resolvedSp));
     setShowChangePriceModal(true);
   }, [currentTab]);
 

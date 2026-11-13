@@ -181,7 +181,7 @@ export const documentsService = {
             const mappedItems: DocumentLineItem[] = (s.sale_items && s.sale_items.length > 0)
               ? s.sale_items.map((it, idx) => {
                   const qty = Number(it.quantity || 1);
-                  const rate = Number(it.mrp || 0);
+                  const rate = Number(it.mrp || (it as any).rate || (it as any).unit_price || (it as any).price || 0);
                   const lineTot = Number(it.line_total || (qty * rate));
                   return {
                     id: it.id || `sale_item_${idx}`,
@@ -203,6 +203,12 @@ export const documentsService = {
                 })
               : [];
 
+            const itemsSum = mappedItems.reduce((acc, it) => acc + Number(it.lineTotal || 0), 0);
+            const rawGrand = Number(s.total || (s as any).total_amount || (s as any).grand_total || (s as any).amount || 0);
+            const finalGrand = rawGrand > 0 ? rawGrand : (itemsSum > 0 ? itemsSum : Number(s.subtotal || 0));
+            const rawSubtotal = Number(s.subtotal || 0);
+            const finalSubtotal = rawSubtotal > 0 ? rawSubtotal : (finalGrand > 0 ? finalGrand : itemsSum);
+
             return {
               id: s.id,
               organizationId: orgId,
@@ -217,16 +223,16 @@ export const documentsService = {
               docDate: s.created_at ? s.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
               dueDate: s.created_at ? s.created_at.split("T")[0] : undefined,
               items: mappedItems,
-              subtotal: Number(s.subtotal || 0),
+              subtotal: finalSubtotal,
               discountTotal: Number(s.discount_amount || 0),
-              taxableTotal: Number((s.subtotal || 0) - (s.discount_amount || 0)),
+              taxableTotal: Number((finalSubtotal || 0) - (s.discount_amount || 0)),
               cgstTotal: Number((s.tax || 0) / 2),
               sgstTotal: Number((s.tax || 0) / 2),
               igstTotal: 0,
               taxTotal: Number(s.tax || 0),
               roundOff: 0,
-              grandTotal: Number(s.total || 0),
-              paidAmount: Number(s.total || 0),
+              grandTotal: finalGrand,
+              paidAmount: finalGrand,
               balanceDue: 0,
               status: "paid" as DocumentStatus,
               paymentMethod: s.payment_method || "Cash",

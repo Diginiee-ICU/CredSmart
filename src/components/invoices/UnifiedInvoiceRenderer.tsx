@@ -444,9 +444,16 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     }, [safeItems, isInterstate]);
 
     // Totals calculations
-    const totalTaxable = totals?.taxableAmount !== undefined
+    const calculatedItemsTotal = safeItems.reduce((sum, it) => {
+      const line = (it.total !== undefined && it.total !== null && Number(it.total) > 0)
+        ? Number(it.total)
+        : (Number(it.rate || 0) * Number(it.qty || 1));
+      return sum + (isNaN(line) ? 0 : line);
+    }, 0);
+
+    const totalTaxable = (totals?.taxableAmount !== undefined && totals.taxableAmount > 0)
       ? totals.taxableAmount
-      : hsnSummaryList.reduce((sum, h) => sum + h.taxableValue, 0);
+      : (hsnSummaryList.reduce((sum, h) => sum + h.taxableValue, 0) || calculatedItemsTotal);
 
     const totalTax = totals?.taxTotal !== undefined
       ? totals.taxTotal
@@ -460,7 +467,24 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
     const sgstVal = isInterstate ? 0 : (totals?.sgst !== undefined ? totals.sgst : (totalTax - totalCess) / 2);
     const igstVal = isInterstate ? (totals?.igst !== undefined ? totals.igst : totalTax - totalCess) : 0;
 
-    const grandTotalVal = totals?.grandTotal || 0;
+    const grandTotalVal = Number(
+      (totals?.grandTotal !== undefined && totals.grandTotal !== null && Number(totals.grandTotal) > 0)
+        ? totals.grandTotal
+        : ((totals as any)?.total && Number((totals as any).total) > 0
+            ? Number((totals as any).total)
+            : ((totals as any)?.total_amount && Number((totals as any).total_amount) > 0
+                ? Number((totals as any).total_amount)
+                : ((totals as any)?.totalAmount && Number((totals as any).totalAmount) > 0
+                    ? Number((totals as any).totalAmount)
+                    : ((totalTaxable + totalTax + deliveryCharge > 0)
+                        ? (totalTaxable + totalTax + deliveryCharge)
+                        : calculatedItemsTotal))))
+    ) || 0;
+
+    const subtotalVal = (totals?.subtotal !== undefined && totals.subtotal > 0)
+      ? totals.subtotal
+      : (calculatedItemsTotal > 0 ? calculatedItemsTotal : grandTotalVal);
+
     const paidAmountVal = totals?.paidAmount !== undefined ? totals.paidAmount : (paymentMethod === "Credit" ? 0 : grandTotalVal);
     const balanceDueVal = totals?.balanceDue !== undefined ? totals.balanceDue : (grandTotalVal - paidAmountVal);
 
@@ -606,7 +630,7 @@ export const UnifiedInvoiceRenderer = forwardRef<HTMLDivElement, UnifiedInvoiceP
           <div className="border-t border-dashed border-neutral-400 pt-1.5 space-y-1 text-[11px]">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span>₹{(totals?.subtotal || 0).toFixed(2)}</span>
+              <span>₹{subtotalVal.toFixed(2)}</span>
             </div>
             {deliveryCharge > 0 && (
               <div className="flex justify-between">

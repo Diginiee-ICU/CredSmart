@@ -320,12 +320,33 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       isEstimate: data.isEstimate,
       customElement: receiptRef.current,
       elementId: "receipt-printable-area",
-      items: data.items.map((it) => ({
-        name: it.product.name,
-        quantity: it.quantity,
-        rate: it.batch.mrp,
-        total: it.batch.mrp * it.quantity,
-      })),
+      items: data.items.map((it) => {
+        const itemData = it as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+        const rate = Number(
+          (itemData.sp && Number(itemData.sp) > 0 ? itemData.sp : null) ||
+          (itemData.rate && Number(itemData.rate) > 0 ? itemData.rate : null) ||
+          (itemData.unitPrice && Number(itemData.unitPrice) > 0 ? itemData.unitPrice : null) ||
+          (it.batch?.mrp && Number(it.batch.mrp) > 0 ? it.batch.mrp : null) ||
+          (itemData.mrp && Number(itemData.mrp) > 0 ? itemData.mrp : null) ||
+          (it.product as any)?.selling_price ||
+          (it.product as any)?.sellingPrice ||
+          (it.product as any)?.mrp ||
+          0
+        );
+        const total = Number(
+          (itemData.total !== undefined && itemData.total !== null && Number(itemData.total) > 0)
+            ? itemData.total
+            : ((itemData.lineTotal !== undefined && itemData.lineTotal !== null && Number(itemData.lineTotal) > 0)
+                ? itemData.lineTotal
+                : (rate * it.quantity))
+        );
+        return {
+          name: it.product.name,
+          quantity: it.quantity,
+          rate,
+          total,
+        };
+      }),
     });
   };
 
@@ -362,11 +383,28 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
         showHsnSummary: layout === "a4_detailed",
         items: data.items.map((it) => {
           const itemData = it as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+          const rate = Number(
+            (itemData.sp && Number(itemData.sp) > 0 ? itemData.sp : null) ||
+            (itemData.rate && Number(itemData.rate) > 0 ? itemData.rate : null) ||
+            (itemData.unitPrice && Number(itemData.unitPrice) > 0 ? itemData.unitPrice : null) ||
+            (itemData.batch?.mrp && Number(itemData.batch.mrp) > 0 ? itemData.batch.mrp : null) ||
+            (itemData.mrp && Number(itemData.mrp) > 0 ? itemData.mrp : null) ||
+            (itemData.product?.selling_price && Number(itemData.product.selling_price) > 0 ? itemData.product.selling_price : null) ||
+            (itemData.product?.sellingPrice && Number(itemData.product.sellingPrice) > 0 ? itemData.product.sellingPrice : null) ||
+            0
+          );
+          const total = Number(
+            (itemData.total !== undefined && itemData.total !== null && Number(itemData.total) > 0)
+              ? itemData.total
+              : ((itemData.lineTotal !== undefined && itemData.lineTotal !== null && Number(itemData.lineTotal) > 0)
+                  ? itemData.lineTotal
+                  : (rate * it.quantity))
+          );
           return {
             name: itemData.product?.name || itemData.name || "Item",
             quantity: it.quantity,
-            rate: itemData.batch?.mrp || itemData.rate || itemData.unitPrice || 0,
-            total: (itemData.batch?.mrp || itemData.rate || itemData.unitPrice || 0) * it.quantity,
+            rate,
+            total,
             hsn: itemData.product?.hsn || itemData.product?.hsnCode || itemData.hsn,
             taxRate: itemData.product?.gstRate || itemData.taxRate || 0,
             unit: itemData.unit || itemData.product?.unit || "PCS",
@@ -393,12 +431,32 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
       isEstimate: data.isEstimate,
       customElement: receiptRef.current,
       elementId: "receipt-printable-area",
-      items: data.items.map((it) => ({
-        name: (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).product?.name || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).name || "Item", // eslint-disable-line @typescript-eslint/no-explicit-any
-        quantity: it.quantity,
-        rate: (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).batch?.mrp || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).rate || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).unitPrice || 0, // eslint-disable-line @typescript-eslint/no-explicit-any
-        total: ((it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).batch?.mrp || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).rate || (it as any /* eslint-disable-line @typescript-eslint/no-explicit-any */).unitPrice || 0) * it.quantity, // eslint-disable-line @typescript-eslint/no-explicit-any
-      })),
+      items: data.items.map((it) => {
+        const itemData = it as any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+        const rate = Number(
+          (itemData.sp && Number(itemData.sp) > 0 ? itemData.sp : null) ||
+          (itemData.rate && Number(itemData.rate) > 0 ? itemData.rate : null) ||
+          (itemData.unitPrice && Number(itemData.unitPrice) > 0 ? itemData.unitPrice : null) ||
+          (itemData.batch?.mrp && Number(itemData.batch.mrp) > 0 ? itemData.batch.mrp : null) ||
+          (itemData.mrp && Number(itemData.mrp) > 0 ? itemData.mrp : null) ||
+          (itemData.product?.selling_price && Number(itemData.product.selling_price) > 0 ? itemData.product.selling_price : null) ||
+          (itemData.product?.sellingPrice && Number(itemData.product.sellingPrice) > 0 ? itemData.product.sellingPrice : null) ||
+          0
+        );
+        const total = Number(
+          (itemData.total !== undefined && itemData.total !== null && Number(itemData.total) > 0)
+            ? itemData.total
+            : ((itemData.lineTotal !== undefined && itemData.lineTotal !== null && Number(itemData.lineTotal) > 0)
+                ? itemData.lineTotal
+                : (rate * it.quantity))
+        );
+        return {
+          name: itemData.product?.name || itemData.name || "Item",
+          quantity: it.quantity,
+          rate,
+          total,
+        };
+      }),
     });
   };
 
@@ -644,7 +702,25 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                 const p = itemData.product ?? {};
                 const b = itemData.batch ?? {};
                 const qty = Number(item.quantity) || 1;
-                const rate = Number(b.mrp ?? itemData.rate ?? itemData.unitPrice ?? 0);
+                const rate = Number(
+                  (itemData.sp && Number(itemData.sp) > 0 ? itemData.sp : null) ||
+                  (itemData.rate && Number(itemData.rate) > 0 ? itemData.rate : null) ||
+                  (itemData.unitPrice && Number(itemData.unitPrice) > 0 ? itemData.unitPrice : null) ||
+                  (b.mrp && Number(b.mrp) > 0 ? b.mrp : null) ||
+                  (itemData.mrp && Number(itemData.mrp) > 0 ? itemData.mrp : null) ||
+                  (p.selling_price && Number(p.selling_price) > 0 ? p.selling_price : null) ||
+                  (p.sellingPrice && Number(p.sellingPrice) > 0 ? p.sellingPrice : null) ||
+                  (p.mrp && Number(p.mrp) > 0 ? p.mrp : null) ||
+                  (p.price && Number(p.price) > 0 ? p.price : null) ||
+                  0
+                );
+                const itemTotal = Number(
+                  (itemData.total !== undefined && itemData.total !== null && Number(itemData.total) > 0)
+                    ? itemData.total
+                    : ((itemData.lineTotal !== undefined && itemData.lineTotal !== null && Number(itemData.lineTotal) > 0)
+                        ? itemData.lineTotal
+                        : (rate * qty))
+                );
                 const resolvedUnit = itemData.unit || p.unit || "PCS";
                 const resolvedAltUnit = itemData.altUnit || p.altUnit || p.tags?.alt_unit || undefined;
                 const resolvedAltConv = itemData.altUnitConversion ?? p.altUnitConversion ?? p.tags?.alt_unit_conversion ?? undefined;
@@ -666,21 +742,23 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
                   mrp: rate,
                   discount: 0,
                   taxRate: p.gstRate ?? itemData.taxRate ?? 0,
-                  total: rate * qty,
+                  total: itemTotal,
                   batchNo: b.batchNumber ?? itemData.batchNo ?? "",
                   expDate: b.expiryDate ?? itemData.expDate ?? "",
                 };
               })}
               totals={{
-                subtotal: data.subtotal,
+                subtotal: (data.subtotal > 0 ? data.subtotal : data.total),
                 discountTotal: data.discountAmount,
                 discountLabel: data.discountLabel,
-                taxableAmount: data.subtotal - data.discountAmount,
+                taxableAmount: (data.subtotal > 0 ? (data.subtotal - data.discountAmount) : data.total),
                 cgst: cgst,
                 sgst: sgst,
                 taxTotal: data.tax,
                 roundOff: roundOffAmount,
                 grandTotal: data.total,
+                total: data.total,
+                total_amount: data.total,
                 paidAmount: data.paymentMethod === "Credit" ? 0 : data.total,
                 balanceDue: data.paymentMethod === "Credit" ? data.total : 0,
               }}
