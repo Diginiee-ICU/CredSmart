@@ -79,15 +79,6 @@ export default function Auth() {
   const [upiId, setUpiId] = useState("");
   const [suitePreference, setSuitePreference] = useState<SuitePreference>("both");
 
-  // Workforce CRM Direct Authentication state
-  const [crmSubMode, setCrmSubMode] = useState<"staff" | "admin">("staff");
-  const [staffCompany, setStaffCompany] = useState("");
-  const [staffMobile, setStaffMobile] = useState("");
-  const [staffPin, setStaffPin] = useState("");
-  const [crmAdminEmail, setCrmAdminEmail] = useState("");
-  const [crmAdminPassword, setCrmAdminPassword] = useState("");
-  const [crmBusy, setCrmBusy] = useState(false);
-
   // Password reset state
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -470,77 +461,6 @@ export default function Auth() {
     }
   };
 
-  const handleStaffLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!staffCompany.trim() || !staffMobile.trim() || !staffPin.trim()) {
-      toast({
-        title: "Incomplete details",
-        description: "Please enter Company ID, Mobile number, and 4-digit PIN.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setCrmBusy(true);
-    try {
-      const { staffSignIn } = await import("@/crm/lib/staff-auth.functions");
-      const { tokenHash } = await staffSignIn({
-        data: { companyId: staffCompany.trim(), mobile: staffMobile.trim(), pin: staffPin.trim() },
-      });
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wf-staff-company", staffCompany.trim());
-        localStorage.setItem("credsmart_active_suite", "crm");
-        localStorage.setItem("credsmart_suite_preference", "crm");
-        sessionStorage.setItem("credsmart_launch_portal_active", "crm");
-      }
-      toast({ title: "Staff Signed In", description: "Welcome to Workforce CRM" });
-      navigate("/crm");
-    } catch (err: unknown) {
-      toast({
-        title: "Sign-in failed",
-        description: err instanceof Error ? err.message : "Invalid mobile number or passcode.",
-        variant: "destructive",
-      });
-    } finally {
-      setCrmBusy(false);
-    }
-  };
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!crmAdminEmail.trim() || !crmAdminPassword) {
-      toast({
-        title: "Incomplete details",
-        description: "Please enter Admin email and password.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setCrmBusy(true);
-    try {
-      const { supabase: crmSupabase } = await import("@/crm/integrations/supabase/client");
-      const { error } = await crmSupabase.auth.signInWithPassword({
-        email: crmAdminEmail.trim(),
-        password: crmAdminPassword,
-      });
-      if (error) throw error;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("credsmart_active_suite", "crm");
-        localStorage.setItem("credsmart_suite_preference", "crm");
-        sessionStorage.setItem("credsmart_launch_portal_active", "crm");
-      }
-      toast({ title: "Signed In", description: "Welcome to Workforce CRM Admin" });
-      navigate("/crm");
-    } catch (err: unknown) {
-      toast({
-        title: "Sign-in failed",
-        description: err instanceof Error ? err.message : "Invalid admin credentials.",
-        variant: "destructive",
-      });
-    } finally {
-      setCrmBusy(false);
-    }
-  };
-
   const totalSteps = 3;
 
   // Portal toggle state — which suite the user intends to access
@@ -695,121 +615,6 @@ export default function Auth() {
                 </p>
               </div>
 
-              {/* CRM Sub-mode Toggle (Staff PIN vs Admin Sign-in) */}
-              <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setCrmSubMode("staff")}
-                  className={cn(
-                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1",
-                    crmSubMode === "staff"
-                      ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                  )}
-                >
-                  <KeyRound className="w-3.5 h-3.5" />
-                  Staff PIN Sign-In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCrmSubMode("admin")}
-                  className={cn(
-                    "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1",
-                    crmSubMode === "admin"
-                      ? "bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 shadow-2xs font-bold"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
-                  )}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  Company Admin Sign-In
-                </button>
-              </div>
-
-              {/* Form 1: Staff PIN Sign In */}
-              {crmSubMode === "staff" && (
-                <form onSubmit={handleStaffLogin} className="space-y-3 pt-1">
-                  <div className="relative">
-                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={staffCompany}
-                      onChange={(e) => setStaffCompany(e.target.value)}
-                      placeholder="Company ID (e.g. CS-101)"
-                      required
-                      className={inputClass}
-                    />
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="tel"
-                      value={staffMobile}
-                      onChange={(e) => setStaffMobile(e.target.value)}
-                      placeholder="Mobile number (10 digits)"
-                      required
-                      className={inputClass}
-                    />
-                  </div>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="password"
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={staffPin}
-                      onChange={(e) => setStaffPin(e.target.value.replace(/\D/g, ""))}
-                      placeholder="4-digit PIN"
-                      required
-                      className={inputClass}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={crmBusy}
-                    className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    {crmBusy ? "Verifying..." : "Staff Clock-In & Sign In"}
-                    {!crmBusy && <ArrowRight className="w-3.5 h-3.5" />}
-                  </button>
-                </form>
-              )}
-
-              {/* Form 2: Admin Sign In */}
-              {crmSubMode === "admin" && (
-                <form onSubmit={handleAdminLogin} className="space-y-3 pt-1">
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      value={crmAdminEmail}
-                      onChange={(e) => setCrmAdminEmail(e.target.value)}
-                      placeholder="Admin email address"
-                      required
-                      className={inputClass}
-                    />
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="password"
-                      value={crmAdminPassword}
-                      onChange={(e) => setCrmAdminPassword(e.target.value)}
-                      placeholder="Admin password"
-                      required
-                      className={inputClass}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={crmBusy}
-                    className="w-full h-8.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
-                  >
-                    {crmBusy ? "Signing in..." : "Sign In as Admin"}
-                    {!crmBusy && <ArrowRight className="w-3.5 h-3.5" />}
-                  </button>
-                </form>
-              )}
-
               {/* Feature Highlights Grid */}
               <div className="grid grid-cols-2 gap-1.5 pt-1 font-medium">
                 <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
@@ -831,7 +636,7 @@ export default function Auth() {
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-1.5 space-y-2">
+              <div className="pt-2 space-y-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -843,9 +648,9 @@ export default function Auth() {
                     navigate("/crm");
                   }}
                   data-testid="go-to-crm-btn"
-                  className="w-full h-8.5 rounded-xl border border-emerald-600/30 bg-emerald-50/70 hover:bg-emerald-100/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer shadow-2xs"
+                  className="w-full h-8.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
                 >
-                  <UserCircle className="w-4 h-4 text-emerald-600" />
+                  <UserCircle className="w-4 h-4 text-white" />
                   <span>Open Workforce CRM Portal</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>

@@ -27,7 +27,8 @@ export function scrollElementAndChildrenToTop(root: HTMLElement | Element) {
 /**
  * ScrollToTop ensures:
  * 1. When navigating between routes, window and content containers scroll to top.
- * 2. When ANY modal, pop up, or dialog opens anywhere in the application, it automatically scrolls to top.
+ * 2. When ANY modal, pop up, or dialog opens anywhere in the application, it automatically scrolls to top ONCE upon opening.
+ *    (Subsequent DOM mutations, switch toggles, or typing while filling out forms NEVER trigger unwanted auto-scrolls).
  */
 export default function ScrollToTop() {
   const { pathname, search } = useLocation();
@@ -49,40 +50,69 @@ export default function ScrollToTop() {
     });
   }, [pathname, search]);
 
-  // 2. Global Modal / Popup Autoscroll-To-Top Watcher
+  // 2. Global Modal / Popup Autoscroll-To-Top Watcher (Scrolled ONCE upon opening)
   useEffect(() => {
-    const handleModalOpen = (targetNode: Element) => {
-      const isModal =
-        targetNode.matches?.(
-          "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-radix-portal], .fixed.inset-0, [class*='fixed'][class*='inset-0'], [class*='z-50']"
-        ) ||
-        targetNode.querySelector?.(
-          "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, .z-50.fixed, [data-dialog-content], [class*='fixed'][class*='inset-0']"
-        );
+    // Track modal roots that have already been scrolled upon opening
+    const scrolledModals = new WeakSet<Element>();
 
-      if (isModal) {
-        // Immediate scroll to top
-        scrollElementAndChildrenToTop(targetNode);
+    const isInteractiveInput = () => {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName.toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        (active as HTMLElement).isContentEditable
+      );
+    };
 
-        // Frame-delayed scroll to top (after CSS layout recalculation)
-        requestAnimationFrame(() => {
-          scrollElementAndChildrenToTop(targetNode);
-        });
-
-        // Timeout backup (after form hydration / dynamic fields load)
-        const t1 = setTimeout(() => {
-          scrollElementAndChildrenToTop(targetNode);
-        }, 50);
-
-        const t2 = setTimeout(() => {
-          scrollElementAndChildrenToTop(targetNode);
-        }, 150);
-
-        return () => {
-          clearTimeout(t1);
-          clearTimeout(t2);
-        };
+    const getModalRoot = (node: Element): Element | null => {
+      if (
+        node.matches?.(
+          "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-dialog-content], [data-vaul-drawer]"
+        )
+      ) {
+        return node;
       }
+      return (
+        node.closest?.(
+          "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-dialog-content], [data-vaul-drawer]"
+        ) || null
+      );
+    };
+
+    const handleModalOpen = (targetNode: Element) => {
+      // If user is actively typing or interacting with an input/control, never steal scroll
+      if (isInteractiveInput()) return;
+
+      const modalRoot = getModalRoot(targetNode);
+      if (!modalRoot) return;
+
+      // Ensure modal is scrolled to top ONCE upon initial appearance
+      if (scrolledModals.has(modalRoot)) {
+        return;
+      }
+      scrolledModals.add(modalRoot);
+
+      // Immediate scroll to top
+      scrollElementAndChildrenToTop(modalRoot);
+
+      // Frame-delayed scroll to top (after CSS layout recalculation)
+      requestAnimationFrame(() => {
+        if (!isInteractiveInput()) {
+          scrollElementAndChildrenToTop(modalRoot);
+        }
+      });
+
+      // Single backup timeout for dynamic form hydration
+      const t1 = setTimeout(() => {
+        if (!isInteractiveInput()) {
+          scrollElementAndChildrenToTop(modalRoot);
+        }
+      }, 60);
+
+      return () => clearTimeout(t1);
     };
 
     // MutationObserver to catch any modal added to the DOM or opened via state change
@@ -91,25 +121,40 @@ export default function ScrollToTop() {
         if (mutation.type === "childList") {
           mutation.addedNodes.forEach((node) => {
             if (node instanceof Element) {
-              handleModalOpen(node);
+              // Only handle if node itself is a modal or contains a modal, NOT if added inside an already open modal
+              const parentModal = node.closest?.(
+                "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-dialog-content], [data-vaul-drawer]"
+              );
+              if (parentModal && scrolledModals.has(parentModal)) {
+                // Node added inside an already-open, already-scrolled modal (e.g. typing or dynamic fields) -> DO NOT scroll!
+                return;
+              }
+              const modalCandidate =
+                node.matches?.(
+                  "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-dialog-content], [data-vaul-drawer]"
+                )
+                  ? node
+                  : node.querySelector?.(
+                      "[role='dialog'], [data-state='open'], [aria-modal='true'], .z-modal, [data-dialog-content], [data-vaul-drawer]"
+                    );
+              if (modalCandidate) {
+                handleModalOpen(modalCandidate);
+              }
             }
           });
         } else if (mutation.type === "attributes") {
-          if (
-            (mutation.attributeName === "data-state" ||
-              mutation.attributeName === "open" ||
-              mutation.attributeName === "aria-hidden" ||
-              mutation.attributeName === "class") &&
-            mutation.target instanceof Element
-          ) {
-            const el = mutation.target as Element;
-            if (
-              el.getAttribute("data-state") === "open" ||
-              el.getAttribute("aria-modal") === "true" ||
-              el.getAttribute("role") === "dialog" ||
-              el.classList.contains("z-modal") ||
-              el.classList.contains("fixed")
-            ) {
+          const el = mutation.target;
+          if (!(el instanceof Element)) return;
+
+          // Only care when a modal root transitions to open
+          if (mutation.attributeName === "data-state") {
+            const newState = el.getAttribute("data-state");
+            const oldState = mutation.oldValue;
+            if (newState === "open" && oldState !== "open") {
+              handleModalOpen(el);
+            }
+          } else if (mutation.attributeName === "open") {
+            if (el.hasAttribute("open") && mutation.oldValue === null) {
               handleModalOpen(el);
             }
           }
@@ -121,7 +166,8 @@ export default function ScrollToTop() {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["data-state", "open", "aria-modal", "class"],
+      attributeFilter: ["data-state", "open"],
+      attributeOldValue: true,
     });
 
     return () => observer.disconnect();

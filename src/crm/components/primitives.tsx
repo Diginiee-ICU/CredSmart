@@ -44,7 +44,7 @@ export function Sheet({
           </Button>
         </div>
         <DrawerDescription className="sr-only">{title}</DrawerDescription>
-        <div className="overflow-y-auto px-4 pb-6 space-y-4">{children}</div>
+        <div className="overflow-y-auto overscroll-contain px-4 pb-6 space-y-4" data-vaul-no-drag>{children}</div>
       </DrawerContent>
     </Drawer>
   );

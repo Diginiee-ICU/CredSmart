@@ -102,8 +102,9 @@ export function StaffEditor({
   );
   const [remove, setRemove] = useState(false);
   const me = useStore((s) => s.me);
-  const s = useStore((s) => s);
-  const admin = operatorRole(s) === "Admin";
+  const customRoles = useStore((s) => s.customRoles);
+  const companyId = useStore((s) => s.companyId);
+  const admin = useStore((s) => operatorRole(s) === "Admin");
   const [createRole, setCreateRole] = useState(false);
   const [roleName, setRoleName] = useState("");
   const [rolePermissions, setRolePermissions] = useState(defaultPermissions("General Executive"));
@@ -155,8 +156,8 @@ export function StaffEditor({
             type="number"
             min="0"
             className={inputCls}
-            value={f.salary}
-            onChange={(e) => setF({ ...f, salary: Number(e.target.value) })}
+            value={f.salary === 0 && !f.name ? "" : f.salary}
+            onChange={(e) => setF({ ...f, salary: e.target.value === "" ? 0 : Number(e.target.value) })}
           />
         </Field>
       </div>
@@ -167,10 +168,10 @@ export function StaffEditor({
           disabled={!admin}
           onChange={(e) => {
             const role = e.target.value as Role;
-            setF({ ...f, role, designation: role, permissions: s.customRoles.find((r) => r.name === role)?.permissions ?? defaultPermissions(role) });
+            setF({ ...f, role, designation: role, permissions: customRoles.find((r) => r.name === role)?.permissions ?? defaultPermissions(role) });
           }}
         >
-          {[...BUILTIN_ROLES, ...s.customRoles.map((r) => r.name), ...(![...BUILTIN_ROLES, ...s.customRoles.map((r) => r.name)].includes(f.role) ? [f.role] : [])].map((r) => <option key={r}>{r}</option>)}
+          {[...BUILTIN_ROLES, ...customRoles.map((r) => r.name), ...(![...BUILTIN_ROLES, ...customRoles.map((r) => r.name)].includes(f.role) ? [f.role] : [])].map((r) => <option key={r}>{r}</option>)}
         </select>
       </Field>
       {admin && <Button variant="secondary" className="h-8 text-xs" onClick={() => setCreateRole(!createRole)}><Plus />Create Custom Role</Button>}
@@ -224,7 +225,7 @@ export function StaffEditor({
               window.open(
                 waLink(
                   f.mobile,
-                  `Welcome, ${f.name}!\nDesignation: ${f.designation}\nPhone: ${f.mobile}\nSign-in link: ${staffSignInUrl(s.companyId)}\n4-digit PIN: ${employee.pin}`,
+                  `Welcome, ${f.name}!\nDesignation: ${f.designation}\nPhone: ${f.mobile}\nSign-in link: ${staffSignInUrl(companyId)}\n4-digit PIN: ${employee.pin}`,
                 ),
                 "_blank",
                 "noopener",
