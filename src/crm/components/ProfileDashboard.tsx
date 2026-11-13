@@ -93,6 +93,7 @@ export function AdminProfile({ onLogout }: { onLogout: () => void }) {
         <div className="min-w-0"><h2 className="text-sm font-bold truncate">{me.name}</h2><p className="text-xs text-muted-foreground">{me.designation} · {me.role}</p><p className="text-xs">{me.mobile || "Phone not set"}</p></div>
       </article>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">{stats.map(([l, v]) => <div key={l} className="glass p-2.5 rounded-2xl"><p className="text-[10px] text-muted-foreground">{l}</p><p className="text-base font-bold">{v}</p></div>)}</div>
+      <CloudSyncSection />
       <ChangePasscode employee={me} />
       <LogoutButton onLogout={onLogout} />
     </div>
