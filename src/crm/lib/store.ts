@@ -218,7 +218,70 @@ export async function watchWorkspace(workspaceId: string | null, reload: () => v
 }
 export const currentWorkspaceId = () => ownerWorkspaceId;
 let ownerWorkspaceId: string | null = null;
-function persist() {
+let cloudSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let lastErrorToastTime = 0;
+const ERROR_TOAST_THROTTLE_MS = 60000;
+
+function dispatchCloudSave(immediate = false) {
+  if (cloudSaveTimer) {
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = null;
+  }
+  if (!cloudUser) return;
+
+  const runSave = () => {
+    const snapshot = state;
+    const owner = cloudUser;
+    queue = queue.catch(() => {}).then(async () => {
+      if (cloudUser !== owner) return;
+      const { employees, ...rest } = snapshot;
+      const data = { ...rest, employees: employees.map(({ role, permissions, ...e }) => e) };
+      const roles = employees.map((e) => ({
+        employee_id: e.id,
+        role: e.role,
+        permissions: e.permissions,
+      }));
+      const { error } = await supabase.rpc("save_workforce", { _data: data, _roles: roles });
+      if (error) {
+        console.warn("[CRM Cloud Save Error]", error);
+        const now = Date.now();
+        if (now - lastErrorToastTime > ERROR_TOAST_THROTTLE_MS) {
+          lastErrorToastTime = now;
+          if (error.code === "42883" || error.message?.includes("realtime.send")) {
+            saveError?.("Cloud sync paused: Database trigger requires update. Your changes remain safe on this device.");
+          } else {
+            saveError?.("Cloud save failed. Your changes remain on this device.");
+          }
+        }
+      }
+    });
+  };
+
+  if (immediate) {
+    runSave();
+  } else {
+    cloudSaveTimer = setTimeout(runSave, 1000);
+  }
+}
+
+export async function forceCloudSync(): Promise<{ ok: boolean; error?: string }> {
+  if (!cloudUser) return { ok: false, error: "Not signed in to Cloud" };
+  const snapshot = state;
+  const { employees, ...rest } = snapshot;
+  const data = { ...rest, employees: employees.map(({ role, permissions, ...e }) => e) };
+  const roles = employees.map((e) => ({
+    employee_id: e.id,
+    role: e.role,
+    permissions: e.permissions,
+  }));
+  const { error } = await supabase.rpc("save_workforce", { _data: data, _roles: roles });
+  if (error) {
+    return { ok: false, error: error.message || error.code || "Save failed" };
+  }
+  return { ok: true };
+}
+
+function persist(immediate = false) {
   lastLocalSave = Date.now();
   if (staffMode) {
     const { attendance, tasks, notes, requests } = state;
@@ -235,20 +298,7 @@ function persist() {
   }
   localStorage.setItem(KEY, JSON.stringify(state));
   if (cloudUser) {
-    const snapshot = state;
-    const owner = cloudUser;
-    queue = queue.catch(() => {}).then(async () => {
-      if (cloudUser !== owner) return;
-      const { employees, ...rest } = snapshot;
-      const data = { ...rest, employees: employees.map(({ role, permissions, ...e }) => e) };
-      const roles = employees.map((e) => ({
-        employee_id: e.id,
-        role: e.role,
-        permissions: e.permissions,
-      }));
-      const { error } = await supabase.rpc("save_workforce", { _data: data, _roles: roles });
-      if (error) saveError?.("Cloud save failed. Your changes remain on this device.");
-    });
+    dispatchCloudSave(immediate);
   }
 }
 function set(fn: (s: State) => State) {
@@ -314,7 +364,7 @@ export async function connectWorkspace(userId: string | null) {
     localStorage.setItem(KEY, JSON.stringify(state));
     emit();
   } else {
-    persist();
+    persist(true);
     await queue;
   }
 }
