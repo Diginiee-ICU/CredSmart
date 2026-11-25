@@ -1,10 +1,16 @@
 const express = require('express');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { authenticate, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Deduplicate & gracefully serve concurrent refresh requests from multiple tabs or API calls
+const inFlightRefreshes = new Map();
+const recentRefreshCache = new Map();
+const REFRESH_GRACE_TTL_MS = 15000;
 
 const PLATFORM_ADMIN_EMAILS = new Set(
   (process.env.PLATFORM_ADMIN_EMAILS || 'ashwinbishnoi05@gmail.com')
@@ -44,9 +50,14 @@ const generateTokens = (user, orgId) => {
     email: user.email,
     orgId,
     is_platform_admin: isPlatformAdminAccount(user),
+    jti: crypto.randomUUID(),
   };
   const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-  const refreshToken = jwt.sign({ id: user.id, type: 'refresh' }, JWT_SECRET, { expiresIn: '30d' });
+  const refreshToken = jwt.sign(
+    { id: user.id, type: 'refresh', jti: crypto.randomUUID() },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
   return { accessToken, refreshToken };
 };
 
@@ -270,67 +281,136 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/refresh
 router.post('/refresh', async (req, res) => {
   try {
-    const refreshToken = req.body.refresh_token;
+    const refreshToken = req.body?.refresh_token;
     if (!refreshToken) {
       return res.status(400).json({ error: 'Refresh token is required' });
     }
 
-    const tokenRes = await pool.query(
-      `SELECT rt.id, rt.user_id, rt.expires_at, u.*
-       FROM refresh_tokens rt
-       JOIN users u ON u.id = rt.user_id
-       WHERE rt.token = $1`,
-      [refreshToken]
-    );
-
-    if (tokenRes.rows.length === 0 || new Date(tokenRes.rows[0].expires_at) < new Date()) {
-      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    // Check short grace cache in case multiple concurrent calls sent the same old token
+    const cached = recentRefreshCache.get(refreshToken);
+    if (cached && cached.expiresAt > Date.now()) {
+      return res.status(200).json(cached.payload);
     }
 
-    const row = tokenRes.rows[0];
-    const user = {
-      id: row.user_id,
-      email: row.email,
-      full_name: row.full_name,
-      phone: row.phone,
-      avatar_url: row.avatar_url,
-      is_platform_admin: row.is_platform_admin,
-      created_at: row.created_at,
-    };
+    // Coalesce concurrent in-flight refresh requests for the same refresh token
+    if (inFlightRefreshes.has(refreshToken)) {
+      const sharedResult = await inFlightRefreshes.get(refreshToken);
+      return res.status(sharedResult.status).json(sharedResult.body);
+    }
 
-    const orgId = await getUserPrimaryOrgId(user.id);
+    const refreshWork = (async () => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
 
-    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, orgId);
-    const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const tokenRes = await client.query(
+          `SELECT rt.id, rt.user_id, rt.expires_at,
+                  u.email, u.full_name, u.phone, u.avatar_url, u.created_at,
+                  u.is_platform_admin
+           FROM refresh_tokens rt
+           JOIN users u ON u.id = rt.user_id
+           WHERE rt.token = $1
+           FOR UPDATE OF rt`,
+          [refreshToken]
+        ).catch(async () => {
+          // Fallback in case is_platform_admin column is not yet present on users
+          await client.query('ROLLBACK');
+          await client.query('BEGIN');
+          return client.query(
+            `SELECT rt.id, rt.user_id, rt.expires_at,
+                    u.email, u.full_name, u.phone, u.avatar_url, u.created_at
+             FROM refresh_tokens rt
+             JOIN users u ON u.id = rt.user_id
+             WHERE rt.token = $1
+             FOR UPDATE OF rt`,
+            [refreshToken]
+          );
+        });
 
-    // Rotate refresh token
-    await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [row.id]);
-    await pool.query(
-      `INSERT INTO refresh_tokens (user_id, token, expires_at)
-       VALUES ($1, $2, $3)`,
-      [user.id, newRefreshToken, newExpiresAt]
-    );
+        if (tokenRes.rows.length === 0 || new Date(tokenRes.rows[0].expires_at) < new Date()) {
+          await client.query('ROLLBACK');
+          // Re-check grace cache in case another process/request just rotated it
+          const lateCached = recentRefreshCache.get(refreshToken);
+          if (lateCached && lateCached.expiresAt > Date.now()) {
+            return { status: 200, body: lateCached.payload };
+          }
+          return { status: 401, body: { error: 'Invalid or expired refresh token' } };
+        }
 
-    const isPlatformAdmin = isPlatformAdminAccount(user);
-    recordPresenceSafely(user.id, orgId, user.email, user.full_name, 'owner');
-    const formattedUser = {
-      id: user.id,
-      email: user.email,
-      is_platform_admin: isPlatformAdmin,
-      user_metadata: { full_name: user.full_name, phone: user.phone, is_platform_admin: isPlatformAdmin },
-      created_at: user.created_at,
-    };
+        const row = tokenRes.rows[0];
+        const user = {
+          id: row.user_id,
+          email: row.email,
+          full_name: row.full_name,
+          phone: row.phone,
+          avatar_url: row.avatar_url,
+          is_platform_admin: Boolean(row.is_platform_admin),
+          created_at: row.created_at,
+        };
 
-    return res.status(200).json({
-      user: formattedUser,
-      session: {
-        access_token: accessToken,
-        refresh_token: newRefreshToken,
-        user: formattedUser,
-      },
-      access_token: accessToken,
-      refresh_token: newRefreshToken,
-    });
+        const orgId = await getUserPrimaryOrgId(user.id);
+        const { accessToken, refreshToken: newRefreshToken } = generateTokens(user, orgId);
+        const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await client.query('DELETE FROM refresh_tokens WHERE id = $1', [row.id]);
+        await client.query(
+          `INSERT INTO refresh_tokens (user_id, token, expires_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (token) DO UPDATE SET expires_at = EXCLUDED.expires_at`,
+          [user.id, newRefreshToken, newExpiresAt]
+        );
+
+        await client.query('COMMIT');
+
+        const isPlatformAdmin = isPlatformAdminAccount(user);
+        recordPresenceSafely(user.id, orgId, user.email, user.full_name, 'owner');
+        const formattedUser = {
+          id: user.id,
+          email: user.email,
+          is_platform_admin: isPlatformAdmin,
+          user_metadata: { full_name: user.full_name, phone: user.phone, is_platform_admin: isPlatformAdmin },
+          created_at: user.created_at,
+        };
+
+        const responsePayload = {
+          user: formattedUser,
+          session: {
+            access_token: accessToken,
+            refresh_token: newRefreshToken,
+            user: formattedUser,
+          },
+          access_token: accessToken,
+          refresh_token: newRefreshToken,
+        };
+
+        recentRefreshCache.set(refreshToken, {
+          expiresAt: Date.now() + REFRESH_GRACE_TTL_MS,
+          payload: responsePayload,
+        });
+        if (recentRefreshCache.size > 500) {
+          const now = Date.now();
+          for (const [k, v] of recentRefreshCache.entries()) {
+            if (v.expiresAt <= now) recentRefreshCache.delete(k);
+          }
+        }
+
+        return { status: 200, body: responsePayload };
+      } catch (innerErr) {
+        await client.query('ROLLBACK').catch(() => {});
+        console.error('Refresh inner error:', innerErr);
+        return { status: 500, body: { error: innerErr.message || 'Token refresh failed' } };
+      } finally {
+        client.release();
+      }
+    })();
+
+    inFlightRefreshes.set(refreshToken, refreshWork);
+    try {
+      const out = await refreshWork;
+      return res.status(out.status).json(out.body);
+    } finally {
+      inFlightRefreshes.delete(refreshToken);
+    }
   } catch (err) {
     console.error('Refresh error:', err);
     return res.status(500).json({ error: err.message || 'Token refresh failed' });

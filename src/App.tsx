@@ -1,6 +1,7 @@
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
@@ -150,11 +151,37 @@ function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] 
     return <Navigate to={ROUTE_PATHS.auth} replace />;
   }
 
-  const effectiveRole = userRole || "store_owner";
+  const effectiveRole = userRole || "cashier";
   const currentPath = location.pathname || window.location.pathname;
 
   if (!allowedRoles.includes(effectiveRole) && !isRouteAllowedForRole(currentPath, effectiveRole, userPermissions)) {
     return <Navigate to={ROUTE_PATHS.checkout} replace />;
+  }
+
+  return <Outlet />;
+}
+
+function AdminProtectedRoute() {
+  const { user, loading: authLoading } = useAuth();
+  const { userRole, loading: orgLoading } = useOrganization();
+  const { isPlatformAdmin } = useWhiteLabel();
+
+  if (authLoading || orgLoading) {
+    return <SleekRouteLoader />;
+  }
+
+  if (!user) {
+    return <Navigate to={ROUTE_PATHS.auth} replace />;
+  }
+
+  const email = String(user?.email || "").trim().toLowerCase();
+  const isAshwin = email === "ashwinbishnoi05@gmail.com";
+  const hasAdminRole = userRole === "super_admin" || userRole === "admin";
+  const hasAccess = isPlatformAdmin || isAshwin || hasAdminRole;
+
+  if (!hasAccess) {
+    toast.error("Access Denied: Admin Control Center is restricted to Platform Administrators.");
+    return <Navigate to={ROUTE_PATHS.pos} replace />;
   }
 
   return <Outlet />;
@@ -343,6 +370,10 @@ const App = () => (
                             <Route path={ROUTE_PATHS.settingsHelp} element={<Navigate to={ROUTE_PATHS.faq} replace />} />
                             <Route path={ROUTE_PATHS.staff} element={<Staff />} />
                             <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                          </Route>
+
+                          {/* Restricted strictly to Platform Admins, Super Admins & Admins */}
+                          <Route element={<AdminProtectedRoute />}>
                             <Route path={ROUTE_PATHS.admin} element={<AdminPortal />} />
                           </Route>
                         </Route>

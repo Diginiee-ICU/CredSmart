@@ -12,18 +12,6 @@ const PLATFORM_ADMIN_EMAILS = new Set(
     .filter(Boolean)
 );
 
-const DEFAULT_IGNORED_HOSTS = new Set([
-  'localhost',
-  '127.0.0.1',
-  'credsmart.online',
-  'www.credsmart.online',
-  'app.credsmart.online',
-  'api.credsmart.online',
-  'pos.credalert.bussiness',
-  'credalert.business',
-  'www.credalert.business',
-]);
-
 const getOrgId = (req) =>
   req.headers['x-organization-id'] ||
   req.orgId ||
@@ -129,19 +117,10 @@ const normalizeSlug = (slug) =>
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
 
-const normalizeDomain = (domain) =>
-  String(domain || '')
-    .trim()
-    .toLowerCase()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/.*$/, '')
-    .replace(/:\d+$/, '')
-    .slice(0, 250);
-
 const projectPublicBrandConfig = (row) => ({
   organization_id: row.organization_id,
   brand_slug: row.brand_slug || '',
-  custom_domain: row.custom_domain || '',
+  custom_domain: '',
   brand_name: row.brand_name || 'CredSmart',
   brand_tagline: row.brand_tagline || '',
   powered_by_text: row.powered_by_text || '',
@@ -162,13 +141,12 @@ const projectPublicBrandConfig = (row) => ({
 });
 
 // ============================================================================
-// 1. PUBLIC RESOLVER (For Auth / Landing / Custom Domains before login)
+// 1. PUBLIC RESOLVER (For Auth / Branded Portal Slugs before login)
 // ============================================================================
 
-// GET /api/white-label/resolve?host=&slug=
+// GET /api/white-label/resolve?slug=
 router.get('/white-label/resolve', optionalAuth, async (req, res) => {
   try {
-    const rawHost = normalizeDomain(req.query.host || req.get('x-forwarded-host') || req.get('host') || '');
     const rawSlug = normalizeSlug(req.query.slug || '');
 
     let row = null;
@@ -181,16 +159,6 @@ router.get('/white-label/resolve', optionalAuth, async (req, res) => {
         [rawSlug]
       );
       if (slugRes.rows.length > 0) row = slugRes.rows[0];
-    }
-
-    if (!row && rawHost && !DEFAULT_IGNORED_HOSTS.has(rawHost)) {
-      const hostRes = await pool.query(
-        `SELECT * FROM white_label_configs
-         WHERE is_activated = true AND is_enabled = true AND LOWER(custom_domain) = $1
-         LIMIT 1`,
-        [rawHost]
-      );
-      if (hostRes.rows.length > 0) row = hostRes.rows[0];
     }
 
     if (!row) {
@@ -273,7 +241,7 @@ router.post('/white-label/request', async (req, res) => {
       return res.status(403).json({ error: 'Only store owners or administrators can request white-labeling' });
     }
 
-    const { requested_brand_name, requested_domain = '', notes = '' } = req.body || {};
+    const { requested_brand_name, notes = '' } = req.body || {};
     const brandName = String(requested_brand_name || '').trim();
     if (brandName.length < 2) {
       return res.status(400).json({ error: 'Please specify a desired brand name (at least 2 characters)' });
@@ -305,7 +273,7 @@ router.post('/white-label/request', async (req, res) => {
          org_id, organization_id, requested_by, requester_email, requester_name,
          requested_brand_name, requested_domain, notes, status
        )
-       VALUES ($1, $1, $2, $3, $4, $5, $6, $7, 'pending')
+       VALUES ($1, $1, $2, $3, $4, $5, '', $6, 'pending')
        RETURNING id, organization_id, requested_by, requester_email, requester_name,
                  requested_brand_name, requested_domain, notes, status, created_at, updated_at`,
       [
@@ -314,7 +282,6 @@ router.post('/white-label/request', async (req, res) => {
         userRow.email || req.user.email || '',
         userRow.full_name || '',
         brandName,
-        normalizeDomain(requested_domain),
         String(notes || '').trim(),
       ]
     );
@@ -402,13 +369,12 @@ router.post('/white-label/activate', async (req, res) => {
       baseSlug = `${baseSlug}-${String(orgId).slice(0, 4)}`;
     }
 
-    const domainVal = normalizeDomain(reqRow.requested_domain) || null;
     const cfgRes = await client.query(
       `INSERT INTO white_label_configs (
          org_id, organization_id, request_id, is_activated, is_enabled, activated_at,
          brand_slug, custom_domain, brand_name
        )
-       VALUES ($1, $1, $2, true, true, NOW(), $3, $4, $5)
+       VALUES ($1, $1, $2, true, true, NOW(), $3, NULL, $4)
        ON CONFLICT (organization_id)
        DO UPDATE SET
          request_id = EXCLUDED.request_id,
@@ -416,10 +382,11 @@ router.post('/white-label/activate', async (req, res) => {
          is_enabled = true,
          activated_at = COALESCE(white_label_configs.activated_at, NOW()),
          brand_slug = COALESCE(NULLIF(white_label_configs.brand_slug, ''), EXCLUDED.brand_slug),
+         custom_domain = NULL,
          brand_name = COALESCE(NULLIF(white_label_configs.brand_name, 'CredSmart'), EXCLUDED.brand_name),
          updated_at = NOW()
        RETURNING *`,
-      [orgId, reqRow.id, baseSlug, domainVal, reqRow.requested_brand_name || 'My Brand']
+      [orgId, reqRow.id, baseSlug, reqRow.requested_brand_name || 'My Brand']
     );
 
     await client.query('COMMIT');
@@ -466,8 +433,6 @@ router.put('/white-label/config', async (req, res) => {
     }
 
     const brandSlug = body.brand_slug !== undefined ? (normalizeSlug(body.brand_slug) || null) : existing.rows[0].brand_slug;
-    const customDomain =
-      body.custom_domain !== undefined ? (normalizeDomain(body.custom_domain) || null) : existing.rows[0].custom_domain;
 
     if (brandSlug) {
       const conflict = await pool.query(
@@ -479,48 +444,34 @@ router.put('/white-label/config', async (req, res) => {
       }
     }
 
-    if (customDomain) {
-      if (DEFAULT_IGNORED_HOSTS.has(customDomain)) {
-        return res.status(400).json({ error: 'Reserved platform domain cannot be claimed' });
-      }
-      const conflict = await pool.query(
-        `SELECT id FROM white_label_configs WHERE LOWER(custom_domain) = $1 AND organization_id <> $2 LIMIT 1`,
-        [customDomain, orgId]
-      );
-      if (conflict.rows.length > 0) {
-        return res.status(409).json({ error: `Domain "${customDomain}" is already bound to another workspace` });
-      }
-    }
-
     const updated = await pool.query(
       `UPDATE white_label_configs SET
          brand_slug = $2,
-         custom_domain = $3,
-         brand_name = $4,
-         brand_tagline = $5,
-         powered_by_text = $6,
-         hide_platform_branding = $7,
-         logo_light_url = $8,
-         logo_dark_url = $9,
-         favicon_url = $10,
-         splash_logo_url = $11,
-         primary_color = $12,
-         secondary_color = $13,
-         sidebar_theme = $14,
-         support_email = $15,
-         support_phone = $16,
-         website_url = $17,
-         meta_title = $18,
-         meta_description = $19,
-         custom_footer_text = $20,
-         is_enabled = $21,
+         custom_domain = NULL,
+         brand_name = $3,
+         brand_tagline = $4,
+         powered_by_text = $5,
+         hide_platform_branding = $6,
+         logo_light_url = $7,
+         logo_dark_url = $8,
+         favicon_url = $9,
+         splash_logo_url = $10,
+         primary_color = $11,
+         secondary_color = $12,
+         sidebar_theme = $13,
+         support_email = $14,
+         support_phone = $15,
+         website_url = $16,
+         meta_title = $17,
+         meta_description = $18,
+         custom_footer_text = $19,
+         is_enabled = $20,
          updated_at = NOW()
        WHERE organization_id = $1 OR org_id = $1
        RETURNING *`,
       [
         orgId,
         brandSlug,
-        customDomain,
         brandName,
         String(body.brand_tagline ?? existing.rows[0].brand_tagline ?? '').trim().slice(0, 180),
         String(body.powered_by_text ?? existing.rows[0].powered_by_text ?? '').trim().slice(0, 120),

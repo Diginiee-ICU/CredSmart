@@ -23,8 +23,8 @@ export function StorefrontStandeeModal({
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://pos.credalert.bussiness";
   const shortUrl = `${baseUrl}/c/${store.slug}`;
   const displayUrl =
-    isWhiteLabeled && (brand.custom_domain || typeof window !== "undefined")
-      ? `${brand.custom_domain || window.location.host}/c/${store.slug}`
+    isWhiteLabeled && typeof window !== "undefined"
+      ? `${window.location.host}/c/${store.slug}`
       : `pos.credalert.bussiness/c/${store.slug}`;
   const accentColor = store.theme_color || "#FF6A00";
 

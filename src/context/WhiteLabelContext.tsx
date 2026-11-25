@@ -50,18 +50,7 @@ const WhiteLabelContext = createContext<WhiteLabelContextValue>({
   toggleEnabled: async () => ({ success: false }),
 });
 
-const PLATFORM_DEFAULT_HOSTS = new Set([
-  "localhost",
-  "127.0.0.1",
-  "credsmart.online",
-  "www.credsmart.online",
-  "app.credsmart.online",
-  "pos.credalert.bussiness",
-  "credalert.business",
-  "www.credalert.business",
-]);
-
-function extractBrandSlugFromLocation(): string {
+const extractBrandSlugFromLocation = (): string => {
   if (typeof window === "undefined") return "";
   try {
     const params = new URLSearchParams(window.location.search);
@@ -87,7 +76,7 @@ function extractBrandSlugFromLocation(): string {
     // ignore URL/storage access errors
   }
   return "";
-}
+};
 
 function configToResolvedBrand(cfg: WhiteLabelConfig): ResolvedWhiteLabelBrand {
   return {
@@ -191,15 +180,12 @@ export function WhiteLabelProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // 2. Public resolution by hostname or ?brand=slug / /b/:slug
-      const host = typeof window !== "undefined" ? window.location.hostname.toLowerCase() : "";
+      // 2. Public resolution by ?brand=slug or /b/:slug
       const slug = extractBrandSlugFromLocation();
-      const shouldQueryCustomHost = Boolean(host && !PLATFORM_DEFAULT_HOSTS.has(host));
 
-      if (slug || shouldQueryCustomHost) {
+      if (slug) {
         const pubRes = await whiteLabelApi.resolvePublicBrand({
-          host: shouldQueryCustomHost ? host : undefined,
-          slug: slug || undefined,
+          slug,
         });
         if (pubRes.data?.active && pubRes.data.brand) {
           applyResolvedBrand(pubRes.data.brand, true);

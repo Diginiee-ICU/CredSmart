@@ -122,6 +122,86 @@ BEGIN
 END $$;
 
 -- ============================================================================
+-- 2b. UNIVERSAL USER SYNCHRONIZATION & SELF-HEALING IDENTITY REGISTRY
+-- Ensures every business owner, tester, cashier, sales operator & staff member
+-- is represented in public.users with zero missing rows.
+-- ============================================================================
+DO $$
+BEGIN
+  -- 1. Sync from auth.users (if Supabase Auth schema exists)
+  IF to_regclass('auth.users') IS NOT NULL THEN
+    INSERT INTO users (id, email, password_hash, full_name, phone, created_at)
+    SELECT
+      au.id,
+      LOWER(TRIM(au.email)),
+      COALESCE(au.encrypted_password, '$2a$10$abcdefghijklmnopqrstuvwxyz012345'),
+      COALESCE(NULLIF(TRIM(au.raw_user_meta_data->>'full_name'), ''), split_part(au.email, '@', 1)),
+      au.phone,
+      au.created_at
+    FROM auth.users au
+    ON CONFLICT (id) DO UPDATE SET
+      email = EXCLUDED.email,
+      full_name = COALESCE(NULLIF(users.full_name, ''), EXCLUDED.full_name);
+  END IF;
+
+  -- 2. Ensure all organization owners exist in users
+  INSERT INTO users (id, email, password_hash, full_name, phone, created_at)
+  SELECT DISTINCT
+    o.owner_id,
+    COALESCE(NULLIF(TRIM(o.email), ''), 'owner_' || substr(o.id::text, 1, 8) || '@credsmart.online'),
+    '$2a$10$e5hF4xG0wH8qL9sP1rT7uOH0vN1wM2xY3zA4bC5dE6fG7hI8jK9l.',
+    COALESCE(NULLIF(TRIM(o.name), ''), 'Business Owner'),
+    o.phone,
+    o.created_at
+  FROM organizations o
+  WHERE o.owner_id IS NOT NULL
+  ON CONFLICT (id) DO UPDATE SET
+    full_name = COALESCE(NULLIF(users.full_name, ''), EXCLUDED.full_name);
+
+  -- 3. Ensure all members in org_memberships exist in users
+  INSERT INTO users (id, email, password_hash, full_name, created_at)
+  SELECT DISTINCT
+    m.user_id,
+    'user_' || substr(m.user_id::text, 1, 8) || '@credsmart.online',
+    '$2a$10$e5hF4xG0wH8qL9sP1rT7uOH0vN1wM2xY3zA4bC5dE6fG7hI8jK9l.',
+    'Staff Member',
+    m.created_at
+  FROM org_memberships m
+  WHERE m.user_id IS NOT NULL
+  ON CONFLICT (id) DO NOTHING;
+
+  -- 4. Ensure all billing creators in sales exist in users
+  IF to_regclass('public.sales') IS NOT NULL THEN
+    INSERT INTO users (id, email, password_hash, full_name, created_at)
+    SELECT DISTINCT
+      s.created_by,
+      'operator_' || substr(s.created_by::text, 1, 8) || '@credsmart.online',
+      '$2a$10$e5hF4xG0wH8qL9sP1rT7uOH0vN1wM2xY3zA4bC5dE6fG7hI8jK9l.',
+      'Billing Operator',
+      s.created_at
+    FROM sales s
+    WHERE s.created_by IS NOT NULL
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
+
+  -- 5. Ensure all live presence users exist in users
+  IF to_regclass('public.user_presence') IS NOT NULL THEN
+    INSERT INTO users (id, email, password_hash, full_name, created_at)
+    SELECT DISTINCT
+      p.user_id,
+      COALESCE(NULLIF(TRIM(p.user_email), ''), 'user_' || substr(p.user_id::text, 1, 8) || '@credsmart.online'),
+      '$2a$10$e5hF4xG0wH8qL9sP1rT7uOH0vN1wM2xY3zA4bC5dE6fG7hI8jK9l.',
+      COALESCE(NULLIF(TRIM(p.user_name), ''), 'User'),
+      p.last_active_at
+    FROM user_presence p
+    WHERE p.user_id IS NOT NULL
+    ON CONFLICT (id) DO UPDATE SET
+      full_name = COALESCE(NULLIF(users.full_name, ''), EXCLUDED.full_name),
+      email = COALESCE(NULLIF(users.email, ''), EXCLUDED.email);
+  END IF;
+END $$;
+
+-- ============================================================================
 -- 3. MEMBERSHIPS (DUAL TABLE SUPPORT & CROSS-SYNC)
 -- ============================================================================
 -- 1) organization_memberships

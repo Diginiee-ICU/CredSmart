@@ -239,7 +239,7 @@ const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => 
   const localList = getLocalOrgRegistry(userId);
   const localMemberships: MembershipRow[] = localList.map((o) => ({
     organization_id: o.id,
-    role: o.role === "cashier" ? "cashier" : "store_owner",
+    role: o.role ? String(o.role).toLowerCase() : "cashier",
   }));
 
   try {
@@ -253,7 +253,7 @@ const fetchAllMemberships = async (userId: string): Promise<MembershipRow[]> => 
     const remoteMemberships = (data || [])
       .map((d) => ({
         organization_id: d.organization_id || (d as any).org_id,
-        role: d.role === "cashier" ? "cashier" : "store_owner",
+        role: d.role ? String(d.role).toLowerCase() : "cashier",
       }))
       .filter((m) => Boolean(m.organization_id));
 
@@ -622,7 +622,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         setOrg(null);
         setOrgId(null);
         setOrganizations([]);
-        setUserRole("store_owner");
+        setUserRole(null);
         return;
       }
 
@@ -633,7 +633,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       setOrgId(currentActiveOrgId);
       localStorage.setItem(ACTIVE_ORG_KEY, currentActiveOrgId);
-      setUserRole(matchedMembership.role || "store_owner");
+      setUserRole(matchedMembership.role ? String(matchedMembership.role).toLowerCase() : "cashier");
 
       // Load granular custom feature permissions
       const permsKey = `org_user_permissions_${currentActiveOrgId}_${user.id}`;

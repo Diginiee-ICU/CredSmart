@@ -53,6 +53,46 @@ const isPlatformAdmin = async (reqUser) => {
   return false;
 };
 
+// Middleware: Strictly enforces administrator privileges (Platform Admin, Super Admin, Admin, or Store Owner)
+// Blocks cashiers, salesmen, accountants, delivery staff, and unauthorized roles with HTTP 403.
+const requireAdminAccess = async (req, res, next) => {
+  if (!req.user || !req.user.id) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  // 1. Platform Admin always has full access
+  const platformAdmin = await isPlatformAdmin(req.user);
+  if (platformAdmin) {
+    req.isPlatformAdmin = true;
+    return next();
+  }
+
+  // 2. Check Database roles: super_admin, admin, owner, store_owner
+  try {
+    const roleRes = await pool.query(
+      `SELECT role FROM (
+         SELECT role FROM org_memberships WHERE user_id = $1
+         UNION ALL
+         SELECT role FROM organization_memberships WHERE user_id = $1
+         UNION ALL
+         SELECT 'owner' AS role FROM organizations WHERE owner_id = $1
+       ) m
+       WHERE LOWER(m.role) IN ('super_admin', 'admin', 'owner', 'store_owner')
+       LIMIT 1`,
+      [req.user.id]
+    );
+    if (roleRes.rows.length > 0) {
+      req.isPlatformAdmin = false;
+      return next();
+    }
+  } catch (_roleErr) {}
+
+  return res.status(403).json({
+    error: 'Access denied. Administrator privileges required.',
+    code: 'FORBIDDEN_ADMIN_ONLY',
+  });
+};
+
 const shouldUsePlatformScope = async (req) => {
   const requestedScope = String(req.query.scope || '').toLowerCase();
   if (requestedScope === 'org') return false;
@@ -152,7 +192,7 @@ router.post('/presence/heartbeat', async (req, res) => {
 });
 
 // GET /api/presence/live-users
-router.get('/presence/live-users', async (req, res) => {
+router.get('/presence/live-users', requireAdminAccess, async (req, res) => {
   try {
     const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
@@ -234,7 +274,7 @@ router.get('/presence/live-users', async (req, res) => {
 // ============================================================================
 
 // GET /api/admin/metrics
-router.get('/admin/metrics', async (req, res) => {
+router.get('/admin/metrics', requireAdminAccess, async (req, res) => {
   try {
     const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
@@ -403,7 +443,7 @@ router.get('/admin/metrics', async (req, res) => {
 // ============================================================================
 
 // GET /api/admin/users
-router.get('/admin/users', async (req, res) => {
+router.get('/admin/users', requireAdminAccess, async (req, res) => {
   try {
     const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
@@ -415,6 +455,66 @@ router.get('/admin/users', async (req, res) => {
     if (usePlatformScope) {
       // Platform Admin View: returns EVERY registered user, tester, real-time business owner, and staff across all organizations
       const platformQuery = `
+        WITH all_known_users AS (
+          SELECT
+            u.id,
+            u.email,
+            u.full_name,
+            u.phone,
+            u.avatar_url,
+            u.created_at,
+            COALESCE(u.is_platform_admin, false) as is_platform_admin,
+            1 AS source_prio
+          FROM users u
+          UNION ALL
+          SELECT
+            o.owner_id AS id,
+            COALESCE(NULLIF(TRIM(o.email), ''), 'owner_' || substr(o.id::text, 1, 8) || '@credsmart.online') AS email,
+            COALESCE(NULLIF(TRIM(o.name), ''), 'Business Owner') AS full_name,
+            o.phone,
+            o.logo_url AS avatar_url,
+            o.created_at,
+            false as is_platform_admin,
+            2 AS source_prio
+          FROM organizations o
+          WHERE o.owner_id IS NOT NULL
+          UNION ALL
+          SELECT
+            m.user_id AS id,
+            'user_' || substr(m.user_id::text, 1, 8) || '@credsmart.online' AS email,
+            'Staff Member' AS full_name,
+            NULL as phone,
+            NULL as avatar_url,
+            m.created_at,
+            false as is_platform_admin,
+            3 AS source_prio
+          FROM org_memberships m
+          WHERE m.user_id IS NOT NULL
+          UNION ALL
+          SELECT
+            p.user_id AS id,
+            COALESCE(NULLIF(TRIM(p.user_email), ''), 'user_' || substr(p.user_id::text, 1, 8) || '@credsmart.online') AS email,
+            COALESCE(NULLIF(TRIM(p.user_name), ''), 'User') AS full_name,
+            NULL as phone,
+            NULL as avatar_url,
+            p.last_active_at AS created_at,
+            false as is_platform_admin,
+            4 AS source_prio
+          FROM user_presence p
+          WHERE p.user_id IS NOT NULL
+        ),
+        deduped_users AS (
+          SELECT DISTINCT ON (id)
+            id,
+            email,
+            full_name,
+            phone,
+            avatar_url,
+            created_at,
+            is_platform_admin
+          FROM all_known_users
+          ORDER BY id, source_prio ASC, created_at ASC
+        )
         SELECT
           u.id,
           u.email,
@@ -437,7 +537,7 @@ router.get('/admin/users', async (req, res) => {
           COALESCE(sc.bill_count, 0)::int as bill_count,
           COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
           COALESCE(fl.locked_count, 0)::int as locked_features_count
-        FROM users u
+        FROM deduped_users u
         LEFT JOIN LATERAL (
           SELECT org_id, role FROM (
             SELECT COALESCE(org_id, organization_id) AS org_id, role, 1 AS prio, created_at
@@ -543,13 +643,13 @@ router.get('/admin/users', async (req, res) => {
     // Single-organization View: includes org_memberships, organization_memberships, organizations.owner_id, crm_staff_assignments & user_presence
     const orgQuery = `
       SELECT * FROM (
-        SELECT DISTINCT ON (u.id)
-          u.id,
-          u.email,
-          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(p.user_name), ''), split_part(u.email, '@', 1)) as full_name,
+        SELECT DISTINCT ON (m.user_id)
+          m.user_id as id,
+          COALESCE(u.email, p.user_email, o.email, '') as email,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(p.user_name), ''), split_part(COALESCE(u.email, p.user_email, ''), '@', 1), o.name, 'Business Member') as full_name,
           u.phone,
           u.avatar_url,
-          u.created_at,
+          COALESCE(u.created_at, m.created_at, NOW()) as created_at,
           $1::uuid as organization_id,
           COALESCE(o.name, 'Business') as organization_name,
           COALESCE(NULLIF(TRIM(m.role), ''), NULLIF(TRIM(p.user_role), ''), 'cashier') as role,
@@ -564,36 +664,36 @@ router.get('/admin/users', async (req, res) => {
           COALESCE(sc.bill_count, 0)::int as bill_count,
           COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
           COALESCE(fl.locked_count, 0)::int as locked_features_count
-        FROM users u
-        JOIN (
-          SELECT user_id, role, 1 AS prio FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
+        FROM (
+          SELECT user_id, role, created_at, 1 AS prio FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
           UNION ALL
-          SELECT user_id, role, 2 AS prio FROM organization_memberships WHERE (organization_id = $1 OR org_id = $1)
+          SELECT user_id, role, created_at, 2 AS prio FROM organization_memberships WHERE (organization_id = $1 OR org_id = $1)
           UNION ALL
-          SELECT owner_id AS user_id, 'owner' AS role, 3 AS prio FROM organizations WHERE id = $1 AND owner_id IS NOT NULL
+          SELECT owner_id AS user_id, 'owner' AS role, created_at, 3 AS prio FROM organizations WHERE id = $1 AND owner_id IS NOT NULL
           UNION ALL
-          SELECT COALESCE(csa.user_id, csa.staff_id) AS user_id, COALESCE(NULLIF(TRIM(cr.name), ''), 'staff') AS role, 4 AS prio
+          SELECT COALESCE(csa.user_id, csa.staff_id) AS user_id, COALESCE(NULLIF(TRIM(cr.name), ''), 'staff') AS role, csa.created_at, 4 AS prio
           FROM crm_staff_assignments csa
           LEFT JOIN crm_roles cr ON cr.id = csa.role_id
           WHERE (csa.org_id = $1 OR csa.organization_id = $1)
           UNION ALL
-          SELECT user_id, COALESCE(NULLIF(user_role, ''), 'cashier') AS role, 5 AS prio FROM user_presence WHERE (organization_id = $1 OR org_id = $1)
-        ) m ON m.user_id = u.id
+          SELECT user_id, COALESCE(NULLIF(user_role, ''), 'cashier') AS role, last_active_at AS created_at, 5 AS prio FROM user_presence WHERE (organization_id = $1 OR org_id = $1)
+        ) m
+        LEFT JOIN users u ON u.id = m.user_id
         LEFT JOIN organizations o ON o.id = $1
-        LEFT JOIN user_presence p ON p.user_id = u.id AND (p.organization_id = $1 OR p.org_id = $1)
+        LEFT JOIN user_presence p ON p.user_id = m.user_id AND (p.organization_id = $1 OR p.org_id = $1)
         LEFT JOIN (
           SELECT created_by, COUNT(*)::int as bill_count, SUM(COALESCE(NULLIF(total_amount, 0), total, 0)) as bill_total
           FROM sales
           WHERE (organization_id = $1 OR org_id = $1)
           GROUP BY created_by
-        ) sc ON sc.created_by = u.id
+        ) sc ON sc.created_by = m.user_id
         LEFT JOIN (
           SELECT user_id, COUNT(*)::int as locked_count
           FROM user_feature_locks
           WHERE (organization_id = $1 OR org_id = $1) AND is_locked = true
           GROUP BY user_id
-        ) fl ON fl.user_id = u.id
-        ORDER BY u.id, m.prio ASC, u.created_at ASC
+        ) fl ON fl.user_id = m.user_id
+        ORDER BY m.user_id, m.prio ASC, m.created_at ASC
       ) users_list
       ORDER BY
         CASE WHEN users_list.presence_status = 'online' THEN 0 WHEN users_list.presence_status = 'idle' THEN 1 ELSE 2 END ASC,
@@ -607,13 +707,13 @@ router.get('/admin/users', async (req, res) => {
     } catch (primaryOrgErr) {
       console.warn('Org users enriched query fallback triggered:', primaryOrgErr.message);
       const safeOrgQuery = `
-        SELECT DISTINCT ON (u.id)
-          u.id,
-          u.email,
-          COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) as full_name,
+        SELECT DISTINCT ON (m.user_id)
+          m.user_id as id,
+          COALESCE(u.email, o.email, '') as email,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(COALESCE(u.email, ''), '@', 1), o.name, 'Business Member') as full_name,
           u.phone,
           u.avatar_url,
-          u.created_at,
+          COALESCE(u.created_at, NOW()) as created_at,
           $1::uuid as organization_id,
           COALESCE(o.name, 'Business') as organization_name,
           COALESCE(NULLIF(TRIM(m.role), ''), 'owner') as role,
@@ -621,10 +721,14 @@ router.get('/admin/users', async (req, res) => {
           0::int as bill_count,
           0::numeric(12,2) as bill_total,
           0::int as locked_features_count
-        FROM users u
-        JOIN org_memberships m ON m.user_id = u.id AND (m.org_id = $1 OR m.organization_id = $1)
+        FROM (
+          SELECT user_id, role FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
+          UNION ALL
+          SELECT owner_id as user_id, 'owner' as role FROM organizations WHERE id = $1 AND owner_id IS NOT NULL
+        ) m
+        LEFT JOIN users u ON u.id = m.user_id
         LEFT JOIN organizations o ON o.id = $1
-        ORDER BY u.id, u.created_at DESC;
+        ORDER BY m.user_id;
       `;
       const fallbackOrgRes = await pool.query(safeOrgQuery, [orgId]);
       return res.json(fallbackOrgRes.rows || []);
@@ -636,7 +740,7 @@ router.get('/admin/users', async (req, res) => {
 });
 
 // POST /api/admin/create-user
-router.post('/admin/create-user', async (req, res) => {
+router.post('/admin/create-user', requireAdminAccess, async (req, res) => {
   const client = await pool.connect();
   try {
     const callerOrgId = getOrgId(req);
@@ -783,7 +887,7 @@ router.post('/admin/create-user', async (req, res) => {
 });
 
 // GET /api/admin/users/:userId/features
-router.get('/admin/users/:userId/features', async (req, res) => {
+router.get('/admin/users/:userId/features', requireAdminAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     const orgId = await resolveTargetOrgForFeatureManagement(req, userId);
@@ -811,7 +915,7 @@ router.get('/admin/users/:userId/features', async (req, res) => {
 });
 
 // POST /api/admin/users/:userId/features/toggle
-router.post('/admin/users/:userId/features/toggle', async (req, res) => {
+router.post('/admin/users/:userId/features/toggle', requireAdminAccess, async (req, res) => {
   try {
     const { userId } = req.params;
     const { feature_key, is_locked } = req.body;
@@ -851,7 +955,7 @@ router.post('/admin/users/:userId/features/toggle', async (req, res) => {
 });
 
 // POST /api/admin/users/:userId/features/bulk
-router.post('/admin/users/:userId/features/bulk', async (req, res) => {
+router.post('/admin/users/:userId/features/bulk', requireAdminAccess, async (req, res) => {
   const client = await pool.connect();
   try {
     const { userId } = req.params;
@@ -894,7 +998,7 @@ router.post('/admin/users/:userId/features/bulk', async (req, res) => {
 // ============================================================================
 
 // GET /api/admin/access-requests
-router.get('/admin/access-requests', async (req, res) => {
+router.get('/admin/access-requests', requireAdminAccess, async (req, res) => {
   try {
     const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
@@ -950,7 +1054,7 @@ router.get('/admin/access-requests', async (req, res) => {
 });
 
 // POST /api/admin/access-requests/:id/review
-router.post('/admin/access-requests/:id/review', async (req, res) => {
+router.post('/admin/access-requests/:id/review', requireAdminAccess, async (req, res) => {
   const client = await pool.connect();
   try {
     const orgId = getOrgId(req);

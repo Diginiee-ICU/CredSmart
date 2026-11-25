@@ -26,6 +26,7 @@ export interface Session {
 
 type AuthListener = (event: string, session: Session | null) => void;
 const authListeners = new Set<AuthListener>();
+let inFlightRefreshPromise: Promise<{ data: { session: Session | null; user: User | null }; error: any }> | null = null;
 
 const notifyAuth = (event: string, session: Session | null) => {
   authListeners.forEach((cb) => cb(event, session));
@@ -227,28 +228,47 @@ export const supabase = {
     },
 
     refreshSession: async () => {
+      if (inFlightRefreshPromise) {
+        return inFlightRefreshPromise;
+      }
+
       const refreshToken = localStorage.getItem(REFRESH_KEY);
       if (!refreshToken) return { data: { session: null, user: null }, error: { message: "No refresh token" } };
-      try {
-        const res = await fetch(`${API_ORIGIN}/api/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          localStorage.removeItem(TOKEN_KEY);
-          localStorage.removeItem(REFRESH_KEY);
-          localStorage.removeItem(USER_KEY);
-          notifyAuth("SIGNED_OUT", null);
-          return { data: { session: null, user: null }, error: { message: data.error || "Refresh failed" } };
+
+      inFlightRefreshPromise = (async () => {
+        try {
+          const res = await fetch(`${API_ORIGIN}/api/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+          let data: any = {};
+          try {
+            data = await res.json();
+          } catch {
+            data = {};
+          }
+          if (!res.ok) {
+            // Only clear local session when refresh token is definitively invalid/rejected (401/403), never on transient 5xx
+            if (res.status === 401 || res.status === 403) {
+              localStorage.removeItem(TOKEN_KEY);
+              localStorage.removeItem(REFRESH_KEY);
+              localStorage.removeItem(USER_KEY);
+              notifyAuth("SIGNED_OUT", null);
+            }
+            return { data: { session: null, user: null }, error: { message: data.error || "Refresh failed", status: res.status } };
+          }
+          const session = saveSession(data);
+          notifyAuth("TOKEN_REFRESHED", session);
+          return { data: { session, user: session?.user || null }, error: null };
+        } catch (err: any) {
+          return { data: { session: null, user: null }, error: { message: err.message } };
+        } finally {
+          inFlightRefreshPromise = null;
         }
-        const session = saveSession(data);
-        notifyAuth("TOKEN_REFRESHED", session);
-        return { data: { session, user: session?.user || null }, error: null };
-      } catch (err: any) {
-        return { data: { session: null, user: null }, error: { message: err.message } };
-      }
+      })();
+
+      return inFlightRefreshPromise;
     },
 
     getUser: async () => {

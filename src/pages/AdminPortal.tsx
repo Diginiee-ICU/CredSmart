@@ -145,6 +145,11 @@ export default function AdminPortal() {
     return FULL_ACCESS_ROLES.includes((userRole || "") as any);
   }, [userRole]);
 
+  const userEmail = String(user?.email || "").trim().toLowerCase();
+  const isAshwin = userEmail === "ashwinbishnoi05@gmail.com";
+  const hasAdminRole = userRole === "super_admin" || userRole === "admin" || isPrivileged;
+  const isAuthorized = isPlatformAdmin || isAshwin || hasAdminRole;
+
   const effectiveScope: "all" | "org" = isPlatformAdmin ? adminScope : "org";
 
   // Automatically switch to platform-wide scope if isPlatformAdmin resolves true
@@ -156,6 +161,10 @@ export default function AdminPortal() {
 
   // Load all admin data
   const loadData = useCallback(async (isSilent = false) => {
+    if (!isAuthorized) {
+      setLoading(false);
+      return;
+    }
     if (!orgId && !isPlatformAdmin) return;
     if (!isSilent) setLoading(true);
     setRefreshing(true);
@@ -431,6 +440,31 @@ export default function AdminPortal() {
       return matchesQuery && matchesRole;
     });
   }, [users, userSearch, userRoleFilter]);
+
+  if (!isAuthorized) {
+    return (
+      <div className="h-full flex-1 flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-950 text-center select-none">
+        <div className="w-14 h-14 rounded-2xl bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4 border border-rose-200 dark:border-rose-800 shadow-2xs">
+          <Lock className="w-7 h-7 stroke-[2]" />
+        </div>
+        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+          Access Restricted: Administrator Privileges Required
+        </h2>
+        <p className="text-xs text-slate-500 max-w-sm mb-5">
+          The Admin &amp; Feature Control Center is restricted to authorized platform administrators and organization managers.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/billing/pos";
+          }}
+          className="h-8.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
+        >
+          Return to POS &amp; Billing
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-950 overflow-hidden select-none">
@@ -814,6 +848,7 @@ export default function AdminPortal() {
                 >
                   <option value="all">All Roles</option>
                   <option value="owner_group">Business Owners</option>
+                  <option value="store_owner">Store Owner</option>
                   <option value="admin_group">Admins &amp; Super Admins</option>
                   <option value="manager">Manager</option>
                   <option value="cashier">Cashier</option>
@@ -1296,7 +1331,6 @@ export default function AdminPortal() {
 
                           <p className="text-xs text-slate-500 font-mono truncate">
                             Requester: {item.requester_name || item.requester_email} ({item.requester_email})
-                            {item.requested_domain ? ` • Domain: ${item.requested_domain}` : ""}
                           </p>
 
                           {item.notes && (

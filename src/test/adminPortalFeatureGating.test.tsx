@@ -644,5 +644,22 @@ describe("CredSmart Admin Portal & Granular Feature Gating Suite", () => {
         expect(capturedUsageBody.feature_key).toBe("reports");
       });
     });
+
+    it("blocks unauthorized roles (e.g. cashier) from accessing AdminPortal and renders restricted access screen", async () => {
+      mockRole = "cashier";
+
+      render(
+        <MemoryRouter>
+          <FeatureAccessProvider>
+            <AdminPortal />
+          </FeatureAccessProvider>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/Access Restricted: Administrator Privileges Required/i)).toBeDefined();
+        expect(screen.getByRole("button", { name: /Return to POS & Billing/i })).toBeDefined();
+      });
+    });
   });
 });

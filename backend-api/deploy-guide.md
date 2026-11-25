@@ -22,10 +22,10 @@ scp backend-api.tar.gz woodzire@credsmart:~/server/
 On your Ubuntu server terminal:
 ```bash
 cd ~/server
-tar -xzvf backend-api.tar.gz -C api/
-cp api/fix_db.sql ./fix_db.sql
-cp api/add_indexes.sql ./add_indexes.sql
-cp api/clean_cross_memberships.sql ./clean_cross_memberships.sql
+tar --overwrite -xzvf backend-api.tar.gz -C api/
+cp -f api/fix_db.sql ./fix_db.sql
+cp -f api/add_indexes.sql ./add_indexes.sql
+cp -f api/clean_cross_memberships.sql ./clean_cross_memberships.sql
 chmod +x api/deploy-fix.sh
 ```
 

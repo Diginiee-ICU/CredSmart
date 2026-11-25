@@ -161,7 +161,6 @@ export default function WhiteLabelSettings() {
 
   // Request Form State
   const [reqBrandName, setReqBrandName] = useState(org?.name || "");
-  const [reqDomain, setReqDomain] = useState("");
   const [reqNotes, setReqNotes] = useState("");
   const [submittingReq, setSubmittingReq] = useState(false);
 
@@ -186,7 +185,6 @@ export default function WhiteLabelSettings() {
     secondary_color: "#F97316",
     sidebar_theme: "dark",
     brand_slug: "",
-    custom_domain: "",
     support_email: "",
     support_phone: "",
     website_url: "",
@@ -217,7 +215,6 @@ export default function WhiteLabelSettings() {
         secondary_color: config.secondary_color || "#F97316",
         sidebar_theme: config.sidebar_theme || "dark",
         brand_slug: config.brand_slug || "",
-        custom_domain: config.custom_domain || "",
         support_email: config.support_email || "",
         support_phone: config.support_phone || "",
         website_url: config.website_url || "",
@@ -238,7 +235,6 @@ export default function WhiteLabelSettings() {
     setSubmittingReq(true);
     const res = await submitRequest({
       requested_brand_name: reqBrandName.trim(),
-      requested_domain: reqDomain.trim(),
       notes: reqNotes.trim(),
     });
     setSubmittingReq(false);
@@ -359,7 +355,7 @@ export default function WhiteLabelSettings() {
                 ) : null}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                Rebrand the entire app, login portal, invoices &amp; domain with your own identity
+                Rebrand the entire app, login portal &amp; invoices with your own identity
               </p>
             </div>
 
@@ -462,33 +458,18 @@ export default function WhiteLabelSettings() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                          Desired Brand Name <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={reqBrandName}
-                          onChange={(e) => setReqBrandName(e.target.value)}
-                          placeholder="e.g. Apex Billing POS"
-                          className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                          Preferred Custom Domain (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={reqDomain}
-                          onChange={(e) => setReqDomain(e.target.value)}
-                          placeholder="e.g. pos.apexretail.in"
-                          className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        Desired Brand Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={reqBrandName}
+                        onChange={(e) => setReqBrandName(e.target.value)}
+                        placeholder="e.g. Apex Billing POS"
+                        className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
                     </div>
 
                     <div>
@@ -538,12 +519,6 @@ export default function WhiteLabelSettings() {
                         <span className="text-slate-500">Requested Brand:</span>
                         <span className="font-semibold text-slate-900 dark:text-white">{request.requested_brand_name}</span>
                       </div>
-                      {request.requested_domain && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">Target Domain:</span>
-                          <span className="font-mono text-slate-900 dark:text-white">{request.requested_domain}</span>
-                        </div>
-                      )}
                       <div className="flex justify-between">
                         <span className="text-slate-500">Submitted On:</span>
                         <span className="font-mono text-slate-700 dark:text-slate-300">
@@ -623,7 +598,7 @@ export default function WhiteLabelSettings() {
                       { id: "identity" as const, label: "Identity & Brand", icon: Sparkles },
                       { id: "assets" as const, label: "Logos & Icons", icon: ImageIcon },
                       { id: "theme" as const, label: "Colors & Theme", icon: Palette },
-                      { id: "domain" as const, label: "Domain & SEO", icon: Globe },
+                      { id: "domain" as const, label: "Portal Link & SEO", icon: Globe },
                     ].map((tab) => {
                       const active = studioTab === tab.id;
                       return (
@@ -881,40 +856,25 @@ export default function WhiteLabelSettings() {
                     </div>
                   )}
 
-                  {/* Tab: Domain, Brand Link & SEO */}
+                  {/* Tab: Portal Link & SEO */}
                   {studioTab === "domain" && (
                     <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3.5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            Branded Portal Slug
-                          </label>
-                          <input
-                            type="text"
-                            value={draft.brand_slug || ""}
-                            onChange={(e) =>
-                              setDraft((d) => ({
-                                ...d,
-                                brand_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
-                              }))
-                            }
-                            placeholder="e.g. apex-pos"
-                            className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                            Custom Domain (CNAME)
-                          </label>
-                          <input
-                            type="text"
-                            value={draft.custom_domain || ""}
-                            onChange={(e) => setDraft((d) => ({ ...d, custom_domain: e.target.value.toLowerCase().trim() }))}
-                            placeholder="e.g. pos.yourcompany.com"
-                            className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          Branded Portal Slug
+                        </label>
+                        <input
+                          type="text"
+                          value={draft.brand_slug || ""}
+                          onChange={(e) =>
+                            setDraft((d) => ({
+                              ...d,
+                              brand_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
+                            }))
+                          }
+                          placeholder="e.g. apex-pos"
+                          className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
                       </div>
 
                       {brandShareUrl && (
@@ -965,10 +925,6 @@ export default function WhiteLabelSettings() {
                           placeholder="Custom description for browser links & search previews..."
                           className="w-full p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                         />
-                      </div>
-
-                      <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 text-[11px] text-slate-500 font-mono">
-                        DNS Tip: Point custom domain CNAME record to your Ubuntu server host and route HTTP/HTTPS traffic to the frontend app.
                       </div>
                     </div>
                   )}

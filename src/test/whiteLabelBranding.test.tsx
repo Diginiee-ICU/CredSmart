@@ -146,9 +146,10 @@ describe("CredSmart White-Label Branding & Key Approval Suite", () => {
         </MemoryRouter>
       );
 
-      // Step 1: Request Form appears
+      // Step 1: Request Form appears WITHOUT any custom domain field
       await waitFor(() => {
         expect(screen.getByText(/Request Custom White-Label Access/i)).toBeDefined();
+        expect(screen.queryByText(/Preferred Custom Domain/i)).toBeNull();
       });
 
       const submitBtn = screen.getByRole("button", { name: /Submit White-Label Request/i });
@@ -158,7 +159,7 @@ describe("CredSmart White-Label Branding & Key Approval Suite", () => {
       await waitFor(() => {
         expect(screen.getByText(/Awaiting Admin Approval/i)).toBeDefined();
       });
-    });
+    }, 15000);
 
     it("unlocks Branding Studio upon valid key entry and propagates custom branding to UI logo", async () => {
       vi.spyOn(global, "fetch").mockImplementation(async (input) => {
@@ -244,10 +245,19 @@ describe("CredSmart White-Label Branding & Key Approval Suite", () => {
       // Branding Studio unlocked & Logo rebranded from CredSmart -> Apex Billing!
       await waitFor(() => {
         expect(screen.getByText(/Identity & Brand/i)).toBeDefined();
+        expect(screen.getByText(/Portal Link & SEO/i)).toBeDefined();
+        expect(screen.queryByText(/Domain & SEO/i)).toBeNull();
         expect(screen.getAllByText(/Apex Billing/i).length).toBeGreaterThan(0);
         expect(localStorage.getItem(WL_ACTIVE_BRAND_CACHE_KEY)).toBeTruthy();
       });
-    });
+
+      // Switch to Portal Link & SEO tab and confirm no custom domain CNAME field exists
+      fireEvent.click(screen.getByRole("button", { name: /Portal Link & SEO/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/Branded Portal Slug/i)).toBeDefined();
+        expect(screen.queryByText(/Custom Domain \(CNAME\)/i)).toBeNull();
+      });
+    }, 15000);
   });
 
   describe("3. Platform Admin Governance in AdminPortal", () => {

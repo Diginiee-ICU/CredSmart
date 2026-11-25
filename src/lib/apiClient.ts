@@ -121,6 +121,21 @@ export function buildApiUrl(
  * - Transparent 401 token refresh via supabase.auth.refreshSession() and single retry
  * - Robust response normalization into { data, error }
  */
+export function isJwtExpiringSoon(token: string, skewMs = 10000): boolean {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonStr = typeof atob === "function" ? atob(base64) : "";
+    if (!jsonStr) return false;
+    const payload = JSON.parse(jsonStr);
+    if (typeof payload?.exp !== "number") return false;
+    return payload.exp * 1000 <= Date.now() + skewMs;
+  } catch {
+    return false;
+  }
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
@@ -190,12 +205,18 @@ export async function apiClient<T>(
     requestHeaders.set("x-organization-id", activeOrgId);
   }
 
-  // 4. Attach Supabase JWT Bearer Token
+  // 4. Attach Supabase JWT Bearer Token (proactively refresh once if expired to avoid parallel 401 bursts)
   if (!skipAuth && !requestHeaders.has("Authorization")) {
     try {
       if (supabase?.auth?.getSession) {
         const { data } = await supabase.auth.getSession();
-        const token = data?.session?.access_token;
+        let token = data?.session?.access_token;
+        if (token && isJwtExpiringSoon(token) && supabase?.auth?.refreshSession) {
+          const { data: refreshed } = await supabase.auth.refreshSession();
+          if (refreshed?.session?.access_token) {
+            token = refreshed.session.access_token;
+          }
+        }
         if (token) {
           requestHeaders.set("Authorization", `Bearer ${token}`);
         }
