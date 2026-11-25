@@ -61,6 +61,19 @@ class MockSupabaseHarness {
       expenses: [],
       bank_accounts: [],
     };
+    this.upsertedRows = {
+      products: [],
+      product_batches: [],
+      customers: [],
+      suppliers: [],
+      credit_transactions: [],
+      sales: [],
+      sale_items: [],
+      purchase_invoices: [],
+      purchase_invoice_items: [],
+      expenses: [],
+      bank_accounts: [],
+    };
   }
 
   seed(table: string, rows: any[]) {
@@ -142,6 +155,138 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
+// Mock API clients for migrated service layers
+vi.mock("@/services/productsApi", () => ({
+  productsApi: {
+    getProducts: async () => ({
+      data: mockDb.store["products"] || [],
+      error: null,
+    }),
+    createProduct: async (product: any) => {
+      const res = await mockDb.from("products").insert([product]);
+      return { data: res.data?.[0] || product, error: null };
+    },
+    bulkImport: async (items: any[], strategy = "overwrite") => {
+      if (strategy === "overwrite") {
+        await mockDb.from("products").upsert(items);
+        return { data: { products: items, inserted: 0, updated: items.length }, error: null };
+      } else {
+        const res = await mockDb.from("products").insert(items);
+        return { data: { products: res.data || items, inserted: items.length, updated: 0 }, error: null };
+      }
+    },
+    getBatches: async (productIds?: string[]) => ({
+      data: (mockDb.store["product_batches"] || []).filter(
+        (b: any) => !productIds || productIds.includes(b.product_id)
+      ),
+      error: null,
+    }),
+    bulkUpsertBatches: async (batches: any[]) => {
+      await mockDb.from("product_batches").upsert(batches);
+      return { data: { success: true, count: batches.length }, error: null };
+    },
+  },
+}));
+
+vi.mock("@/services/partiesApi", () => ({
+  partiesApi: {
+    getCustomers: async () => ({
+      data: mockDb.store["customers"] || [],
+      error: null,
+    }),
+    getSuppliers: async () => ({
+      data: mockDb.store["suppliers"] || [],
+      error: null,
+    }),
+    getCreditTransactions: async () => ({
+      data: mockDb.store["credit_transactions"] || [],
+      error: null,
+    }),
+    bulkImportCustomers: async (customers: any[]) => {
+      await mockDb.from("customers").upsert(customers);
+      return { data: { count: customers.length }, error: null };
+    },
+    bulkImportSuppliers: async (suppliers: any[]) => {
+      await mockDb.from("suppliers").upsert(suppliers);
+      return { data: { count: suppliers.length }, error: null };
+    },
+    bulkUpsertCustomers: async (customers: any[]) => {
+      await mockDb.from("customers").upsert(customers);
+      return { data: { count: customers.length }, error: null };
+    },
+    bulkUpsertSuppliers: async (suppliers: any[]) => {
+      await mockDb.from("suppliers").upsert(suppliers);
+      return { data: { count: suppliers.length }, error: null };
+    },
+    createCustomer: async (customer: any) => {
+      const res = await mockDb.from("customers").insert([customer]);
+      return { data: res.data?.[0] || customer, error: null };
+    },
+    createSupplier: async (supplier: any) => {
+      const res = await mockDb.from("suppliers").insert([supplier]);
+      return { data: res.data?.[0] || supplier, error: null };
+    },
+    bulkInsertCreditTransactions: async (txns: any[]) => {
+      await mockDb.from("credit_transactions").insert(txns);
+      return { data: { count: txns.length }, error: null };
+    },
+    getBankAccounts: async () => ({
+      data: mockDb.store["bank_accounts"] || [],
+      error: null,
+    }),
+    bulkUpsertBankAccounts: async (accounts: any[]) => {
+      await mockDb.from("bank_accounts").upsert(accounts);
+      return { data: { count: accounts.length }, error: null };
+    },
+  },
+}));
+
+vi.mock("@/services/invoicesApi", () => ({
+  invoicesApi: {
+    getSales: async () => ({
+      data: mockDb.store["sales"] || [],
+      error: null,
+    }),
+    getPurchaseInvoices: async () => ({
+      data: mockDb.store["purchase_invoices"] || [],
+      error: null,
+    }),
+    getExpenses: async () => ({
+      data: mockDb.store["expenses"] || [],
+      error: null,
+    }),
+    bulkInsertSales: async (sales: any[]) => {
+      await mockDb.from("sales").insert(sales);
+      return { data: { count: sales.length }, error: null };
+    },
+    createSaleItems: async (items: any[]) => {
+      await mockDb.from("sale_items").insert(items);
+      return { data: { count: items.length }, error: null };
+    },
+    bulkInsertPurchaseInvoices: async (purchases: any[]) => {
+      await mockDb.from("purchase_invoices").insert(purchases);
+      return { data: { count: purchases.length }, error: null };
+    },
+    createPurchaseInvoiceItems: async (items: any[]) => {
+      await mockDb.from("purchase_invoice_items").insert(items);
+      return { data: { count: items.length }, error: null };
+    },
+    bulkInsertExpenses: async (expenses: any[]) => {
+      await mockDb.from("expenses").insert(expenses);
+      return { data: { count: expenses.length }, error: null };
+    },
+  },
+}));
+
+vi.mock("@/services/settingsApi", () => ({
+  settingsApi: {
+    upsertSyncPairingToken: async (tokenData: any) => ({
+      data: tokenData,
+      error: null,
+    }),
+  },
+}));
+
 // ─── LocalStorage Sandbox ─────────────────────────────────────────────────────
 
 const virtualStorage = new Map<string, string>();
@@ -183,6 +328,9 @@ describe("Tier 1: Comprehensive Feature Coverage", () => {
   beforeEach(() => {
     mockDb.reset();
     virtualStorage.clear();
+    if (typeof localStorage !== "undefined") {
+      try { localStorage.clear(); } catch {}
+    }
     dispatchedEvents.length = 0;
   });
 
@@ -1610,6 +1758,9 @@ describe("Tier 2: Boundary & Corner Cases", () => {
   beforeEach(() => {
     mockDb.reset();
     virtualStorage.clear();
+    if (typeof localStorage !== "undefined") {
+      try { localStorage.clear(); } catch {}
+    }
   });
 
   it("2.1 Empty XML input returns zero entities without throwing exceptions", () => {
@@ -1855,6 +2006,9 @@ describe("Tier 3: Pairwise Cross-Feature Interactions", () => {
   beforeEach(() => {
     mockDb.reset();
     virtualStorage.clear();
+    if (typeof localStorage !== "undefined") {
+      try { localStorage.clear(); } catch {}
+    }
   });
 
   it("3.1 Ingests Sales voucher with inventory items and reconciles customer credit balance", async () => {
@@ -2038,6 +2192,9 @@ describe("Tier 4: Real-World Business Application Scenarios", () => {
   beforeEach(() => {
     mockDb.reset();
     virtualStorage.clear();
+    if (typeof localStorage !== "undefined") {
+      try { localStorage.clear(); } catch {}
+    }
   });
 
   it("4.1 Scenario 1: Full Retail Business Sync (Supermarket / Kirana)", async () => {

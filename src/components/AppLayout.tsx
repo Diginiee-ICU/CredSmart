@@ -44,7 +44,9 @@ import {
 import { SuiteSwitcher } from "@/components/SuiteSwitcher";
 import { WorkspaceSwitcher } from "@/components/portal/WorkspaceSwitcher";
 import { useActiveSuite } from "@/hooks/useActiveSuite";
-import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole } from "@/config/routes";
+import { ROUTE_PATHS, NAV_ROUTES, isRouteAllowedForRole, FULL_ACCESS_ROLES } from "@/config/routes";
+import { FeatureAccessRequestModal } from "@/components/features/FeatureAccessRequestModal";
+import { startHeartbeatLoop } from "@/services/presenceService";
 import { UniversalQuickCreateModal } from "@/components/UniversalQuickCreateModal";
 import { SalesInvoiceModal } from "@/components/SalesInvoiceModal";
 import { ReceiptModal } from "@/components/ReceiptModal";
@@ -319,6 +321,13 @@ function getPageMeta(pathname: string): PageMeta {
     };
   }
 
+  if (pathname === (ROUTE_PATHS as any).admin || pathname === "/billing/admin" || pathname === "/admin") {
+    return {
+      title: "Admin & Operations Control Center",
+      subtitle: "Live Users, Billings Analytics, and Granular Feature Access",
+    };
+  }
+
   if (pathname.startsWith("/crm")) {
     return {
       title: "CredSmart CRM",
@@ -426,6 +435,20 @@ export default function AppLayout() {
       store_owner: "Store Owner",
       cashier: "Cashier",
     }[userRole || ""] || "Store Owner";
+
+  // Live Presence Heartbeat loop for active operator
+  useEffect(() => {
+    if (!user || !orgId) return;
+    const cleanup = startHeartbeatLoop(() => ({
+      orgId,
+      userId: user.id,
+      email: user.email,
+      name: (user.user_metadata as any)?.full_name || "",
+      role: userRole || "cashier",
+      currentPath: location.pathname,
+    }));
+    return cleanup;
+  }, [user, orgId, userRole, location.pathname]);
 
   // Keyboard shortcut listener for ⌘K / Ctrl+K
   useEffect(() => {
@@ -837,6 +860,18 @@ export default function AppLayout() {
                     </DropdownMenuItem>
                   </div>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
+                  {FULL_ACCESS_ROLES.includes((userRole || "") as any) && (
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setProfileMenuOpen(false);
+                        navigate((ROUTE_PATHS as any).admin || "/billing/admin");
+                      }}
+                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"
+                    >
+                      <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>Admin &amp; Feature Control Center</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onSelect={() => {
                       setProfileMenuOpen(false);
@@ -1004,6 +1039,9 @@ export default function AppLayout() {
         open={createBusinessModalOpen}
         onOpenChange={setCreateBusinessModalOpen}
       />
+
+      {/* Global Locked Feature Access Request Modal */}
+      <FeatureAccessRequestModal />
 
       {/* Direct Module: Create Item Modal */}
       <CreateItemModal

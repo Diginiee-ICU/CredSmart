@@ -1445,6 +1445,112 @@ BEGIN
   END IF;
 END $$;
 
+-- ============================================================================
+-- 21. LIVE USER PRESENCE, FEATURE ACCESS & ACCESS REQUESTS
+-- ============================================================================
+
+-- 1) user_presence
+CREATE TABLE IF NOT EXISTS user_presence (
+  user_id UUID NOT NULL,
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_email VARCHAR(255),
+  user_name VARCHAR(255),
+  user_role VARCHAR(50),
+  current_path VARCHAR(255),
+  platform VARCHAR(50) DEFAULT 'desktop-web',
+  last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, organization_id)
+);
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS user_name VARCHAR(255);
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS user_role VARCHAR(50);
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS current_path VARCHAR(255);
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS platform VARCHAR(50) DEFAULT 'desktop-web';
+ALTER TABLE user_presence ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+DROP TRIGGER IF EXISTS trg_sync_user_presence_org ON user_presence;
+CREATE TRIGGER trg_sync_user_presence_org BEFORE INSERT OR UPDATE ON user_presence FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+CREATE INDEX IF NOT EXISTS idx_user_presence_live ON user_presence(organization_id, last_active_at DESC);
+
+-- 2) user_feature_locks
+CREATE TABLE IF NOT EXISTS user_feature_locks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  feature_key VARCHAR(50) NOT NULL,
+  is_locked BOOLEAN NOT NULL DEFAULT true,
+  locked_by UUID,
+  locked_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(organization_id, user_id, feature_key)
+);
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT true;
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS locked_by UUID;
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE user_feature_locks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DROP TRIGGER IF EXISTS trg_sync_user_feature_locks_org ON user_feature_locks;
+CREATE TRIGGER trg_sync_user_feature_locks_org BEFORE INSERT OR UPDATE ON user_feature_locks FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+CREATE INDEX IF NOT EXISTS idx_user_feature_locks_lookup ON user_feature_locks(organization_id, user_id);
+
+-- 3) feature_access_requests
+CREATE TABLE IF NOT EXISTS feature_access_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  user_email VARCHAR(255),
+  user_name VARCHAR(255),
+  feature_key VARCHAR(50) NOT NULL,
+  reason TEXT DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  reviewed_by UUID,
+  reviewed_at TIMESTAMPTZ,
+  admin_notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS user_name VARCHAR(255);
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS reason TEXT DEFAULT '';
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS reviewed_by UUID;
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS admin_notes TEXT DEFAULT '';
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE feature_access_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+DROP TRIGGER IF EXISTS trg_sync_feature_access_requests_org ON feature_access_requests;
+CREATE TRIGGER trg_sync_feature_access_requests_org BEFORE INSERT OR UPDATE ON feature_access_requests FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+CREATE INDEX IF NOT EXISTS idx_feature_requests_org_status ON feature_access_requests(organization_id, status);
+
+-- 4) feature_usage_logs
+CREATE TABLE IF NOT EXISTS feature_usage_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  feature_key VARCHAR(50) NOT NULL,
+  action VARCHAR(50) NOT NULL DEFAULT 'view',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE feature_usage_logs ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE feature_usage_logs ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE feature_usage_logs ADD COLUMN IF NOT EXISTS action VARCHAR(50) DEFAULT 'view';
+ALTER TABLE feature_usage_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+DROP TRIGGER IF EXISTS trg_sync_feature_usage_logs_org ON feature_usage_logs;
+CREATE TRIGGER trg_sync_feature_usage_logs_org BEFORE INSERT OR UPDATE ON feature_usage_logs FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+CREATE INDEX IF NOT EXISTS idx_feature_usage_org_created ON feature_usage_logs(organization_id, created_at DESC);
+
 COMMIT;
 
 -- ============================================================================
@@ -1495,4 +1601,8 @@ ANALYZE customer_tickets;
 ANALYZE staff_tasks;
 ANALYZE network_invoices;
 ANALYZE network_notifications;
+ANALYZE user_presence;
+ANALYZE user_feature_locks;
+ANALYZE feature_access_requests;
+ANALYZE feature_usage_logs;
 

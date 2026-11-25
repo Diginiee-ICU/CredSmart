@@ -5,11 +5,12 @@ async function main() {
   const email = process.argv[2];
   const password = process.argv[3];
   const fullName = process.argv[4] || 'Admin User';
-  const orgName = process.argv[5] || 'CredSmart Business';
+  const targetRole = (process.argv[5] || 'owner').toLowerCase();
+  const orgName = process.argv[6] || 'CredSmart Business';
 
   if (!email || !password) {
-    console.log('Usage: node create-user.js <email> <password> [fullName] [orgName]');
-    console.log('Example: node create-user.js admin@credsmart.online Secret123 "CredSmart Admin" "CredSmart Global"');
+    console.log('Usage: node create-user.js <email> <password> [fullName] [role] [orgName]');
+    console.log('Example: node create-user.js admin@credsmart.online Secret123 "CredSmart Admin" owner "CredSmart Global"');
     process.exit(1);
   }
 
@@ -56,6 +57,17 @@ async function main() {
     if (orgRes.rows.length > 0 && orgRes.rows[0].org_id) {
       orgId = orgRes.rows[0].org_id;
       console.log(`[OK] User already belongs to organization: ${orgId}`);
+      await client.query(
+        `UPDATE org_memberships SET role = $1 WHERE user_id = $2 AND (org_id = $3 OR organization_id = $3)`,
+        [targetRole, userId, orgId]
+      );
+      try {
+        await client.query(
+          `UPDATE organization_memberships SET role = $1 WHERE user_id = $2 AND (organization_id = $3 OR org_id = $3)`,
+          [targetRole, userId, orgId]
+        );
+      } catch (_e) {}
+      console.log(`[OK] Updated membership role to "${targetRole}" in organization: ${orgId}`);
     } else {
       // Check if an organization with data already exists
       const existingOrgRes = await client.query(
@@ -82,16 +94,16 @@ async function main() {
 
       await client.query(
         `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
-         VALUES ($1, $2, $2, 'owner')
-         ON CONFLICT (user_id, org_id) DO NOTHING`,
-        [userId, orgId]
+         VALUES ($1, $2, $2, $3)
+         ON CONFLICT (user_id, org_id) DO UPDATE SET role = EXCLUDED.role`,
+        [userId, orgId, targetRole]
       );
 
       await client.query(
         `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
-         VALUES ($1, $2, $2, 'owner')
+         VALUES ($1, $2, $2, $3)
          ON CONFLICT DO NOTHING`,
-        [userId, orgId]
+        [userId, orgId, targetRole]
       );
 
       await client.query(

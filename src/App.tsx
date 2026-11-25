@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
+import { FeatureAccessProvider } from "@/hooks/useFeatureAccess";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
 import { ProductsProvider } from "@/context/ProductsContext";
@@ -44,6 +45,7 @@ const VendorDiscovery = React.lazy(() => import("@/pages/VendorDiscovery"));
 const Inventory = React.lazy(() => import("@/pages/Inventory"));
 const Godown = React.lazy(() => import("@/pages/Godown"));
 const Staff = React.lazy(() => import("@/pages/Staff"));
+const AdminPortal = React.lazy(() => import("@/pages/AdminPortal"));
 const PurchaseReturns = React.lazy(() => import("@/pages/PurchaseReturns"));
 const CustomerLedger = React.lazy(() => import("@/pages/CustomerLedger"));
 const ActivityLog = React.lazy(() => import("@/pages/ActivityLog"));
@@ -238,8 +240,9 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <OrgProvider>
-            <NetworkInvoicesProvider>
-              <ProductsProvider>
+            <FeatureAccessProvider>
+              <NetworkInvoicesProvider>
+                <ProductsProvider>
                 <Toaster />
                 <Sonner />
                 <NativePlatformBridge />
@@ -317,6 +320,7 @@ const App = () => (
                             <Route path={ROUTE_PATHS.settingsHelp} element={<Navigate to={ROUTE_PATHS.faq} replace />} />
                             <Route path={ROUTE_PATHS.staff} element={<Staff />} />
                             <Route path={ROUTE_PATHS.activityLog} element={<ActivityLog />} />
+                            <Route path={ROUTE_PATHS.admin} element={<AdminPortal />} />
                           </Route>
                         </Route>
                       </Route>
@@ -361,6 +365,7 @@ const App = () => (
                       <Route path="/settings/help" element={<LegacyRedirect to="/faq" />} />
                       <Route path="/staff" element={<LegacyRedirect to="/billing/staff" />} />
                       <Route path="/activity-log" element={<LegacyRedirect to="/billing/activity-log" />} />
+                      <Route path="/admin" element={<LegacyRedirect to="/billing/admin" />} />
 
                       {/* Global 404 Catch-All */}
                       <Route path="*" element={<NotFound />} />
@@ -369,7 +374,8 @@ const App = () => (
                 </AppRouter>
               </ProductsProvider>
             </NetworkInvoicesProvider>
-          </OrgProvider>
+          </FeatureAccessProvider>
+        </OrgProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

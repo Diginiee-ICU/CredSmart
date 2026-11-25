@@ -94,6 +94,7 @@ export const ROUTE_PATHS = {
   // Business Tools (mapped under /billing/*)
   staff: "/billing/staff",
   activityLog: "/billing/activity-log",
+  admin: "/billing/admin",
 
   // CRM Command Center & Submodules (strictly /crm/*)
   crm: "/crm",
@@ -165,6 +166,7 @@ export const RESTRICTED_ROUTES_FOR_CASHIER: ReadonlySet<string> = new Set([
   ROUTE_PATHS.tallyImport,
   ROUTE_PATHS.staff,
   ROUTE_PATHS.activityLog,
+  ROUTE_PATHS.admin,
   ROUTE_PATHS.crm,
   ROUTE_PATHS.crmDashboard,
   ROUTE_PATHS.crmAttendance,
@@ -217,9 +219,11 @@ export type FeatureKey =
   | "analytics"
   | "staff"
   | "settings"
-  | "crm";
+  | "crm"
+  | "admin";
 
 export const FEATURE_ROUTE_MAP: Record<FeatureKey, string[]> = {
+  admin: [ROUTE_PATHS.admin],
   dashboard: [ROUTE_PATHS.dashboard],
   pos: [ROUTE_PATHS.pos, ROUTE_PATHS.checkout],
   sales: [ROUTE_PATHS.sales, ROUTE_PATHS.salesHistory],
@@ -287,6 +291,7 @@ export function normalizeRouteForRbac(url: string): string {
     "/expenses",
     "/staff",
     "/activity-log",
+    "/admin",
     "/settings",
     "/tally-import",
   ];

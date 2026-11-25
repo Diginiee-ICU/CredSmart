@@ -28,11 +28,14 @@ import {
   LifeBuoy,
   Briefcase,
   Sparkles,
+  Lock,
+  Clock,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useFeatureAccess, getFeatureKeyFromUrl } from "@/hooks/useFeatureAccess";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   BILLING_NAV_ROUTES,
@@ -54,7 +57,14 @@ interface NavGroup {
     icon: React.ElementType;
     badge?: string;
     shortcut?: string;
-    children?: { title: string; url: string }[];
+    isLocked?: boolean;
+    requestStatus?: "none" | "pending" | "approved" | "rejected";
+    children?: {
+      title: string;
+      url: string;
+      isLocked?: boolean;
+      requestStatus?: "none" | "pending" | "approved" | "rejected";
+    }[];
   }[];
 }
 
@@ -76,6 +86,7 @@ export function AppSidebar({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { userRole, userPermissions } = useOrganization();
+  const { isFeatureLocked, isRouteLocked, getFeatureRequestStatus, openRequestModal } = useFeatureAccess();
   const location = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -187,31 +198,41 @@ export function AppSidebar({
 
     return activeNavRoutes
       .map((group) => {
-        const allowedItems = group.items
-          .filter((item) => isRouteAllowedForRole(item.url, userRole, userPermissions))
-          .map((item) => {
-            const allowedChildren = item.children
-              ? item.children.filter((child) =>
-                  isRouteAllowedForRole(child.url as string, userRole, userPermissions)
-                )
-              : undefined;
+        const mappedItems = group.items.map((item) => {
+          const featKey = getFeatureKeyFromUrl(item.url);
+          const isRoleAllowed = isRouteAllowedForRole(item.url, userRole, userPermissions);
+          const isLocked = Boolean(featKey && isFeatureLocked(featKey)) || !isRoleAllowed;
+          const reqStatus = featKey ? getFeatureRequestStatus(featKey) : "none";
 
+          const mappedChildren = item.children?.map((child) => {
+            const childFeatKey = getFeatureKeyFromUrl(child.url as string);
+            const childRoleAllowed = isRouteAllowedForRole(child.url as string, userRole, userPermissions);
+            const childLocked = Boolean(childFeatKey && isFeatureLocked(childFeatKey)) || !childRoleAllowed;
             return {
-              ...item,
-              children: allowedChildren,
+              ...child,
+              isLocked: childLocked,
+              requestStatus: childFeatKey ? getFeatureRequestStatus(childFeatKey) : "none",
             };
           });
+
+          return {
+            ...item,
+            isLocked,
+            requestStatus: reqStatus,
+            children: mappedChildren,
+          };
+        });
 
         if (!query) {
           return {
             label: group.label || (group as { group?: string }).group || "",
             group: (group as { group?: string }).group || group.label || "",
-            items: allowedItems,
+            items: mappedItems,
           };
         }
 
         // If query exists, match item title or child titles
-        const matchedItems = allowedItems.filter((item) => {
+        const matchedItems = mappedItems.filter((item) => {
           const matchesTitle = item.title.toLowerCase().includes(query);
           const matchesChildren = item.children?.some((child) =>
             child.title.toLowerCase().includes(query)
@@ -226,13 +247,18 @@ export function AppSidebar({
         };
       })
       .filter((group) => group.items.length > 0);
-  }, [activeNavRoutes, userRole, userPermissions, searchQuery]);
+  }, [activeNavRoutes, userRole, userPermissions, searchQuery, isFeatureLocked, getFeatureRequestStatus]);
 
   const toggleSubmenu = (title: string) => {
     setExpandedMenus((prev) => ({ ...prev, [title]: !prev[title] }));
   };
 
   const handleNavigate = (url: string) => {
+    const featKey = getFeatureKeyFromUrl(url);
+    if (featKey && (isFeatureLocked(featKey) || !isRouteAllowedForRole(url, userRole, userPermissions))) {
+      openRequestModal(featKey);
+      return;
+    }
     navigate(url);
     onClose?.();
   };
@@ -598,7 +624,19 @@ export function AppSidebar({
                                   </div>
                                   <div className="flex items-center gap-1.5 min-w-0">
                                     <span className="truncate text-xs sm:text-sm font-semibold">{item.title}</span>
-                                    {item.badge && (
+                                    {item.isLocked ? (
+                                      item.requestStatus === "pending" ? (
+                                        <span className="px-1.5 py-0.2 rounded-md text-[10px] font-bold border font-mono shrink-0 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 flex items-center gap-1">
+                                          <Clock className="w-2.5 h-2.5 animate-pulse" />
+                                          <span>PENDING</span>
+                                        </span>
+                                      ) : (
+                                        <span className="px-1.5 py-0.2 rounded-md text-[10px] font-bold border font-mono shrink-0 bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800 flex items-center gap-1">
+                                          <Lock className="w-2.5 h-2.5" />
+                                          <span>LOCKED</span>
+                                        </span>
+                                      )
+                                    ) : item.badge ? (
                                       <span
                                         className={cn(
                                           "px-1.5 py-0.2 rounded-md text-[11px] font-black border font-mono shrink-0",
@@ -609,7 +647,7 @@ export function AppSidebar({
                                       >
                                         {item.badge}
                                       </span>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </button>
 
@@ -646,6 +684,14 @@ export function AppSidebar({
                                         )}
                                       />
                                     </button>
+                                  ) : item.isLocked ? (
+                                    <span
+                                      className="p-1 text-rose-500 dark:text-rose-400 cursor-pointer"
+                                      onClick={() => handleNavigate(item.url)}
+                                      title="Feature locked. Click to request access."
+                                    >
+                                      <Lock className="w-3.5 h-3.5" />
+                                    </span>
                                   ) : (
                                     <button
                                       type="button"
@@ -699,7 +745,21 @@ export function AppSidebar({
                                           )}
                                         />
                                         <span className="truncate group-hover/child:translate-x-0.5 transition-transform flex-1">{child.title}</span>
-                                        <ArrowUpRight className="w-3 h-3 text-slate-400 opacity-0 group-hover/child:opacity-100 transition-opacity shrink-0" />
+                                        {child.isLocked ? (
+                                          child.requestStatus === "pending" ? (
+                                            <span className="px-1 py-0.2 rounded text-[9px] font-bold font-mono bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-0.5 shrink-0">
+                                              <Clock className="w-2 h-2 animate-pulse" />
+                                              <span>PENDING</span>
+                                            </span>
+                                          ) : (
+                                            <span className="px-1 py-0.2 rounded text-[9px] font-bold font-mono bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-0.5 shrink-0">
+                                              <Lock className="w-2 h-2" />
+                                              <span>LOCKED</span>
+                                            </span>
+                                          )
+                                        ) : (
+                                          <ArrowUpRight className="w-3 h-3 text-slate-400 opacity-0 group-hover/child:opacity-100 transition-opacity shrink-0" />
+                                        )}
                                       </button>
                                     );
                                   })}
