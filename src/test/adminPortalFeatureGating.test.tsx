@@ -573,5 +573,76 @@ describe("CredSmart Admin Portal & Granular Feature Gating Suite", () => {
         expect(capturedToggleBody.is_locked).toBe(true);
       });
     });
+
+    it("surfaces backend error banner with Retry when /admin/users fails", async () => {
+      mockRole = "store_owner";
+
+      vi.spyOn(global, "fetch").mockImplementation((url: any) => {
+        const s = String(url);
+        if (s.includes("/admin/metrics")) {
+          return Promise.resolve(new Response(JSON.stringify({ live_users_count: 1 }), { status: 200 }));
+        }
+        if (s.includes("/admin/users")) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ error: 'column "role" does not exist' }), {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            })
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      });
+
+      render(
+        <MemoryRouter>
+          <FeatureAccessProvider>
+            <AdminPortal />
+          </FeatureAccessProvider>
+        </MemoryRouter>
+      );
+
+      const usersTabBtn = await screen.findByRole("button", { name: /^Users$/i });
+      fireEvent.click(usersTabBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Failed to load users/i)).toBeDefined();
+        expect(screen.getByRole("button", { name: /Retry/i })).toBeDefined();
+      });
+    });
+
+    it("logs feature usage telemetry when visiting an unlocked guarded route", async () => {
+      mockRole = "store_owner";
+      let capturedUsageBody: any = null;
+
+      vi.spyOn(global, "fetch").mockImplementation((url: any, options?: any) => {
+        const s = String(url);
+        if (s.includes("/features/log-usage") && options?.method === "POST") {
+          capturedUsageBody = JSON.parse(options.body);
+          return Promise.resolve(new Response(JSON.stringify({ success: true }), { status: 200 }));
+        }
+        if (s.includes("/features/my-locks")) {
+          return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      });
+
+      render(
+        <MemoryRouter initialEntries={["/billing/reports"]}>
+          <FeatureAccessProvider>
+            <Routes>
+              <Route element={<FeatureLockGuard />}>
+                <Route path="/billing/reports" element={<div data-testid="unlocked-reports">Reports Ready</div>} />
+              </Route>
+            </Routes>
+          </FeatureAccessProvider>
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("unlocked-reports")).toBeDefined();
+        expect(capturedUsageBody).toBeTruthy();
+        expect(capturedUsageBody.feature_key).toBe("reports");
+      });
+    });
   });
 });

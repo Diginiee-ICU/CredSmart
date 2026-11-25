@@ -461,7 +461,7 @@ const provisionOrganization = async (
   // 2. If RPC did not create org, perform direct insert without .select()
   if (orgId === generatedOrgId) {
     try {
-      const { error: insertErr } = await settingsApi.createOrganization({
+      const { data: createdOrg, error: insertErr } = await settingsApi.createOrganization({
         id: generatedOrgId,
         name: payload.storeName || "My Store",
         business_type: payload.businessType || DEFAULT_BUSINESS_TYPE,
@@ -475,12 +475,17 @@ const provisionOrganization = async (
         logo_url: "",
       });
 
-      if (insertErr) {
+      if (createdOrg?.id) {
+        orgId = createdOrg.id;
+      } else if (insertErr) {
         console.warn("Direct org insert fallback notice:", insertErr.message);
-        await settingsApi.createOrganization({
+        const { data: fallbackOrg } = await settingsApi.createOrganization({
           id: generatedOrgId,
           name: payload.storeName || "My Store",
         });
+        if (fallbackOrg?.id) {
+          orgId = fallbackOrg.id;
+        }
       }
     } catch (err) {
       console.warn("Direct org provision catch notice:", err);
@@ -780,12 +785,12 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     try {
-      const newId = crypto.randomUUID();
+      let effectiveOrgId = crypto.randomUUID();
 
       // 1. Try to create organization in backend via settingsApi
       try {
-        const { error: orgError } = await settingsApi.createOrganization({
-          id: newId,
+        const { data: createdOrg, error: orgError } = await settingsApi.createOrganization({
+          id: effectiveOrgId,
           name: data.name.trim(),
           business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
           address: data.address?.trim() || "",
@@ -798,12 +803,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           logo_url: data.logo_url || "",
         });
 
-        if (orgError) {
+        if (createdOrg?.id) {
+          effectiveOrgId = createdOrg.id;
+        } else if (orgError) {
           console.warn("Direct org insert fallback notice:", orgError.message);
-          await settingsApi.createOrganization({
-            id: newId,
+          const { data: fallbackOrg } = await settingsApi.createOrganization({
+            id: effectiveOrgId,
             name: data.name.trim(),
           });
+          if (fallbackOrg?.id) {
+            effectiveOrgId = fallbackOrg.id;
+          }
         }
       } catch (err) {
         console.warn("Direct org creation catch notice:", err);
@@ -813,11 +823,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       try {
         await settingsApi.upsertMembership(
           {
-            organization_id: newId,
+            organization_id: effectiveOrgId,
             user_id: user.id,
             role: "store_owner",
           },
-          newId
+          effectiveOrgId
         );
       } catch (err) {
         console.warn("Membership insert catch notice:", err);
@@ -825,7 +835,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       // 3. Save to local org registry
       saveLocalOrgRegistry(user.id, {
-        id: newId,
+        id: effectiveOrgId,
         name: data.name.trim(),
         business_type: data.business_type || DEFAULT_BUSINESS_TYPE,
         address: data.address?.trim() || "",
@@ -840,7 +850,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       });
 
       // 4. Save Bank & UPI Details for the new store
-      saveOrgBankAndUpi(newId, {
+      saveOrgBankAndUpi(effectiveOrgId, {
         businessName: data.name,
         phone: data.phone,
         email: data.email,
@@ -856,7 +866,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
       // 5. Seed standard inventory
       try {
-        await seedOrgProducts(newId, {
+        await seedOrgProducts(effectiveOrgId, {
           businessType: data.business_type || DEFAULT_BUSINESS_TYPE,
         });
       } catch (seedErr) {
@@ -864,12 +874,12 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       }
 
       // 6. Switch active organization
-      localStorage.setItem(ACTIVE_ORG_KEY, newId);
-      setOrgId(newId);
-      window.dispatchEvent(new CustomEvent("credsmart_org_changed", { detail: { orgId: newId } }));
+      localStorage.setItem(ACTIVE_ORG_KEY, effectiveOrgId);
+      setOrgId(effectiveOrgId);
+      window.dispatchEvent(new CustomEvent("credsmart_org_changed", { detail: { orgId: effectiveOrgId } }));
 
       await fetchOrg();
-      return newId;
+      return effectiveOrgId;
     } catch (err) {
       console.error("Failed to create organization:", err);
       throw err;

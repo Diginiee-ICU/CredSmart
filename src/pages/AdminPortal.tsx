@@ -116,6 +116,7 @@ export default function AdminPortal() {
   const [adminScope, setAdminScope] = useState<"all" | "org">(isPlatformAdmin ? "all" : "org");
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [usersError, setUsersError] = useState<string | null>(null);
 
   // Create User Modal State
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -170,12 +171,23 @@ export default function AdminPortal() {
 
       if (metricsRes.data) setMetrics(metricsRes.data);
       if (liveRes.data) setLiveUsers(liveRes.data);
-      if (usersRes.data) {
-        setUsers(usersRes.data);
-        if (!selectedUserId && usersRes.data.length > 0) {
-          setSelectedUserId(usersRes.data[0].id);
+
+      if (usersRes.error) {
+        const errMsg = usersRes.error.message || "Failed to fetch users from backend.";
+        setUsersError(errMsg);
+        setUsers([]);
+        if (!isSilent) {
+          toast.error(`Users directory error: ${errMsg}`);
         }
+      } else if (usersRes.data) {
+        setUsersError(null);
+        setUsers(usersRes.data);
+        setSelectedUserId((prev) => {
+          if (prev && usersRes.data!.some((u) => u.id === prev)) return prev;
+          return usersRes.data!.length > 0 ? usersRes.data![0].id : "";
+        });
       }
+
       if (reqRes.data) setRequests(reqRes.data);
       if (wlRes?.data && Array.isArray(wlRes.data)) setWlRequests(wlRes.data);
     } catch {
@@ -184,7 +196,7 @@ export default function AdminPortal() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [orgId, selectedUserId, isPlatformAdmin, effectiveScope]);
+  }, [orgId, isPlatformAdmin, effectiveScope]);
 
   useEffect(() => {
     loadData();
@@ -268,9 +280,9 @@ export default function AdminPortal() {
 
   // Review access request (Approve / Reject)
   const handleReviewRequest = async (requestId: string, status: "approved" | "rejected") => {
-    if (!orgId) return;
+    if (!orgId && !isPlatformAdmin) return;
 
-    const { data, error } = await adminApi.reviewAccessRequest(requestId, status, "", orgId);
+    const { data, error } = await adminApi.reviewAccessRequest(requestId, status, "", orgId || undefined);
     if (error) {
       toast.error(error.message || "Failed to review request.");
     } else {
@@ -285,7 +297,7 @@ export default function AdminPortal() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orgId) {
+    if (!orgId && !newUserData.create_own_org && !isPlatformAdmin) {
       toast.error("Organization ID is required.");
       return;
     }
@@ -300,9 +312,9 @@ export default function AdminPortal() {
 
     setIsSubmittingUser(true);
     try {
-      const res = await adminApi.createUser(newUserData, orgId);
+      const res = await adminApi.createUser(newUserData, orgId || undefined);
       if (res.error) {
-        toast.error(res.error);
+        toast.error(res.error.message || "Failed to create user.");
       } else {
         toast.success(res.data?.message || `User ${newUserData.email} created as ${newUserData.role}!`);
         setShowAddUserModal(false);
@@ -441,10 +453,12 @@ export default function AdminPortal() {
                 <select
                   value={adminScope}
                   onChange={(e) => setAdminScope(e.target.value as "all" | "org")}
-                  className="hidden md:inline-block h-6 px-2 rounded border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-[11px] font-mono font-semibold text-blue-700 dark:text-blue-300 cursor-pointer"
+                  className="h-6.5 px-2 rounded border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-[11px] font-mono font-semibold text-blue-700 dark:text-blue-300 cursor-pointer"
                   title="Switch between all platform users & businesses or active store only"
                 >
-                  <option value="all">All Businesses ({users.length} users)</option>
+                  <option value="all">
+                    All Businesses ({usersError ? "!" : users.length || metrics?.total_users_count || 0} users)
+                  </option>
                   <option value="org">Active Store Only</option>
                 </select>
               )}
@@ -745,9 +759,16 @@ export default function AdminPortal() {
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
                       {(metrics?.billings_by_staff || []).map((staff, idx) => (
-                        <tr key={staff.user_id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                        <tr key={`${staff.user_id || idx}-${staff.organization_name || idx}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
                           <td className="py-2 px-3 text-slate-900 dark:text-white font-semibold">
-                            {staff.user_name || "Counter Cashier"}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>{staff.user_name || "Counter Cashier"}</span>
+                              {staff.organization_name && (
+                                <span className="px-1.5 py-0.2 rounded text-[11px] font-mono font-normal bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                  {staff.organization_name}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-2 px-3 font-mono tabular-nums text-slate-600 dark:text-slate-300">
                             {staff.count} bills
@@ -827,7 +848,24 @@ export default function AdminPortal() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
-                    {filteredUsers.length === 0 ? (
+                    {usersError ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center">
+                          <div className="inline-flex flex-col items-center gap-2">
+                            <p className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                              Failed to load users: {usersError}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => loadData(false)}
+                              className="h-7 px-3 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filteredUsers.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-slate-400">
                           No users found matching query.
@@ -845,7 +883,7 @@ export default function AdminPortal() {
                                 <p className="font-semibold text-slate-900 dark:text-white truncate">
                                   {u.full_name || u.email?.split("@")[0] || "Staff Member"}
                                   {u.is_platform_admin && (
-                                    <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-blue-600 text-white uppercase">
+                                    <span className="ml-1.5 px-1.5 py-0.2 rounded text-[11px] font-mono bg-blue-600 text-white uppercase">
                                       Platform Admin
                                     </span>
                                   )}

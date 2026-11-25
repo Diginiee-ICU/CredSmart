@@ -58,7 +58,9 @@ const getUserPrimaryOrgId = async (userId) => {
          UNION
          SELECT organization_id AS org_id, organization_id, user_id, created_at, 1 AS priority FROM organization_memberships WHERE user_id = $1
          UNION
-         SELECT org_id, organization_id, COALESCE(user_id, staff_id) AS user_id, created_at, 2 AS priority FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1)
+         SELECT id AS org_id, id AS organization_id, owner_id AS user_id, created_at, 2 AS priority FROM organizations WHERE owner_id = $1
+         UNION
+         SELECT org_id, organization_id, COALESCE(user_id, staff_id) AS user_id, created_at, 3 AS priority FROM crm_staff_assignments WHERE (user_id = $1 OR staff_id = $1)
        ) m
        WHERE COALESCE(m.org_id, m.organization_id) IS NOT NULL
        ORDER BY m.priority ASC, m.created_at ASC

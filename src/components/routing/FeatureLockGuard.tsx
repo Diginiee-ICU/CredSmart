@@ -1,18 +1,35 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useFeatureAccess, getFeatureKeyFromUrl } from "@/hooks/useFeatureAccess";
+import { useOrganization } from "@/hooks/useOrganization";
+import { adminApi } from "@/services/adminApi";
 import { SYSTEM_FEATURES_MAP } from "@/config/features";
 import { ROUTE_PATHS } from "@/config/routes";
-import { Lock, ShieldAlert, ArrowLeft, Send, Clock } from "lucide-react";
+import { Lock, ArrowLeft, Send, Clock } from "lucide-react";
+
+const recentUsageLogTimestamps = new Map<string, number>();
 
 export function FeatureLockGuard(): React.ReactElement {
   const location = useLocation();
   const navigate = useNavigate();
+  const { orgId } = useOrganization();
   const { isRouteLocked, openRequestModal, getFeatureRequestStatus } = useFeatureAccess();
 
   const currentPath = location.pathname || "";
   const featureKey = useMemo(() => getFeatureKeyFromUrl(currentPath), [currentPath]);
   const isLocked = isRouteLocked(currentPath);
+
+  // Record feature usage telemetry (debounced per 60s per feature/org) when accessible
+  useEffect(() => {
+    if (isLocked || !featureKey || !orgId) return;
+    const throttleKey = `${orgId}:${featureKey}`;
+    const now = Date.now();
+    const lastLogged = recentUsageLogTimestamps.get(throttleKey) || 0;
+    if (now - lastLogged < 60000) return;
+
+    recentUsageLogTimestamps.set(throttleKey, now);
+    adminApi.logFeatureUsage(featureKey, "view", orgId).catch(() => {});
+  }, [isLocked, featureKey, orgId, currentPath]);
 
   if (isLocked && featureKey) {
     const feature = SYSTEM_FEATURES_MAP[featureKey];

@@ -66,32 +66,93 @@ router.get('/organizations/:id', async (req, res) => {
 router.post('/organizations', async (req, res) => {
   const client = await pool.connect();
   try {
-    const { name, gstin, pan, phone, email, address, city, state, pincode, logo_url } = req.body;
+    const {
+      id: requestedId,
+      name,
+      business_type = 'General Store',
+      gstin = '',
+      pan = '',
+      phone = '',
+      email = '',
+      address = '',
+      city = '',
+      state = '',
+      pincode = '',
+      logo_url = '',
+      invoice_prefix = 'INV',
+      tax_rate = 18,
+    } = req.body;
     if (!name) return res.status(400).json({ error: 'Organization name is required' });
 
+    const validRequestedId =
+      requestedId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(requestedId))
+        ? String(requestedId)
+        : null;
+
     await client.query('BEGIN');
-    const orgRes = await client.query(
-      `INSERT INTO organizations (name, gstin, pan, phone, email, address, city, state, pincode, logo_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-      [name, gstin, pan, phone, email, address, city, state, pincode, logo_url]
-    );
+    const orgRes = validRequestedId
+      ? await client.query(
+          `INSERT INTO organizations (id, name, gstin, pan, phone, email, address, city, state, pincode, logo_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           ON CONFLICT (id) DO UPDATE SET
+             name = COALESCE(NULLIF(EXCLUDED.name, ''), organizations.name),
+             updated_at = NOW()
+           RETURNING *`,
+          [validRequestedId, name, gstin, pan, phone, email, address, city, state, pincode, logo_url]
+        )
+      : await client.query(
+          `INSERT INTO organizations (name, gstin, pan, phone, email, address, city, state, pincode, logo_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+           RETURNING *`,
+          [name, gstin, pan, phone, email, address, city, state, pincode, logo_url]
+        );
     const org = orgRes.rows[0];
 
+    try {
+      await client.query('SAVEPOINT sp_org_meta');
+      await client.query(
+        `UPDATE organizations
+         SET owner_id = COALESCE(owner_id, $1),
+             business_type = COALESCE(NULLIF($2, ''), business_type),
+             invoice_prefix = COALESCE(NULLIF($3, ''), invoice_prefix),
+             tax_rate = COALESCE($4, tax_rate)
+         WHERE id = $5`,
+        [req.user.id, business_type, invoice_prefix, Number(tax_rate) || 18, org.id]
+      );
+      await client.query('RELEASE SAVEPOINT sp_org_meta');
+    } catch (_metaErr) {
+      await client.query('ROLLBACK TO SAVEPOINT sp_org_meta');
+    }
+
     await client.query(
-      `INSERT INTO org_memberships (user_id, org_id, organization_id, role) VALUES ($1, $2, $2, 'owner')`,
+      `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
+       VALUES ($1, $2, $2, 'owner')
+       ON CONFLICT (user_id, org_id) DO UPDATE SET role = COALESCE(NULLIF(org_memberships.role, ''), 'owner')`,
       [req.user.id, org.id]
     );
 
+    try {
+      await client.query('SAVEPOINT sp_org_mem2');
+      await client.query(
+        `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
+         VALUES ($1, $2, $2, 'owner')
+         ON CONFLICT (user_id, organization_id) DO UPDATE SET role = COALESCE(NULLIF(organization_memberships.role, ''), 'owner')`,
+        [req.user.id, org.id]
+      );
+      await client.query('RELEASE SAVEPOINT sp_org_mem2');
+    } catch (_m2Err) {
+      await client.query('ROLLBACK TO SAVEPOINT sp_org_mem2');
+    }
+
     await client.query(
       `INSERT INTO invoice_sequences (org_id, organization_id, sales_prefix, sales_counter, purchase_prefix, purchase_counter)
-       VALUES ($1, $1, 'INV', 0, 'PUR', 0)
+       VALUES ($1, $1, $2, 0, 'PUR', 0)
        ON CONFLICT (org_id) DO NOTHING`,
-      [org.id]
+      [org.id, invoice_prefix || 'INV']
     );
 
     await client.query('COMMIT');
-    return res.status(201).json(org);
+    return res.status(201).json({ ...org, owner_id: org.owner_id || req.user.id });
   } catch (err) {
     await client.query('ROLLBACK');
     return res.status(500).json({ error: err.message });

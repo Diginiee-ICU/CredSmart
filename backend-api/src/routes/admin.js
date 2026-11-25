@@ -183,8 +183,23 @@ router.get('/presence/live-users', async (req, res) => {
         ) sub
         ORDER BY sub.last_active_at DESC;
       `;
-      const result = await pool.query(query);
-      return res.json(result.rows || []);
+      try {
+        const result = await pool.query(query);
+        return res.json(result.rows || []);
+      } catch (liveErr) {
+        console.warn('Live users enriched query fallback:', liveErr.message);
+        const fallback = await pool.query(
+          `SELECT DISTINCT ON (p.user_id)
+             p.*,
+             COALESCE(NULLIF(TRIM(p.user_name), ''), split_part(COALESCE(p.user_email, ''), '@', 1), 'User') as display_name,
+             COALESCE(p.user_email, '') as resolved_email,
+             'online' as status
+           FROM user_presence p
+           WHERE p.last_active_at >= NOW() - INTERVAL '30 minutes'
+           ORDER BY p.user_id, p.last_active_at DESC`
+        );
+        return res.json(fallback.rows || []);
+      }
     }
 
     const query = `
@@ -257,7 +272,7 @@ router.get('/admin/metrics', async (req, res) => {
     const todaySalesRes = await pool.query(
       `SELECT 
          COUNT(*)::int as count,
-         COALESCE(SUM(total), 0)::numeric(12,2) as total_amount
+         COALESCE(SUM(COALESCE(NULLIF(total_amount, 0), total, 0)), 0)::numeric(12,2) as total_amount
        FROM sales 
        WHERE ${scopeWhere} AND created_at >= CURRENT_DATE`,
       params
@@ -269,7 +284,7 @@ router.get('/admin/metrics', async (req, res) => {
     const totalSalesRes = await pool.query(
       `SELECT 
          COUNT(*)::int as count,
-         COALESCE(SUM(total), 0)::numeric(12,2) as total_amount
+         COALESCE(SUM(COALESCE(NULLIF(total_amount, 0), total, 0)), 0)::numeric(12,2) as total_amount
        FROM sales 
        WHERE ${scopeWhere}`,
       params
@@ -296,7 +311,7 @@ router.get('/admin/metrics', async (req, res) => {
       `SELECT 
          EXTRACT(HOUR FROM created_at)::int as hour,
          COUNT(*)::int as count,
-         COALESCE(SUM(total), 0)::numeric(12,2) as total
+         COALESCE(SUM(COALESCE(NULLIF(total_amount, 0), total, 0)), 0)::numeric(12,2) as total
        FROM sales 
        WHERE ${scopeWhere} AND created_at >= CURRENT_DATE
        GROUP BY hour 
@@ -305,23 +320,44 @@ router.get('/admin/metrics', async (req, res) => {
     );
 
     // 6. Billings by Staff / Business Owner
-    const staffSalesRes = await pool.query(
-      `SELECT 
-         COALESCE(s.created_by::text, o.id::text, 'unassigned') as user_id,
-         COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1), o.name, 'Business Operator') as user_name,
-         COALESCE(u.email, o.email, '') as user_email,
-         COALESCE(o.name, 'Business') as organization_name,
-         COUNT(s.id)::int as count,
-         COALESCE(SUM(s.total), 0)::numeric(12,2) as total
-       FROM sales s
-       LEFT JOIN users u ON u.id = s.created_by
-       LEFT JOIN organizations o ON o.id = COALESCE(s.organization_id, s.org_id)
-       WHERE ${salesScopeWhere}
-       GROUP BY COALESCE(s.created_by::text, o.id::text, 'unassigned'), u.full_name, u.email, o.name, o.email
-       ORDER BY count DESC
-       LIMIT 15`,
-      params
-    );
+    let staffSalesRes;
+    try {
+      staffSalesRes = await pool.query(
+        `SELECT 
+           COALESCE(COALESCE(s.created_by, o.owner_id)::text, o.id::text, 'unassigned') as user_id,
+           COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1), o.name, 'Business Operator') as user_name,
+           COALESCE(u.email, o.email, '') as user_email,
+           COALESCE(o.name, 'Business') as organization_name,
+           COUNT(s.id)::int as count,
+           COALESCE(SUM(COALESCE(NULLIF(s.total_amount, 0), s.total, 0)), 0)::numeric(12,2) as total
+         FROM sales s
+         LEFT JOIN organizations o ON o.id = COALESCE(s.organization_id, s.org_id)
+         LEFT JOIN users u ON u.id = COALESCE(s.created_by, o.owner_id)
+         WHERE ${salesScopeWhere}
+         GROUP BY COALESCE(COALESCE(s.created_by, o.owner_id)::text, o.id::text, 'unassigned'), u.full_name, u.email, o.name, o.email
+         ORDER BY count DESC
+         LIMIT 25`,
+        params
+      );
+    } catch (_staffSalesErr) {
+      staffSalesRes = await pool.query(
+        `SELECT 
+           COALESCE(s.created_by::text, o.id::text, 'unassigned') as user_id,
+           COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1), o.name, 'Business Operator') as user_name,
+           COALESCE(u.email, o.email, '') as user_email,
+           COALESCE(o.name, 'Business') as organization_name,
+           COUNT(s.id)::int as count,
+           COALESCE(SUM(COALESCE(NULLIF(s.total_amount, 0), s.total, 0)), 0)::numeric(12,2) as total
+         FROM sales s
+         LEFT JOIN users u ON u.id = s.created_by
+         LEFT JOIN organizations o ON o.id = COALESCE(s.organization_id, s.org_id)
+         WHERE ${salesScopeWhere}
+         GROUP BY COALESCE(s.created_by::text, o.id::text, 'unassigned'), u.full_name, u.email, o.name, o.email
+         ORDER BY count DESC
+         LIMIT 25`,
+        params
+      );
+    }
 
     // 7. Feature Usage Analytics
     let featureUsageStats = [];
@@ -413,8 +449,10 @@ router.get('/admin/users', async (req, res) => {
             SELECT id AS org_id, 'owner' AS role, 3 AS prio, created_at
             FROM organizations WHERE owner_id = u.id
             UNION ALL
-            SELECT COALESCE(org_id, organization_id) AS org_id, COALESCE(role, 'staff') AS role, 4 AS prio, created_at
-            FROM crm_staff_assignments WHERE (user_id = u.id OR staff_id = u.id) AND COALESCE(org_id, organization_id) IS NOT NULL
+            SELECT COALESCE(csa.org_id, csa.organization_id) AS org_id, COALESCE(NULLIF(TRIM(cr.name), ''), 'staff') AS role, 4 AS prio, csa.created_at
+            FROM crm_staff_assignments csa
+            LEFT JOIN crm_roles cr ON cr.id = csa.role_id
+            WHERE (csa.user_id = u.id OR csa.staff_id = u.id) AND COALESCE(csa.org_id, csa.organization_id) IS NOT NULL
           ) all_m
           ORDER BY prio ASC, created_at ASC
           LIMIT 1
@@ -434,7 +472,7 @@ router.get('/admin/users', async (req, res) => {
         ) lp ON true
         LEFT JOIN organizations o ON o.id = COALESCE(m.org_id, lp.last_org_id)
         LEFT JOIN LATERAL (
-          SELECT COUNT(*)::int as bill_count, COALESCE(SUM(s.total), 0) as bill_total
+          SELECT COUNT(*)::int as bill_count, COALESCE(SUM(COALESCE(NULLIF(s.total_amount, 0), s.total, 0)), 0) as bill_total
           FROM sales s
           WHERE s.created_by = u.id
              OR (
@@ -459,8 +497,47 @@ router.get('/admin/users', async (req, res) => {
           u.created_at DESC;
       `;
 
-      const result = await pool.query(platformQuery);
-      return res.json(result.rows || []);
+      try {
+        const result = await pool.query(platformQuery);
+        return res.json(result.rows || []);
+      } catch (primaryPlatformErr) {
+        console.warn('Platform users enriched query fallback triggered:', primaryPlatformErr.message);
+        const safePlatformQuery = `
+          SELECT
+            u.id,
+            u.email,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) as full_name,
+            u.phone,
+            u.avatar_url,
+            u.created_at,
+            false as is_platform_admin,
+            m.org_id as organization_id,
+            COALESCE(o.name, 'Unassigned') as organization_name,
+            COALESCE(NULLIF(TRIM(m.role), ''), CASE WHEN o.id IS NOT NULL THEN 'owner' ELSE 'user' END) as role,
+            'offline' as presence_status,
+            NULL::timestamptz as last_active_at,
+            COALESCE(sc.bill_count, 0)::int as bill_count,
+            COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
+            0::int as locked_features_count
+          FROM users u
+          LEFT JOIN LATERAL (
+            SELECT COALESCE(org_id, organization_id) AS org_id, role
+            FROM org_memberships
+            WHERE user_id = u.id
+            ORDER BY created_at ASC
+            LIMIT 1
+          ) m ON true
+          LEFT JOIN organizations o ON o.id = m.org_id
+          LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int as bill_count, COALESCE(SUM(COALESCE(NULLIF(s.total_amount, 0), s.total, 0)), 0) as bill_total
+            FROM sales s
+            WHERE s.created_by = u.id
+          ) sc ON true
+          ORDER BY u.created_at DESC;
+        `;
+        const fallbackResult = await pool.query(safePlatformQuery);
+        return res.json(fallbackResult.rows || []);
+      }
     }
 
     // Single-organization View: includes org_memberships, organization_memberships, organizations.owner_id, crm_staff_assignments & user_presence
@@ -495,14 +572,17 @@ router.get('/admin/users', async (req, res) => {
           UNION ALL
           SELECT owner_id AS user_id, 'owner' AS role, 3 AS prio FROM organizations WHERE id = $1 AND owner_id IS NOT NULL
           UNION ALL
-          SELECT COALESCE(user_id, staff_id) AS user_id, COALESCE(role, 'staff') AS role, 4 AS prio FROM crm_staff_assignments WHERE (org_id = $1 OR organization_id = $1)
+          SELECT COALESCE(csa.user_id, csa.staff_id) AS user_id, COALESCE(NULLIF(TRIM(cr.name), ''), 'staff') AS role, 4 AS prio
+          FROM crm_staff_assignments csa
+          LEFT JOIN crm_roles cr ON cr.id = csa.role_id
+          WHERE (csa.org_id = $1 OR csa.organization_id = $1)
           UNION ALL
           SELECT user_id, COALESCE(NULLIF(user_role, ''), 'cashier') AS role, 5 AS prio FROM user_presence WHERE (organization_id = $1 OR org_id = $1)
         ) m ON m.user_id = u.id
         LEFT JOIN organizations o ON o.id = $1
         LEFT JOIN user_presence p ON p.user_id = u.id AND (p.organization_id = $1 OR p.org_id = $1)
         LEFT JOIN (
-          SELECT created_by, COUNT(*)::int as bill_count, SUM(total) as bill_total
+          SELECT created_by, COUNT(*)::int as bill_count, SUM(COALESCE(NULLIF(total_amount, 0), total, 0)) as bill_total
           FROM sales
           WHERE (organization_id = $1 OR org_id = $1)
           GROUP BY created_by
@@ -521,8 +601,34 @@ router.get('/admin/users', async (req, res) => {
         users_list.created_at DESC;
     `;
 
-    const result = await pool.query(orgQuery, [orgId]);
-    return res.json(result.rows || []);
+    try {
+      const result = await pool.query(orgQuery, [orgId]);
+      return res.json(result.rows || []);
+    } catch (primaryOrgErr) {
+      console.warn('Org users enriched query fallback triggered:', primaryOrgErr.message);
+      const safeOrgQuery = `
+        SELECT DISTINCT ON (u.id)
+          u.id,
+          u.email,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) as full_name,
+          u.phone,
+          u.avatar_url,
+          u.created_at,
+          $1::uuid as organization_id,
+          COALESCE(o.name, 'Business') as organization_name,
+          COALESCE(NULLIF(TRIM(m.role), ''), 'owner') as role,
+          'offline' as presence_status,
+          0::int as bill_count,
+          0::numeric(12,2) as bill_total,
+          0::int as locked_features_count
+        FROM users u
+        JOIN org_memberships m ON m.user_id = u.id AND (m.org_id = $1 OR m.organization_id = $1)
+        LEFT JOIN organizations o ON o.id = $1
+        ORDER BY u.id, u.created_at DESC;
+      `;
+      const fallbackOrgRes = await pool.query(safeOrgQuery, [orgId]);
+      return res.json(fallbackOrgRes.rows || []);
+    }
   } catch (err) {
     console.error('Get admin users error:', err);
     return res.status(500).json({ error: err.message });
@@ -545,7 +651,13 @@ router.post('/admin/create-user', async (req, res) => {
       grant_platform_admin = false,
     } = req.body || {};
 
-    if (!callerOrgId && !create_own_org) {
+    const callerIsPlatformAdmin = await isPlatformAdmin(req.user);
+    const userRole = (role || 'admin').toLowerCase();
+    const willCreateOwnOrg = Boolean(
+      create_own_org || (userRole === 'owner' && organization_name.trim()) || (!callerOrgId && callerIsPlatformAdmin)
+    );
+
+    if (!callerOrgId && !willCreateOwnOrg) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
@@ -556,8 +668,6 @@ router.post('/admin/create-user', async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
-
-    const callerIsPlatformAdmin = await isPlatformAdmin(req.user);
     const cleanEmail = email.toLowerCase().trim();
     const bcrypt = require('bcryptjs');
     const passwordHash = await bcrypt.hash(password, 10);
@@ -598,10 +708,9 @@ router.post('/admin/create-user', async (req, res) => {
       }
     }
 
-    const userRole = (role || 'admin').toLowerCase();
     let targetOrgId = callerOrgId;
 
-    if (create_own_org || (userRole === 'owner' && organization_name.trim())) {
+    if (willCreateOwnOrg) {
       const newOrgName = organization_name.trim() || (full_name ? `${full_name}'s Business` : `${cleanEmail.split('@')[0]}'s Business`);
       const orgRes = await client.query(
         `INSERT INTO organizations (name, email, phone)

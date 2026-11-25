@@ -30,7 +30,7 @@ describe("MobileAppStartingCards Redesign Tests", () => {
 
     // Verify brand
     expect(screen.getByText("CredSmart")).toBeDefined();
-    expect(screen.getByText("v1.2.2")).toBeDefined();
+    expect(screen.getByText("v1.2.3")).toBeDefined();
     expect(screen.getByText("Dual-Engine Architecture")).toBeDefined();
 
     // Verify first slide content

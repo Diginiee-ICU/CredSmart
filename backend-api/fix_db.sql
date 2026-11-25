@@ -61,6 +61,7 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) DEFAULT
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS financial_year_start DATE;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS owner_id UUID;
 
+-- Backfill owner_id from org_memberships, organization_memberships, matching user email, or earliest bill creator
 UPDATE organizations o
 SET owner_id = sub.user_id
 FROM (
@@ -68,10 +69,57 @@ FROM (
     COALESCE(org_id, organization_id) AS org_id,
     user_id
   FROM org_memberships
-  WHERE LOWER(role) IN ('owner', 'store_owner', 'super_admin')
+  WHERE LOWER(role) IN ('owner', 'store_owner', 'super_admin', 'admin')
   ORDER BY COALESCE(org_id, organization_id), created_at ASC
 ) sub
 WHERE o.id = sub.org_id AND o.owner_id IS NULL;
+
+DO $$
+BEGIN
+  IF to_regclass('public.organization_memberships') IS NOT NULL THEN
+    EXECUTE $sql$
+      UPDATE organizations o
+      SET owner_id = sub.user_id
+      FROM (
+        SELECT DISTINCT ON (COALESCE(organization_id, org_id))
+          COALESCE(organization_id, org_id) AS org_id,
+          user_id
+        FROM organization_memberships
+        WHERE LOWER(role) IN ('owner', 'store_owner', 'super_admin', 'admin')
+        ORDER BY COALESCE(organization_id, org_id), created_at ASC
+      ) sub
+      WHERE o.id = sub.org_id AND o.owner_id IS NULL
+    $sql$;
+  END IF;
+END $$;
+
+UPDATE organizations o
+SET owner_id = u.id
+FROM users u
+WHERE o.owner_id IS NULL
+  AND o.email IS NOT NULL
+  AND TRIM(o.email) <> ''
+  AND LOWER(TRIM(o.email)) = LOWER(TRIM(u.email));
+
+DO $$
+BEGIN
+  IF to_regclass('public.sales') IS NOT NULL THEN
+    EXECUTE $sql$
+      UPDATE organizations o
+      SET owner_id = sub.created_by
+      FROM (
+        SELECT DISTINCT ON (COALESCE(organization_id, org_id))
+          COALESCE(organization_id, org_id) AS org_id,
+          created_by
+        FROM sales
+        WHERE COALESCE(organization_id, org_id) IS NOT NULL
+          AND created_by IS NOT NULL
+        ORDER BY COALESCE(organization_id, org_id), created_at ASC
+      ) sub
+      WHERE o.id = sub.org_id AND o.owner_id IS NULL
+    $sql$;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- 3. MEMBERSHIPS (DUAL TABLE SUPPORT & CROSS-SYNC)

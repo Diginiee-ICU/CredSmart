@@ -37,6 +37,87 @@ router.post('/rpc/:fn', async (req, res) => {
       });
     }
 
+    // Bootstrap organization RPC (onboarding fallback)
+    if (fn === 'bootstrap_organization') {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const orgName = args.p_name || 'My Business';
+        const orgRes = await client.query(
+          `INSERT INTO organizations (name, phone, email, address, gstin, pan, logo_url)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           RETURNING *`,
+          [
+            orgName,
+            args.p_phone || '',
+            args.p_email || req.user.email || '',
+            args.p_address || '',
+            args.p_gstin || '',
+            args.p_pan || '',
+            args.p_logo_url || '',
+          ]
+        );
+        const createdOrg = orgRes.rows[0];
+
+        try {
+          await client.query('SAVEPOINT sp_boot_meta');
+          await client.query(
+            `UPDATE organizations
+             SET owner_id = $1,
+                 business_type = COALESCE(NULLIF($2, ''), business_type),
+                 tax_rate = COALESCE($3, tax_rate),
+                 invoice_prefix = COALESCE(NULLIF($4, ''), invoice_prefix)
+             WHERE id = $5`,
+            [
+              req.user.id,
+              args.p_business_type || 'General Store',
+              Number(args.p_tax_rate) || 18,
+              args.p_invoice_prefix || 'INV',
+              createdOrg.id,
+            ]
+          );
+          await client.query('RELEASE SAVEPOINT sp_boot_meta');
+        } catch (_mErr) {
+          await client.query('ROLLBACK TO SAVEPOINT sp_boot_meta');
+        }
+
+        await client.query(
+          `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
+           VALUES ($1, $2, $2, 'owner')
+           ON CONFLICT (user_id, org_id) DO NOTHING`,
+          [req.user.id, createdOrg.id]
+        );
+
+        try {
+          await client.query('SAVEPOINT sp_boot_om');
+          await client.query(
+            `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
+             VALUES ($1, $2, $2, 'owner')
+             ON CONFLICT (user_id, organization_id) DO NOTHING`,
+            [req.user.id, createdOrg.id]
+          );
+          await client.query('RELEASE SAVEPOINT sp_boot_om');
+        } catch (_omErr) {
+          await client.query('ROLLBACK TO SAVEPOINT sp_boot_om');
+        }
+
+        await client.query(
+          `INSERT INTO invoice_sequences (org_id, organization_id, sales_prefix, sales_counter, purchase_prefix, purchase_counter)
+           VALUES ($1, $1, $2, 0, 'PUR', 0)
+           ON CONFLICT (org_id) DO NOTHING`,
+          [createdOrg.id, args.p_invoice_prefix || 'INV']
+        );
+
+        await client.query('COMMIT');
+        return res.json({ organization_id: createdOrg.id, organization: createdOrg });
+      } catch (bootErr) {
+        await client.query('ROLLBACK');
+        throw bootErr;
+      } finally {
+        client.release();
+      }
+    }
+
     return res.json({ success: true, fn, args });
   } catch (err) {
     return res.status(500).json({ error: err.message });
