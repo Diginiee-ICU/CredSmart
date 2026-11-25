@@ -305,10 +305,14 @@ router.post('/refresh', async (req, res) => {
 
         const tokenRes = await client.query(
           `SELECT rt.id, rt.user_id, rt.expires_at,
-                  u.email, u.full_name, u.phone, u.avatar_url, u.created_at,
-                  u.is_platform_admin
+                  COALESCE(u.email, '') as email,
+                  COALESCE(u.full_name, '') as full_name,
+                  u.phone,
+                  u.avatar_url,
+                  COALESCE(u.created_at, NOW()) as created_at,
+                  COALESCE(u.is_platform_admin, false) as is_platform_admin
            FROM refresh_tokens rt
-           JOIN users u ON u.id = rt.user_id
+           LEFT JOIN users u ON u.id = rt.user_id
            WHERE rt.token = $1
            FOR UPDATE OF rt`,
           [refreshToken]
@@ -318,9 +322,14 @@ router.post('/refresh', async (req, res) => {
           await client.query('BEGIN');
           return client.query(
             `SELECT rt.id, rt.user_id, rt.expires_at,
-                    u.email, u.full_name, u.phone, u.avatar_url, u.created_at
+                    COALESCE(u.email, '') as email,
+                    COALESCE(u.full_name, '') as full_name,
+                    u.phone,
+                    u.avatar_url,
+                    COALESCE(u.created_at, NOW()) as created_at,
+                    false as is_platform_admin
              FROM refresh_tokens rt
-             JOIN users u ON u.id = rt.user_id
+             LEFT JOIN users u ON u.id = rt.user_id
              WHERE rt.token = $1
              FOR UPDATE OF rt`,
             [refreshToken]
@@ -353,12 +362,20 @@ router.post('/refresh', async (req, res) => {
         const newExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
         await client.query('DELETE FROM refresh_tokens WHERE id = $1', [row.id]);
-        await client.query(
-          `INSERT INTO refresh_tokens (user_id, token, expires_at)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (token) DO UPDATE SET expires_at = EXCLUDED.expires_at`,
-          [user.id, newRefreshToken, newExpiresAt]
-        );
+        // Use simple INSERT to avoid ON CONFLICT requirement (token is unique by generation)
+        try {
+          await client.query(
+            `INSERT INTO refresh_tokens (user_id, token, expires_at)
+             VALUES ($1, $2, $3)`,
+            [user.id, newRefreshToken, newExpiresAt]
+          );
+        } catch (_insertErr) {
+          // If token collision (extremely rare), upsert by updating existing
+          await client.query(
+            `UPDATE refresh_tokens SET user_id = $1, expires_at = $3 WHERE token = $2`,
+            [user.id, newRefreshToken, newExpiresAt]
+          );
+        }
 
         await client.query('COMMIT');
 

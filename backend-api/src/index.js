@@ -172,6 +172,49 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
+// Automatic Database Alignment & Self-Healing Bootstrap
+(async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_platform_admin BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      UPDATE users SET is_platform_admin = true WHERE LOWER(email) = 'ashwinbishnoi05@gmail.com';
+    `);
+
+    // Backfill any unknown users from organizations, memberships, presence or sales into public.users
+    await pool.query(`
+      INSERT INTO users (id, email, full_name, phone, avatar_url, created_at, password_hash)
+      SELECT
+        all_u.id,
+        COALESCE(NULLIF(TRIM(all_u.email), ''), 'user_' || substr(all_u.id::text, 1, 8) || '@credsmart.online') as email,
+        COALESCE(NULLIF(TRIM(all_u.full_name), ''), 'Business Member') as full_name,
+        all_u.phone,
+        all_u.avatar_url,
+        COALESCE(all_u.created_at, NOW()) as created_at,
+        '$2a$10$N9qo8uLOickgx2ZMRZoMye.I.kF1Yp6P6Yg3l4uM6gVfTfD1.B8xG'
+      FROM (
+        SELECT owner_id as id, email, name as full_name, phone, logo_url as avatar_url, created_at FROM organizations WHERE owner_id IS NOT NULL
+        UNION
+        SELECT user_id as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM org_memberships WHERE user_id IS NOT NULL
+        UNION
+        SELECT user_id as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM organization_memberships WHERE user_id IS NOT NULL
+        UNION
+        SELECT user_id as id, user_email as email, user_name as full_name, NULL as phone, NULL as avatar_url, last_active_at as created_at FROM user_presence WHERE user_id IS NOT NULL
+        UNION
+        SELECT created_by as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM sales WHERE created_by IS NOT NULL
+      ) all_u
+      ON CONFLICT (id) DO UPDATE SET
+        email = COALESCE(NULLIF(EXCLUDED.email, ''), users.email),
+        full_name = COALESCE(NULLIF(EXCLUDED.full_name, ''), users.full_name);
+    `);
+    console.log('[DB Bootstrap] Successfully verified schema and synchronized users');
+  } catch (err) {
+    console.warn('[DB Bootstrap Notice]', err.message);
+  }
+})();
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`CredSmart Lightning Backend API listening on http://0.0.0.0:${PORT}`);
 });

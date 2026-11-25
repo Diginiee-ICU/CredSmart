@@ -31,6 +31,7 @@ import {
   Bot,
   LifeBuoy,
   Shield,
+  Palette,
 } from "lucide-react";
 
 export const ROUTE_PATHS = {
@@ -332,7 +333,8 @@ export function isRouteAllowedForRole(
     role === "admin" ||
     role === "owner" ||
     role === "manager" ||
-    role === "partner"
+    role === "partner" ||
+    role === "platform_admin"
   ) {
     return true;
   }
@@ -626,6 +628,17 @@ export const MAIN_NAV_ROUTES: NavRouteGroup[] = [
         icon: FileSpreadsheet,
         badge: "NEW",
       },
+      {
+        title: "Admin & Operations",
+        url: ROUTE_PATHS.admin,
+        icon: Shield,
+        badge: "ADMIN",
+      },
+      {
+        title: "White-Label Branding",
+        url: ROUTE_PATHS.whiteLabelSettings,
+        icon: Palette,
+      },
     ],
   },
 ];
@@ -794,6 +807,17 @@ export const BILLING_NAV_ROUTES: NavRouteGroup[] = [
         url: ROUTE_PATHS.tallyImport,
         icon: FileSpreadsheet,
         badge: "NEW",
+      },
+      {
+        title: "Admin & Operations",
+        url: ROUTE_PATHS.admin,
+        icon: Shield,
+        badge: "ADMIN",
+      },
+      {
+        title: "White-Label Branding",
+        url: ROUTE_PATHS.whiteLabelSettings,
+        icon: Palette,
       },
     ],
   },

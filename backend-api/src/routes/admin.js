@@ -28,7 +28,8 @@ const getOrgId = (req) => {
 const isPlatformAdmin = async (reqUser) => {
   if (!reqUser || !reqUser.id) return false;
   if (reqUser.is_platform_admin === true) return true;
-  if (reqUser.email && PLATFORM_ADMIN_EMAILS.has(String(reqUser.email).trim().toLowerCase())) {
+  const userEmail = String(reqUser.email || '').trim().toLowerCase();
+  if (userEmail && PLATFORM_ADMIN_EMAILS.has(userEmail)) {
     return true;
   }
   try {
@@ -41,7 +42,15 @@ const isPlatformAdmin = async (reqUser) => {
       }
     }
   } catch (_err) {
-    // Fallback if column not migrated yet
+    try {
+      const fallbackEmailRes = await pool.query('SELECT email FROM users WHERE id = $1', [reqUser.id]);
+      if (fallbackEmailRes.rows.length > 0) {
+        const row = fallbackEmailRes.rows[0];
+        if (row.email && PLATFORM_ADMIN_EMAILS.has(String(row.email).trim().toLowerCase())) {
+          return true;
+        }
+      }
+    } catch (_e2) {}
   }
   try {
     const roleRes = await pool.query(
@@ -453,6 +462,18 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
     }
 
     if (usePlatformScope) {
+      let hasPaColumn = false;
+      try {
+        const colCheck = await pool.query(
+          `SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'is_platform_admin' LIMIT 1`
+        );
+        hasPaColumn = colCheck.rows.length > 0;
+      } catch (_e) {}
+
+      const paUserSelect = hasPaColumn
+        ? `COALESCE(u.is_platform_admin, (LOWER(COALESCE(u.email, '')) = 'ashwinbishnoi05@gmail.com'), false) as is_platform_admin`
+        : `(CASE WHEN LOWER(COALESCE(u.email, '')) = 'ashwinbishnoi05@gmail.com' THEN true ELSE false END) as is_platform_admin`;
+
       // Platform Admin View: returns EVERY registered user, tester, real-time business owner, and staff across all organizations
       const platformQuery = `
         WITH all_known_users AS (
@@ -463,7 +484,7 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
             u.phone,
             u.avatar_url,
             u.created_at,
-            COALESCE(u.is_platform_admin, false) as is_platform_admin,
+            ${paUserSelect},
             1 AS source_prio
           FROM users u
           UNION ALL
@@ -481,15 +502,29 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
           UNION ALL
           SELECT
             m.user_id AS id,
-            'user_' || substr(m.user_id::text, 1, 8) || '@credsmart.online' AS email,
-            'Staff Member' AS full_name,
-            NULL as phone,
-            NULL as avatar_url,
+            COALESCE(NULLIF(TRIM(u.email), ''), 'user_' || substr(m.user_id::text, 1, 8) || '@credsmart.online') AS email,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), 'Staff Member') AS full_name,
+            u.phone as phone,
+            u.avatar_url as avatar_url,
             m.created_at,
             false as is_platform_admin,
             3 AS source_prio
           FROM org_memberships m
+          LEFT JOIN users u ON u.id = m.user_id
           WHERE m.user_id IS NOT NULL
+          UNION ALL
+          SELECT
+            om.user_id AS id,
+            COALESCE(NULLIF(TRIM(u.email), ''), 'user_' || substr(om.user_id::text, 1, 8) || '@credsmart.online') AS email,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), 'Business Member') AS full_name,
+            u.phone as phone,
+            u.avatar_url as avatar_url,
+            om.created_at,
+            false as is_platform_admin,
+            3 AS source_prio
+          FROM organization_memberships om
+          LEFT JOIN users u ON u.id = om.user_id
+          WHERE om.user_id IS NOT NULL
           UNION ALL
           SELECT
             p.user_id AS id,
@@ -502,6 +537,19 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
             4 AS source_prio
           FROM user_presence p
           WHERE p.user_id IS NOT NULL
+          UNION ALL
+          SELECT
+            s.created_by AS id,
+            COALESCE(NULLIF(TRIM(u.email), ''), 'operator_' || substr(s.created_by::text, 1, 8) || '@credsmart.online') AS email,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), 'Billing Operator') AS full_name,
+            u.phone as phone,
+            u.avatar_url as avatar_url,
+            s.created_at,
+            false as is_platform_admin,
+            5 AS source_prio
+          FROM sales s
+          LEFT JOIN users u ON u.id = s.created_by
+          WHERE s.created_by IS NOT NULL
         ),
         deduped_users AS (
           SELECT DISTINCT ON (id)
@@ -603,28 +651,51 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
       } catch (primaryPlatformErr) {
         console.warn('Platform users enriched query fallback triggered:', primaryPlatformErr.message);
         const safePlatformQuery = `
+          WITH all_known_users AS (
+            SELECT id, email, full_name, phone, avatar_url, created_at FROM users
+            UNION ALL
+            SELECT owner_id as id, email, name as full_name, phone, logo_url as avatar_url, created_at FROM organizations WHERE owner_id IS NOT NULL
+            UNION ALL
+            SELECT user_id as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM org_memberships WHERE user_id IS NOT NULL
+            UNION ALL
+            SELECT user_id as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM organization_memberships WHERE user_id IS NOT NULL
+            UNION ALL
+            SELECT user_id as id, user_email as email, user_name as full_name, NULL as phone, NULL as avatar_url, last_active_at as created_at FROM user_presence WHERE user_id IS NOT NULL
+            UNION ALL
+            SELECT created_by as id, NULL as email, NULL as full_name, NULL as phone, NULL as avatar_url, created_at FROM sales WHERE created_by IS NOT NULL
+          ),
+          deduped_users AS (
+            SELECT DISTINCT ON (id) id, email, full_name, phone, avatar_url, created_at
+            FROM all_known_users
+            ORDER BY id, created_at ASC
+          )
           SELECT
             u.id,
-            u.email,
-            COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1)) as full_name,
+            COALESCE(u.email, 'user_' || substr(u.id::text, 1, 8) || '@credsmart.online') as email,
+            COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(COALESCE(u.email, ''), '@', 1), 'Business Member') as full_name,
             u.phone,
             u.avatar_url,
             u.created_at,
-            false as is_platform_admin,
+            (CASE WHEN LOWER(COALESCE(u.email, '')) = 'ashwinbishnoi05@gmail.com' THEN true ELSE false END) as is_platform_admin,
             m.org_id as organization_id,
             COALESCE(o.name, 'Unassigned') as organization_name,
-            COALESCE(NULLIF(TRIM(m.role), ''), CASE WHEN o.id IS NOT NULL THEN 'owner' ELSE 'user' END) as role,
+            COALESCE(NULLIF(TRIM(m.role), ''), CASE WHEN o.id IS NOT NULL THEN 'owner' ELSE 'cashier' END) as role,
             'offline' as presence_status,
             NULL::timestamptz as last_active_at,
             COALESCE(sc.bill_count, 0)::int as bill_count,
             COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
             0::int as locked_features_count
-          FROM users u
+          FROM deduped_users u
           LEFT JOIN LATERAL (
             SELECT COALESCE(org_id, organization_id) AS org_id, role
-            FROM org_memberships
-            WHERE user_id = u.id
-            ORDER BY created_at ASC
+            FROM (
+              SELECT org_id, organization_id, role, created_at FROM org_memberships WHERE user_id = u.id
+              UNION ALL
+              SELECT organization_id as org_id, organization_id, role, created_at FROM organization_memberships WHERE user_id = u.id
+              UNION ALL
+              SELECT id as org_id, id as organization_id, 'owner' as role, created_at FROM organizations WHERE owner_id = u.id
+            ) sub_m
+            ORDER BY sub_m.created_at ASC
             LIMIT 1
           ) m ON true
           LEFT JOIN organizations o ON o.id = m.org_id
@@ -677,6 +748,10 @@ router.get('/admin/users', requireAdminAccess, async (req, res) => {
           WHERE (csa.org_id = $1 OR csa.organization_id = $1)
           UNION ALL
           SELECT user_id, COALESCE(NULLIF(user_role, ''), 'cashier') AS role, last_active_at AS created_at, 5 AS prio FROM user_presence WHERE (organization_id = $1 OR org_id = $1)
+          UNION ALL
+          SELECT created_by AS user_id, 'cashier' AS role, created_at, 6 AS prio FROM sales WHERE (organization_id = $1 OR org_id = $1) AND created_by IS NOT NULL
+          UNION ALL
+          SELECT created_by AS user_id, 'cashier' AS role, created_at, 7 AS prio FROM invoices WHERE (organization_id = $1 OR org_id = $1) AND created_by IS NOT NULL
         ) m
         LEFT JOIN users u ON u.id = m.user_id
         LEFT JOIN organizations o ON o.id = $1

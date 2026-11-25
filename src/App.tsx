@@ -151,7 +151,7 @@ function RoleProtectedRoute({ allowedRoles }: { allowedRoles: readonly string[] 
     return <Navigate to={ROUTE_PATHS.auth} replace />;
   }
 
-  const effectiveRole = userRole || "cashier";
+  const effectiveRole = userRole || "store_owner";
   const currentPath = location.pathname || window.location.pathname;
 
   if (!allowedRoles.includes(effectiveRole) && !isRouteAllowedForRole(currentPath, effectiveRole, userPermissions)) {

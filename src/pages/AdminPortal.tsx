@@ -81,10 +81,10 @@ function matchesRoleFilter(userRoleValue: string | undefined, filterValue: strin
   if (filterValue === "all") return true;
   const r = String(userRoleValue || "").toLowerCase();
   if (filterValue === "store_owner" || filterValue === "owner_group") {
-    return r === "owner" || r === "store_owner" || r === "partner";
+    return r === "owner" || r === "store_owner" || r === "partner" || r === "business owner" || r.includes("owner");
   }
   if (filterValue === "admin_group") {
-    return r === "admin" || r === "super_admin";
+    return r === "admin" || r === "super_admin" || r === "platform_admin";
   }
   return r === filterValue;
 }

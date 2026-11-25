@@ -355,7 +355,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { org, orgId, organizations, switchOrganization, userRole, userPermissions } = useOrganization();
-  const { brand, isWhiteLabeled } = useWhiteLabel();
+  const { brand, isWhiteLabeled, isPlatformAdmin } = useWhiteLabel();
   const { pendingCount, unreadCount } = useNetworkInvoices();
 
   const [openCommand, setOpenCommand] = useState(false);
@@ -783,6 +783,25 @@ export default function AppLayout() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Platform Admin & Super Admin Direct Access */}
+              {(isPlatformAdmin || userRole === "super_admin" || userRole === "admin") && (
+                <button
+                  type="button"
+                  onClick={() => navigate((ROUTE_PATHS as any).admin || "/billing/admin")}
+                  className={cn(
+                    "h-8.5 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0 select-none",
+                    location.pathname === "/billing/admin" || location.pathname === "/admin"
+                      ? "bg-blue-600 text-white shadow-blue-500/20"
+                      : "bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700/40"
+                  )}
+                  title="Admin & Operations Control Center"
+                  aria-label="Admin Portal"
+                >
+                  <Shield className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[2.2]" />
+                  <span className="hidden sm:inline font-mono font-bold">Admin</span>
+                </button>
+              )}
+
               {/* Bell (Desktop & Tablet) */}
               <button
                 type="button"
@@ -887,7 +906,7 @@ export default function AppLayout() {
                     </DropdownMenuItem>
                   </div>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
-                  {FULL_ACCESS_ROLES.includes((userRole || "") as any) && (
+                  {(isPlatformAdmin || FULL_ACCESS_ROLES.includes((userRole || "") as any)) && (
                     <>
                       <DropdownMenuItem
                         onSelect={() => {
