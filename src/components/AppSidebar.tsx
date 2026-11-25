@@ -38,6 +38,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { useFeatureAccess, getFeatureKeyFromUrl } from "@/hooks/useFeatureAccess";
 import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   BILLING_NAV_ROUTES,
   NAV_ROUTES,
@@ -778,12 +779,14 @@ export function AppSidebar({
             </nav>
 
             {/* ── Dropdown Footer Bar ── */}
-            <div className="shrink-0 px-6 py-3 border-t border-slate-200/80 bg-slate-50 flex items-center justify-between rounded-b-3xl">
-              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-emerald-600 font-mono">
+            <div className="shrink-0 px-6 py-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/95 flex items-center justify-between rounded-b-3xl">
+              <div className="flex items-center gap-2 text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-mono">
                 <Shield className="w-3.5 h-3.5 text-emerald-500" />
                 <span>256-Bit SSL • Enterprise Secure • {isCrmSuite ? "RBAC Enforced" : "GST Compliant"}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-slate-500">
+              <div className="flex items-center gap-3">
+                <ThemeToggle showLabel className="h-7 px-2.5 text-[11px] rounded-md font-mono" />
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-slate-500 dark:text-slate-400">
                 {isWhiteLabeled ? (
                   <span className="font-bold text-slate-700">
                     {brand.brand_name} {isCrmSuite ? "CRM" : "POS"}

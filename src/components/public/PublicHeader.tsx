@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
 import { useWhiteLabel } from "@/context/WhiteLabelContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface PublicHeaderProps {
   onOpenDownloadModal?: (platform: "android" | "desktop") => void;
@@ -160,6 +161,9 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
 
         {/* Right CTA Actions */}
         <div className="hidden sm:flex items-center gap-2">
+          {/* Dark / Light Mode Switcher */}
+          <ThemeToggle />
+
           {/* Download App Quick Trigger */}
           <button
             type="button"
@@ -205,15 +209,18 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle (44x44px minimum touch target) */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden w-11 h-11 flex items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {/* Mobile Actions: Theme Toggle & Hamburger */}
+        <div className="flex sm:hidden items-center gap-1">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-11 h-11 flex items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer Menu */}

@@ -42,7 +42,11 @@ import {
   LifeBuoy,
   Shield,
   Palette,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "next-themes";
 import { SuiteSwitcher } from "@/components/SuiteSwitcher";
 import { WorkspaceSwitcher } from "@/components/portal/WorkspaceSwitcher";
 import { useActiveSuite } from "@/hooks/useActiveSuite";
@@ -357,6 +361,7 @@ export default function AppLayout() {
   const { org, orgId, organizations, switchOrganization, userRole, userPermissions } = useOrganization();
   const { brand, isWhiteLabeled, isPlatformAdmin } = useWhiteLabel();
   const { pendingCount, unreadCount } = useNetworkInvoices();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   const [openCommand, setOpenCommand] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -847,6 +852,9 @@ export default function AppLayout() {
                 ) : null}
               </button>
 
+              {/* Dark / Light Mode Switcher (Web & Mobile) */}
+              <ThemeToggle />
+
               {/* Profile dropdown */}
               <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
                 <DropdownMenuTrigger asChild>
@@ -931,6 +939,25 @@ export default function AppLayout() {
                     </>
                   )}
                   <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setTheme(resolvedTheme === "dark" ? "light" : "dark");
+                    }}
+                    className="flex items-center justify-between px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer hover-3d-glow"
+                  >
+                    <div className="flex items-center gap-2">
+                      {resolvedTheme === "dark" ? (
+                        <Sun className="w-4 h-4 text-amber-500 stroke-[2]" />
+                      ) : (
+                        <Moon className="w-4 h-4 text-slate-500 stroke-[2]" />
+                      )}
+                      <span>Appearance</span>
+                    </div>
+                    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase">
+                      {resolvedTheme === "dark" ? "Dark" : "Light"}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
                     onSelect={() => {
                       setProfileMenuOpen(false);
                       navigate(ROUTE_PATHS.businessSettings);
@@ -961,6 +988,14 @@ export default function AppLayout() {
             <CommandEmpty>No matching pages or actions found.</CommandEmpty>
             
             <CommandGroup heading="Quick Actions">
+              <CommandItem onSelect={() => { setTheme(resolvedTheme === "dark" ? "light" : "dark"); setOpenCommand(false); }}>
+                {resolvedTheme === "dark" ? (
+                  <Sun className="mr-2 h-4 w-4 text-amber-500" />
+                ) : (
+                  <Moon className="mr-2 h-4 w-4 text-slate-500" />
+                )}
+                <span>Toggle Appearance ({resolvedTheme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"})</span>
+              </CommandItem>
               <CommandItem onSelect={() => handleCommandSelect(ROUTE_PATHS.checkout)}>
                 <ShoppingCart className="mr-2 h-4 w-4 text-emerald-600" />
                 <span>Create New Invoice (POS Billing)</span>
