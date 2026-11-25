@@ -599,7 +599,15 @@ export function teamStatus(e: Employee, s: State): TeamStatus {
 }
 export function operatorRole(s: State): Role { return cloudUser ? "Admin" : (s.employees.find((e) => e.id === s.me)?.role ?? "General Executive"); }
 export function payslipText(e: Employee, month: string, b: PayrollBreakdown, paidAt?: number) {
-  return `CredSmart Salary Slip — ${month}\n${e.name} · ${e.role}\nMonthly Base: ${money(b.monthlyBase)}\nPresent: ${b.present} · Late: ${b.late} · Absent: ${b.absent}\nPaid days: ${b.paidDays}/${b.workingDays}\nProrated Base: ${money(b.proratedBase)}\nOvertime: ${b.overtimeHours} hrs · ${money(b.overtimePay)}\nStaff Udhar: −${money(b.advance)}\nOther Deductions: −${money(b.deductions - b.advance)}\nFinal Net ${paidAt ? "Paid" : "Payable"}: ${money(b.net)}${paidAt ? `\nPaid: ${new Date(paidAt).toLocaleDateString()}` : "\nProvisional · payment not recorded"}`;
+  let brandPrefix = "CredSmart";
+  try {
+    const raw = localStorage.getItem("credsmart_wl_active_brand");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.isWhiteLabeled && parsed?.brand?.brand_name) brandPrefix = parsed.brand.brand_name;
+    }
+  } catch { /* ignore */ }
+  return `${brandPrefix} Salary Slip — ${month}\n${e.name} · ${e.role}\nMonthly Base: ${money(b.monthlyBase)}\nPresent: ${b.present} · Late: ${b.late} · Absent: ${b.absent}\nPaid days: ${b.paidDays}/${b.workingDays}\nProrated Base: ${money(b.proratedBase)}\nOvertime: ${b.overtimeHours} hrs · ${money(b.overtimePay)}\nStaff Udhar: −${money(b.advance)}\nOther Deductions: −${money(b.deductions - b.advance)}\nFinal Net ${paidAt ? "Paid" : "Payable"}: ${money(b.net)}${paidAt ? `\nPaid: ${new Date(paidAt).toLocaleDateString()}` : "\nProvisional · payment not recorded"}`;
 }
 export const money = (n: number) =>
   new Intl.NumberFormat("en-IN", {

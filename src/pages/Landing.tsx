@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { ROUTE_PATHS } from "@/config/routes";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { cn } from "@/lib/utils";
 import { CredSmartLogo } from "@/components/public/CredSmartLogo";
 import { CredAlertShield3D } from "@/components/public/Landing3DIcons";
@@ -589,6 +590,9 @@ export default function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { userRole } = useOrganization();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+  const brandName = isWhiteLabeled ? brand.brand_name : "CredSmart";
+  const hideCredAlert = isWhiteLabeled && brand.hide_platform_branding;
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [ecosystemModalOpen, setEcosystemModalOpen] = useState(false);
   const [credibilityModalOpen, setCredibilityModalOpen] = useState(false);
@@ -684,11 +688,11 @@ export default function Landing() {
   return (
     <>
       <SEOHead
-        title="CredSmart by CredAlert — Free GST Billing, POS & Business Software"
-        description="India's all-in-one completely free business management platform. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence. Download for Android & Desktop."
+        title={isWhiteLabeled ? `${brandName} — ${brand.brand_tagline || "GST Billing, POS & Business Software"}` : "CredSmart by CredAlert — Free GST Billing, POS & Business Software"}
+        description={isWhiteLabeled && brand.meta_description ? brand.meta_description : "India's all-in-one completely free business management platform. Invoicing, POS billing, inventory, purchases, accounting, customer ledger, and credit intelligence. Download for Android & Desktop."}
         keywords="free GST billing software India, free POS software India, download billing app android, download pos desktop windows, GST invoice generator free, Vyapar alternative free, myBillBook alternative free, retail billing software, CredAlert credit risk intelligence"
-        canonicalUrl="https://pos.credalert.bussiness/"
-        structuredData={structuredDataSchemas}
+        canonicalUrl={isWhiteLabeled && typeof window !== "undefined" ? `${window.location.origin}/` : "https://pos.credalert.bussiness/"}
+        structuredData={isWhiteLabeled ? undefined : structuredDataSchemas}
       />
 
       <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#FF6A00] selection:text-white">
@@ -711,7 +715,7 @@ export default function Landing() {
                 {/* Dual-Suite Pill Badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-200/80 bg-blue-50/80 text-blue-700 text-xs font-semibold mb-3 shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                  <span>CredSmart ERP &amp; CRM Platform</span>
+                  <span>{brandName} ERP &amp; CRM Platform</span>
                 </div>
 
                 {/* Dual-Suite Main Headline */}
@@ -1037,7 +1041,7 @@ export default function Landing() {
             {/* Section Header */}
             <div className="text-center max-w-3xl mx-auto mb-12">
               <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
-                Why Businesses Love <span className="text-[#FF6A00]">CredSmart</span>
+                Why Businesses Love <span className="text-[#FF6A00]">{brandName}</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-600 mt-2">
                 Everything required to digitize billing, speed up counter sales, and secure customer credit.
@@ -1142,10 +1146,10 @@ export default function Landing() {
               >
                 <div>
                   <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
-                    The CredSmart <span className="text-[#FF6A00]">Business Ecosystem</span>
+                    The {brandName} <span className="text-[#FF6A00]">Business Ecosystem</span>
                   </h3>
                   <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
-                    Connect directly with businesses on CredSmart. When you create a sales invoice, it automatically registers in your buyer’s purchase ledger. No manual entry. Zero errors.
+                    Connect directly with businesses on {brandName}. When you create a sales invoice, it automatically registers in your buyer’s purchase ledger. No manual entry. Zero errors.
                   </p>
 
                   {/* Flow Diagram Micro-Widget */}
@@ -1227,10 +1231,10 @@ export default function Landing() {
                   {/* Left info column inside the right card */}
                   <div className="sm:col-span-7 flex flex-col items-start">
                     <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-3">
-                      CredAlert <span className="text-[#FF6A00]">Intelligence</span>
+                      {hideCredAlert ? brandName : "CredAlert"} <span className="text-[#FF6A00]">Intelligence</span>
                     </h3>
                     <p className="text-sm sm:text-base text-slate-600 leading-relaxed mb-6">
-                      Get alerted if a business is flagged as a potential defaulter or risky counterparty by our CredAlert Intelligence system. Make smarter credit decisions. Reduce risk.
+                      Get alerted if a business is flagged as a potential defaulter or risky counterparty by our {hideCredAlert ? brandName : "CredAlert"} Intelligence system. Make smarter credit decisions. Reduce risk.
                     </p>
 
                     <button
@@ -1242,17 +1246,19 @@ export default function Landing() {
                       <ExternalLink className="w-3.5 h-3.5" />
                     </button>
 
-                    <p className="text-xs text-slate-500 font-medium">
-                      For more details visit{" "}
-                      <a
-                        href="https://www.credalert.business"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline font-semibold"
-                      >
-                        www.credalert.business
-                      </a>
-                    </p>
+                    {!hideCredAlert && (
+                      <p className="text-xs text-slate-500 font-medium">
+                        For more details visit{" "}
+                        <a
+                          href="https://www.credalert.business"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline font-semibold"
+                        >
+                          www.credalert.business
+                        </a>
+                      </p>
+                    )}
                   </div>
 
                   {/* Right 3D Shield Graphic inside the right card */}
@@ -1517,7 +1523,7 @@ export default function Landing() {
                 <span>Native Multi-Platform Downloads</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                Run CredSmart on Any Device. <span className="text-[#FF6A00]">100% Free.</span>
+                Run {brandName} on Any Device. <span className="text-[#FF6A00]">100% Free.</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-600 mt-2">
                 Download high-performance native apps for Android smartphones, tablets, and Windows PC. Works offline with seamless cloud sync.
@@ -1541,7 +1547,7 @@ export default function Landing() {
 
                   <h3 className="text-2xl font-black text-slate-900 mb-2 flex items-center gap-2">
                     <Smartphone className="w-6 h-6 text-emerald-600" />
-                    <span>CredSmart for Android</span>
+                    <span>{brandName} for Android</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
                     Full-featured mobile billing terminal. Create invoices on the go, print over Bluetooth, manage party Udhar, and share receipts via WhatsApp.
@@ -1600,7 +1606,7 @@ export default function Landing() {
 
                   <h3 className="text-2xl font-black text-slate-900 mb-2 flex items-center gap-2">
                     <Monitor className="w-6 h-6 text-blue-600" />
-                    <span>CredSmart for Windows</span>
+                    <span>{brandName} for Windows</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
                     Engineered for high-volume billing counters, wholesale distribution warehouses, and zero-latency retail checkouts.
@@ -1657,10 +1663,10 @@ export default function Landing() {
                 The ₹0 Advantage
               </span>
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mt-1">
-                How CredSmart Compares with <span className="text-[#FF6A00]">Paid Alternatives</span>
+                How {brandName} Compares with <span className="text-[#FF6A00]">Paid Alternatives</span>
               </h2>
               <p className="text-sm sm:text-base text-slate-600 mt-2">
-                Why thousands of shop owners are switching from paid renewal software to CredSmart.
+                Why thousands of shop owners are switching from paid renewal software to {brandName}.
               </p>
             </div>
 
@@ -1670,7 +1676,7 @@ export default function Landing() {
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-700">
                     <th className="py-4 px-5 font-bold">Feature</th>
-                    <th className="py-4 px-5 font-black text-blue-700 bg-blue-50/60">CredSmart</th>
+                    <th className="py-4 px-5 font-black text-blue-700 bg-blue-50/60">{brandName}</th>
                     <th className="py-4 px-5 font-semibold text-slate-500">Vyapar</th>
                     <th className="py-4 px-5 font-semibold text-slate-500">myBillBook</th>
                     <th className="py-4 px-5 font-semibold text-slate-500">Tally Prime</th>
@@ -1858,7 +1864,7 @@ export default function Landing() {
                     Run Your Entire Business. <span className="text-amber-300">For Free.</span>
                   </h3>
                   <p className="text-sm sm:text-base text-blue-100 mt-1 max-w-xl font-medium">
-                    Stop juggling multiple tools and paying annual subscription renewals. Start using CredSmart today.
+                    Stop juggling multiple tools and paying annual subscription renewals. Start using {brandName} today.
                   </p>
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs font-semibold text-blue-100">
                     <span className="flex items-center gap-1.5">
@@ -1920,7 +1926,7 @@ export default function Landing() {
               <div className="w-14 h-14 rounded-full bg-[#FF6A00] flex items-center justify-center shadow-xl animate-pulse cursor-pointer">
                 <Play className="w-6 h-6 fill-white text-white ml-1" />
               </div>
-              <p className="mt-3 text-xs font-bold text-slate-200">CredSmart 2-Minute Guided Tour</p>
+              <p className="mt-3 text-xs font-bold text-slate-200">{brandName} 2-Minute Guided Tour</p>
               <p className="text-[11px] text-slate-400">GST Billing &bull; Barcode POS &bull; Inventory &amp; Ledgers</p>
             </div>
             <div className="mt-4 flex justify-end gap-2.5">
@@ -1945,7 +1951,7 @@ export default function Landing() {
           <DialogContent className="max-w-2xl p-6 rounded-2xl bg-white text-slate-900 border border-slate-200">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold text-slate-900">
-                The CredSmart Business Ecosystem
+                The {brandName} Business Ecosystem
               </DialogTitle>
               <DialogDescription className="text-slate-600 text-xs">
                 How automatic connected billing eliminates manual accounting errors.
@@ -1956,7 +1962,7 @@ export default function Landing() {
                 <span className="text-lg">1️⃣</span>
                 <div>
                   <h4 className="font-bold text-slate-900">Direct Invoicing Sync</h4>
-                  <p className="text-[11px] text-slate-600 mt-0.5">When you issue a GST invoice to another business using CredSmart, it instantly registers in their purchase ledger for one-click verification.</p>
+                  <p className="text-[11px] text-slate-600 mt-0.5">When you issue a GST invoice to another business using {brandName}, it instantly registers in their purchase ledger for one-click verification.</p>
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100 flex items-start gap-2.5">

@@ -9,9 +9,13 @@ import {
 } from "lucide-react";
 import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 export function PublicFooter() {
   const currentYear = new Date().getFullYear();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+  const brandName = isWhiteLabeled ? brand.brand_name : "CredSmart";
+  const hidePlatform = isWhiteLabeled && brand.hide_platform_branding;
 
   return (
     <footer className="bg-[#0B132B] text-slate-400 border-t border-slate-800/80 pt-16 pb-12">
@@ -25,20 +29,24 @@ export function PublicFooter() {
               <CredSmartLogo size="lg" variant="dark" />
             </Link>
             <p className="text-xs sm:text-sm text-slate-400 max-w-sm leading-relaxed">
-              India&apos;s all-in-one completely free business management platform. Dual-suite POS billing ERP and Workforce CRM with intelligent credit risk mitigation for MSMEs and enterprises.
+              {isWhiteLabeled && brand.meta_description
+                ? brand.meta_description
+                : "India's all-in-one completely free business management platform. Dual-suite POS billing ERP and Workforce CRM with intelligent credit risk mitigation for MSMEs and enterprises."}
             </p>
 
             {/* Trust & Security Badges (Standardized to 11px) */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> 100% Free Forever
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> GST Ready
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[11px] font-semibold">
                 <Lock className="w-3.5 h-3.5 text-blue-400" /> 256-Bit SSL Encrypted
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> CredAlert Intelligence
-              </span>
+              {!hidePlatform && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> CredAlert Intelligence
+                </span>
+              )}
             </div>
 
             {/* Official Native App Download Chips */}
@@ -186,17 +194,17 @@ export function PublicFooter() {
               </li>
               <li>
                 <Link to="/compare-vyapar" className="hover:text-slate-200 transition-colors">
-                  CredSmart vs Vyapar
+                  {brandName} vs Vyapar
                 </Link>
               </li>
               <li>
                 <Link to="/compare-mybillbook" className="hover:text-slate-200 transition-colors">
-                  CredSmart vs myBillBook
+                  {brandName} vs myBillBook
                 </Link>
               </li>
               <li>
                 <Link to="/compare-tally" className="hover:text-slate-200 transition-colors">
-                  CredSmart vs Tally Prime
+                  {brandName} vs Tally Prime
                 </Link>
               </li>
               <li>
@@ -215,19 +223,21 @@ export function PublicFooter() {
             <ul className="space-y-2 text-xs">
               <li>
                 <Link to="/about" className="hover:text-slate-200 transition-colors">
-                  About CredSmart
+                  About {brandName}
                 </Link>
               </li>
-              <li>
-                <a
-                  href="https://www.credalert.business"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-200 transition-colors inline-flex items-center gap-1"
-                >
-                  CredAlert Network <ExternalLink className="w-3 h-3 text-slate-500" />
-                </a>
-              </li>
+              {!hidePlatform && (
+                <li>
+                  <a
+                    href="https://www.credalert.business"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-slate-200 transition-colors inline-flex items-center gap-1"
+                  >
+                    CredAlert Network <ExternalLink className="w-3 h-3 text-slate-500" />
+                  </a>
+                </li>
+              )}
               <li>
                 <Link to="/security" className="hover:text-slate-200 transition-colors">
                   Security Architecture
@@ -255,10 +265,16 @@ export function PublicFooter() {
         {/* Bottom Bar: Copyright & Statutory Notes */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <div className="flex flex-col sm:flex-row items-center gap-2 text-center sm:text-left">
-            <p>© {currentYear} CredSmart by CredAlert. All rights reserved.</p>
+            <p>
+              {isWhiteLabeled && brand.custom_footer_text
+                ? brand.custom_footer_text
+                : isWhiteLabeled
+                ? `© ${currentYear} ${brand.brand_name}${brand.powered_by_text ? ` by ${brand.powered_by_text}` : ""}. All rights reserved.`
+                : `© ${currentYear} CredSmart by CredAlert. All rights reserved.`}
+            </p>
             <span className="hidden sm:inline text-slate-700">•</span>
             <p className="text-slate-400">
-              ₹0 Community Lifetime Free Retail POS ERP &amp; Workforce CRM
+              {isWhiteLabeled ? (brand.brand_tagline || "Retail POS ERP & Workforce CRM") : "₹0 Community Lifetime Free Retail POS ERP & Workforce CRM"}
             </p>
           </div>
           <div className="flex items-center gap-6">

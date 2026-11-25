@@ -10,6 +10,7 @@ const partiesRoutes = require('./routes/parties');
 const invoicesRoutes = require('./routes/invoices');
 const settingsRoutes = require('./routes/settings');
 const adminRoutes = require('./routes/admin');
+const whiteLabelRoutes = require('./routes/whiteLabel');
 const uploadRoutes = require('./routes/upload');
 const rpcRoutes = require('./routes/rpc');
 
@@ -97,7 +98,14 @@ app.use((req, res, next) => {
   }
 
   // Cache candidate endpoints: both /api/ and /rest/v1/ PostgREST passthroughs
-  if (req.method === 'GET' && (req.path.startsWith('/api/') || req.path.startsWith('/rest/v1/'))) {
+  // Skip micro-caching for real-time admin/white-label governance & license states
+  const bypassCache =
+    req.path.startsWith('/api/white-label') ||
+    req.path.startsWith('/api/admin') ||
+    req.path.startsWith('/api/presence') ||
+    req.path.startsWith('/api/features');
+
+  if (req.method === 'GET' && !bypassCache && (req.path.startsWith('/api/') || req.path.startsWith('/rest/v1/'))) {
     const orgId = req.headers['x-organization-id'] || req.query.org_id || req.query.organization_id || req.user?.orgId || 'global';
     const domain = isCrmPath(req.originalUrl || req.path) ? 'crm' : 'billing';
     const cacheKey = `${orgId}:${domain}:${req.originalUrl}`;
@@ -149,6 +157,7 @@ app.use('/api', partiesRoutes);   // For customers, suppliers, parties, credit-t
 app.use('/api', invoicesRoutes);  // For sales, purchases, purchase-invoices, expenses, returns
 app.use('/api', settingsRoutes);  // For organizations, memberships, storefront-settings, locations
 app.use('/api', adminRoutes);     // For presence heartbeat, live users, admin metrics, feature locks & requests
+app.use('/api', whiteLabelRoutes); // For white-label branding requests, admin approval keys & tenant themes
 app.use('/', uploadRoutes);       // For /api/upload/:bucket and storage
 app.use('/', rpcRoutes);          // For /rpc/:fn and /rest/v1/:table
 

@@ -43,6 +43,16 @@ async function main() {
       console.log(`[OK] Created new user: ${cleanEmail} (ID: ${userId})`);
     }
 
+    if (['owner', 'admin', 'super_admin'].includes(targetRole)) {
+      try {
+        await client.query('SAVEPOINT sp_platform_admin');
+        await client.query('UPDATE users SET is_platform_admin = true WHERE id = $1', [userId]);
+        await client.query('RELEASE SAVEPOINT sp_platform_admin');
+      } catch (_ignored) {
+        await client.query('ROLLBACK TO SAVEPOINT sp_platform_admin');
+      }
+    }
+
     // 2. Ensure organization exists
     let orgId;
     const orgRes = await client.query(

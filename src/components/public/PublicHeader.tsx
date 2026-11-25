@@ -8,6 +8,7 @@ import { useOrganization } from "@/hooks/useOrganization";
 import { cn } from "@/lib/utils";
 import { APP_DOWNLOAD_LINKS } from "@/config/downloadLinks";
 import { CredSmartLogo } from "./CredSmartLogo";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 interface PublicHeaderProps {
   onOpenDownloadModal?: (platform: "android" | "desktop") => void;
@@ -16,6 +17,7 @@ interface PublicHeaderProps {
 export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
   const { user } = useAuth();
   const { userRole } = useOrganization();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,7 +68,9 @@ export function PublicHeader({ onOpenDownloadModal }: PublicHeaderProps) {
     { label: "Features", href: "/features" },
     { label: "Pricing", href: "/pricing" },
     { label: "Ecosystem", href: "/#ecosystem" },
-    { label: "CredAlert Intel", href: "/#intelligence" },
+    ...(!isWhiteLabeled || !brand.hide_platform_branding
+      ? [{ label: "CredAlert Intel", href: "/#intelligence" }]
+      : []),
     { label: "Download", href: "/#download" },
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },

@@ -59,6 +59,19 @@ ALTER TABLE organizations ADD COLUMN IF NOT EXISTS business_type VARCHAR(100);
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS invoice_prefix VARCHAR(20) DEFAULT 'INV';
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS tax_rate NUMERIC(5,2) DEFAULT 18.00;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS financial_year_start DATE;
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS owner_id UUID;
+
+UPDATE organizations o
+SET owner_id = sub.user_id
+FROM (
+  SELECT DISTINCT ON (COALESCE(org_id, organization_id))
+    COALESCE(org_id, organization_id) AS org_id,
+    user_id
+  FROM org_memberships
+  WHERE LOWER(role) IN ('owner', 'store_owner', 'super_admin')
+  ORDER BY COALESCE(org_id, organization_id), created_at ASC
+) sub
+WHERE o.id = sub.org_id AND o.owner_id IS NULL;
 
 -- ============================================================================
 -- 3. MEMBERSHIPS (DUAL TABLE SUPPORT & CROSS-SYNC)
@@ -1551,10 +1564,130 @@ DROP TRIGGER IF EXISTS trg_sync_feature_usage_logs_org ON feature_usage_logs;
 CREATE TRIGGER trg_sync_feature_usage_logs_org BEFORE INSERT OR UPDATE ON feature_usage_logs FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
 CREATE INDEX IF NOT EXISTS idx_feature_usage_org_created ON feature_usage_logs(organization_id, created_at DESC);
 
+-- ============================================================================
+-- 22. WHITE-LABEL BRANDING, PLATFORM ADMIN APPROVAL & KEY ACTIVATION
+-- ============================================================================
+
+-- 1) Platform Admin Flag on users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_platform_admin BOOLEAN NOT NULL DEFAULT false;
+UPDATE users
+SET is_platform_admin = true
+WHERE LOWER(email) = 'ashwinbishnoi05@gmail.com';
+
+-- 2) white_label_requests
+CREATE TABLE IF NOT EXISTS white_label_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  requested_by UUID NOT NULL,
+  requester_email VARCHAR(255) DEFAULT '',
+  requester_name VARCHAR(255) DEFAULT '',
+  requested_brand_name VARCHAR(120) NOT NULL,
+  requested_domain VARCHAR(255) DEFAULT '',
+  notes TEXT DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'pending',
+  activation_key VARCHAR(64),
+  activation_key_hash VARCHAR(128),
+  failed_attempts INT NOT NULL DEFAULT 0,
+  last_attempt_at TIMESTAMPTZ,
+  reviewed_by UUID,
+  reviewed_at TIMESTAMPTZ,
+  admin_notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS requester_email VARCHAR(255) DEFAULT '';
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS requester_name VARCHAR(255) DEFAULT '';
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS requested_domain VARCHAR(255) DEFAULT '';
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS activation_key VARCHAR(64);
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS activation_key_hash VARCHAR(128);
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS failed_attempts INT NOT NULL DEFAULT 0;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS reviewed_by UUID;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+ALTER TABLE white_label_requests ADD COLUMN IF NOT EXISTS admin_notes TEXT DEFAULT '';
+
+DROP TRIGGER IF EXISTS trg_sync_wl_requests_org ON white_label_requests;
+CREATE TRIGGER trg_sync_wl_requests_org BEFORE INSERT OR UPDATE ON white_label_requests FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+CREATE INDEX IF NOT EXISTS idx_wl_requests_org_status ON white_label_requests(organization_id, status, created_at DESC);
+
+-- 3) white_label_configs
+CREATE TABLE IF NOT EXISTS white_label_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  request_id UUID REFERENCES white_label_requests(id) ON DELETE SET NULL,
+  is_activated BOOLEAN NOT NULL DEFAULT false,
+  is_enabled BOOLEAN NOT NULL DEFAULT true,
+  activated_at TIMESTAMPTZ,
+  brand_slug VARCHAR(100),
+  custom_domain VARCHAR(255),
+  brand_name VARCHAR(120) NOT NULL DEFAULT 'CredSmart',
+  brand_tagline VARCHAR(180) DEFAULT 'POS & Invoicing BillBook',
+  powered_by_text VARCHAR(120) DEFAULT '',
+  hide_platform_branding BOOLEAN NOT NULL DEFAULT true,
+  logo_light_url TEXT DEFAULT '',
+  logo_dark_url TEXT DEFAULT '',
+  favicon_url TEXT DEFAULT '',
+  splash_logo_url TEXT DEFAULT '',
+  primary_color VARCHAR(20) NOT NULL DEFAULT '#2563EB',
+  secondary_color VARCHAR(20) NOT NULL DEFAULT '#F97316',
+  sidebar_theme VARCHAR(20) NOT NULL DEFAULT 'dark',
+  support_email VARCHAR(255) DEFAULT '',
+  support_phone VARCHAR(40) DEFAULT '',
+  website_url TEXT DEFAULT '',
+  meta_title VARCHAR(180) DEFAULT '',
+  meta_description TEXT DEFAULT '',
+  custom_footer_text VARCHAR(255) DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(organization_id)
+);
+
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS org_id UUID;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS organization_id UUID;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS request_id UUID;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS is_activated BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS is_enabled BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS activated_at TIMESTAMPTZ;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS brand_slug VARCHAR(100);
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS custom_domain VARCHAR(255);
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS brand_tagline VARCHAR(180) DEFAULT 'POS & Invoicing BillBook';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS powered_by_text VARCHAR(120) DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS hide_platform_branding BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS logo_light_url TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS logo_dark_url TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS favicon_url TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS splash_logo_url TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS primary_color VARCHAR(20) NOT NULL DEFAULT '#2563EB';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS secondary_color VARCHAR(20) NOT NULL DEFAULT '#F97316';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS sidebar_theme VARCHAR(20) NOT NULL DEFAULT 'dark';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS support_email VARCHAR(255) DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS support_phone VARCHAR(40) DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS website_url TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS meta_title VARCHAR(180) DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS meta_description TEXT DEFAULT '';
+ALTER TABLE white_label_configs ADD COLUMN IF NOT EXISTS custom_footer_text VARCHAR(255) DEFAULT '';
+
+DROP TRIGGER IF EXISTS trg_sync_wl_configs_org ON white_label_configs;
+CREATE TRIGGER trg_sync_wl_configs_org BEFORE INSERT OR UPDATE ON white_label_configs FOR EACH ROW EXECUTE FUNCTION sync_org_id_and_organization_id();
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wl_configs_slug_unique
+  ON white_label_configs(LOWER(brand_slug))
+  WHERE brand_slug IS NOT NULL AND brand_slug <> '';
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_wl_configs_domain_unique
+  ON white_label_configs(LOWER(custom_domain))
+  WHERE custom_domain IS NOT NULL AND custom_domain <> '';
+
 COMMIT;
 
 -- ============================================================================
--- 22. PLANNER STATISTICS (OUTSIDE TRANSACTION BLOCK)
+-- 23. PLANNER STATISTICS (OUTSIDE TRANSACTION BLOCK)
 -- ============================================================================
 ANALYZE organizations;
 ANALYZE organization_memberships;
@@ -1605,4 +1738,6 @@ ANALYZE user_presence;
 ANALYZE user_feature_locks;
 ANALYZE feature_access_requests;
 ANALYZE feature_usage_logs;
+ANALYZE white_label_requests;
+ANALYZE white_label_configs;
 

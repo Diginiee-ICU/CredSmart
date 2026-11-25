@@ -32,14 +32,14 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB max
 });
 
-// POST /api/upload/:bucket
-router.post('/upload/:bucket', optionalAuth, upload.single('file'), (req, res) => {
+// Shared upload handler supporting both /api/upload/:bucket and /upload/:bucket
+const handleUpload = (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const bucket = req.params.bucket;
+    const bucket = String(req.params.bucket || 'general').replace(/[^a-zA-Z0-9_-]/g, '');
     const filename = req.file.filename;
     const apiOrigin = process.env.API_BASE_URL || 'https://api.credsmart.online';
     const publicUrl = `${apiOrigin}/storage/v1/object/public/${bucket}/${filename}`;
@@ -54,17 +54,24 @@ router.post('/upload/:bucket', optionalAuth, upload.single('file'), (req, res) =
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
-});
+};
+
+router.post('/api/upload/:bucket', optionalAuth, upload.single('file'), handleUpload);
+router.post('/upload/:bucket', optionalAuth, upload.single('file'), handleUpload);
 
 // GET /storage/v1/object/public/:bucket/:filename
-router.get('/storage/v1/object/public/:bucket/:filename', (req, res) => {
-  const { bucket, filename } = req.params;
+const handleServePublicFile = (req, res) => {
+  const bucket = path.basename(String(req.params.bucket || 'general'));
+  const filename = path.basename(String(req.params.filename || ''));
   const filePath = path.join(uploadDir, bucket, filename);
 
-  if (!fs.existsSync(filePath)) {
+  if (!filename || !fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'File not found' });
   }
   return res.sendFile(filePath);
-});
+};
+
+router.get('/storage/v1/object/public/:bucket/:filename', handleServePublicFile);
+router.get('/api/storage/v1/object/public/:bucket/:filename', handleServePublicFile);
 
 module.exports = router;

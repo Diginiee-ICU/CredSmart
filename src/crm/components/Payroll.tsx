@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, MessageCircle, Pencil, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { actions, useStore, payrollRow, money, monthKey, today, waLink, operatorRole, payslipText, type Employee } from "@/crm/lib/store";
+import { loadActiveBrandCache } from "@/services/whiteLabelApi";
 import { Avatar, Button, Field, inputCls, Sheet } from "./primitives";
 import { CompanyRules } from "./CompanyRules";
 export function Payroll({ employeeId }: { employeeId?: string | undefined }) {
@@ -23,7 +24,7 @@ export function Payroll({ employeeId }: { employeeId?: string | undefined }) {
     if (!e.mobile) { toast.error("Add the employee's phone in Staff & Roles"); return; }
     const row = payrollRow(e, s, month);
     const p = row.paid;
-    const text = p?.breakdown ? payslipText(e, month, p.breakdown, p.paidAt) : p ? `CredSmart Salary Slip — ${month}\n${e.name}\nBase: ${money(p.base)}\nDeductions: ${money(p.deductions)}\nNet Paid: ${money(p.amount)}\nPaid: ${new Date(p.paidAt).toLocaleDateString()}` : payslipText(e, month, row.breakdown);
+    const text = p?.breakdown ? payslipText(e, month, p.breakdown, p.paidAt) : p ? `${loadActiveBrandCache().brand.brand_name} Salary Slip — ${month}\n${e.name}\nBase: ${money(p.base)}\nDeductions: ${money(p.deductions)}\nNet Paid: ${money(p.amount)}\nPaid: ${new Date(p.paidAt).toLocaleDateString()}` : payslipText(e, month, row.breakdown);
     window.open(waLink(e.mobile, text), "_blank", "noopener");
   };
   return <section className="space-y-3">

@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CredSmartLogo } from "@/components/public/CredSmartLogo";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 const businessTypes = [
   "Grocery",
@@ -89,6 +90,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { refresh: refreshOrganization } = useOrganization();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -496,7 +498,9 @@ export default function Auth() {
             <CredSmartLogo size="xl" />
           </Link>
           <p className="text-xs sm:text-sm text-slate-600 mt-2.5 font-medium">
-            All-in-One Completely Free Business Management Platform
+            {isWhiteLabeled && brand.brand_tagline
+              ? brand.brand_tagline
+              : "All-in-One Completely Free Business Management Platform"}
           </p>
         </div>
 

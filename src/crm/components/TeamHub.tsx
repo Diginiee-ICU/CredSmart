@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BellRing, MessageCircle, Pin, Plus, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { actions, operatorRole, teamStatus, useStore, waLink, type TeamStatus } from "@/crm/lib/store";
+import { loadActiveBrandCache } from "@/services/whiteLabelApi";
 import { validMeetingLink } from "@/crm/lib/workforce-rules";
 import { Button, Field, inputCls, Sheet } from "./primitives";
 export const STATUS_COLORS: Record<TeamStatus, string> = { Present: "text-success", "On Break": "text-warning", Late: "text-late", Absent: "text-destructive" };
@@ -27,7 +28,7 @@ export function TeamHub() {
       {[...s.broadcasts].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.at - a.at).map((b) => <article key={b.id} className="glass p-3 space-y-2 min-w-0">
         <div className="flex justify-between gap-2 items-center"><span className={`text-[10px] font-semibold ${b.priority === "Urgent" ? "text-destructive" : "text-primary"}`}>{b.priority ?? "General"}</span>{role === "Admin" ? <Button variant="ghost" size="icon" className={`size-6 ${b.pinned ? "text-primary" : ""}`} title="Pin broadcast" aria-label="Pin broadcast" onClick={() => actions.pinBroadcast(b.id)}><Pin className="size-3" /></Button> : b.pinned && <Pin className="size-3 text-primary" />}</div>
         <p className="text-xs whitespace-pre-wrap break-words">{b.text}</p><p className="text-[9px] text-muted-foreground">{b.author ?? "Admin"} · {new Date(b.at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
-        {role === "Admin" && <Button variant="ghost" className="h-7 px-0 text-[10px] text-success" onClick={() => share(`${b.priority ?? "General"} — CredSmart\n${b.text}`)}><MessageCircle className="size-3" />Broadcast on WhatsApp</Button>}
+        {role === "Admin" && <Button variant="ghost" className="h-7 px-0 text-[10px] text-success" onClick={() => share(`${b.priority ?? "General"} — ${loadActiveBrandCache().brand.brand_name}\n${b.text}`)}><MessageCircle className="size-3" />Broadcast on WhatsApp</Button>}
       </article>)}
     </div>
     {["Admin", "Manager"].includes(role) && <div className="border-t border-border pt-3 space-y-2"><h3 className="text-xs font-semibold flex gap-2 items-center"><Video className="size-4 text-primary" />Start Team Huddle</h3>

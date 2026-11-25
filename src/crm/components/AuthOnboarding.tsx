@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/crm/integrations/supabase/client";
 import { actions, useStore } from "@/crm/lib/store";
+import { loadActiveBrandCache } from "@/services/whiteLabelApi";
 const logoFull = { url: "/crm-logo.jpg" };
 import { Button, Field, inputCls, Sheet } from "./primitives";
 import { Users, ArrowLeft } from "lucide-react";
@@ -37,7 +38,17 @@ export function AuthSheet({ onClose, onStaff, onBack }: { onClose: () => void; o
           Back to portal selection
         </button>
       )}
-      <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mx-auto w-48 max-w-full" data-no-i18n />
+      {(() => {
+        const wl = loadActiveBrandCache();
+        if (wl.isWhiteLabeled) {
+          return wl.brand.logo_light_url ? (
+            <img src={wl.brand.logo_light_url} alt={wl.brand.brand_name} className="mx-auto max-h-12 w-auto max-w-full object-contain" data-no-i18n />
+          ) : (
+            <p className="text-center font-black text-lg" data-no-i18n>{wl.brand.brand_name} CRM</p>
+          );
+        }
+        return <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mx-auto w-48 max-w-full" data-no-i18n />;
+      })()}
       <div className="glass p-1 rounded-full grid grid-cols-2 gap-1">
         <Button type="button" className="h-8 text-xs rounded-full" variant={mode === "signup" ? "default" : "ghost"} onClick={() => setMode("signup")}>Sign Up</Button>
         <Button type="button" className="h-8 text-xs rounded-full" variant={mode === "signin" ? "default" : "ghost"} onClick={() => setMode("signin")}>Sign In</Button>
@@ -62,7 +73,17 @@ export function CompanyOnboarding() {
   return (
     <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-xl overflow-y-auto p-4 flex items-start sm:items-center justify-center">
       <form className="glass w-full max-w-md p-4 space-y-3 rounded-3xl" aria-label="Company onboarding" onSubmit={(ev) => { ev.preventDefault(); try { actions.setupCompany(f); toast.success("Company workspace ready"); } catch (err) { toast.error(err instanceof Error ? err.message : "Could not save"); } }}>
-        <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mx-auto w-44 max-w-full" data-no-i18n />
+        {(() => {
+          const wl = loadActiveBrandCache();
+          if (wl.isWhiteLabeled) {
+            return wl.brand.logo_light_url ? (
+              <img src={wl.brand.logo_light_url} alt={wl.brand.brand_name} className="mx-auto max-h-12 w-auto max-w-full object-contain" data-no-i18n />
+            ) : (
+              <p className="text-center font-black text-lg" data-no-i18n>{wl.brand.brand_name} CRM</p>
+            );
+          }
+          return <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mx-auto w-44 max-w-full" data-no-i18n />;
+        })()}
         <div><p className="text-[10px] uppercase font-semibold text-muted-foreground">Step 1 of 1</p><h2 className="text-lg font-bold">Set up your company</h2><p className="text-xs text-muted-foreground">You'll be the admin. You can add staff right after.</p></div>
         <Field label="Company name"><input required className={`${inputCls} text-xs`} value={f.name} onChange={up("name")} /></Field>
         <div className="grid grid-cols-2 gap-2">
@@ -121,7 +142,17 @@ export function StaffSignIn({ initialCompany, onOwner, onBack }: { initialCompan
               Back to portal selection
             </button>
           )}
-          <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="w-44 max-w-full mb-2" data-no-i18n />
+          {(() => {
+            const wl = loadActiveBrandCache();
+            if (wl.isWhiteLabeled) {
+              return wl.brand.logo_light_url ? (
+                <img src={wl.brand.logo_light_url} alt={wl.brand.brand_name} className="max-h-12 w-auto max-w-full mb-2 object-contain" data-no-i18n />
+              ) : (
+                <p className="font-black text-lg mb-2" data-no-i18n>{wl.brand.brand_name} CRM</p>
+              );
+            }
+            return <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="w-44 max-w-full mb-2" data-no-i18n />;
+          })()}
           <h1 className="text-xl font-bold">Staff Sign In</h1>
           <p className="text-xs text-muted-foreground">Use the mobile number and passcode your admin shared.</p>
         </div>

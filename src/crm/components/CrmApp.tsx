@@ -26,6 +26,7 @@ import {
 import "@/crm/styles/crm.css";
 const logoFull = { url: "/crm-logo.jpg" };
 const logoShield = { url: "/favicon.png" };
+import { loadActiveBrandCache } from "@/services/whiteLabelApi";
 import { OnboardingChecklist } from "./OnboardingChecklist";
 import { CredAlertNudge } from "./CredAlertNudge";
 import { AuthSheet, CompanyOnboarding, STAFF_COMPANY_KEY, StaffSignIn } from "./AuthOnboarding";
@@ -448,8 +449,10 @@ function Eod({ onClose }: { onClose: () => void }) {
     ),
     pending: s.tasks.filter((t) => t.assigneeId === e.id && !t.done),
   }));
+  const wlCache = loadActiveBrandCache();
+  const wlBrandName = wlCache.isWhiteLabeled ? wlCache.brand.brand_name : "CredSmart";
   const text =
-    `CredSmart EOD — ${today()}\n\n` +
+    `${wlBrandName} EOD — ${today()}\n\n` +
     rows
       .map(
         (r) =>
@@ -600,7 +603,22 @@ export function CrmApp() {
   return (
     <div data-crm-active-tab={tab} className={`min-h-dvh mx-auto max-w-6xl lg:grid lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 lg:p-6 ${staff ? "employee-portal" : ""}`} style={staff ? { "--employee-color": staff.color } as React.CSSProperties : undefined}>
       <aside className="hidden lg:flex flex-col gap-2 pt-2">
-        <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mb-5 px-1 w-full max-w-[180px]" data-no-i18n />
+        {(() => {
+          const wl = loadActiveBrandCache();
+          if (wl.isWhiteLabeled) {
+            return wl.brand.logo_light_url ? (
+              <img src={wl.brand.logo_light_url} alt={wl.brand.brand_name} className="mb-5 px-1 max-h-11 w-auto max-w-[180px] object-contain" data-no-i18n />
+            ) : (
+              <div className="mb-5 px-1 flex items-center gap-2 font-black text-base tracking-tight" data-no-i18n>
+                <span className="size-7 rounded-lg flex items-center justify-center text-white text-xs" style={{ backgroundColor: wl.brand.primary_color }}>
+                  {wl.brand.brand_name.charAt(0).toUpperCase()}
+                </span>
+                <span>{wl.brand.brand_name} CRM</span>
+              </div>
+            );
+          }
+          return <img src={logoFull.url} alt="CredSmart CRM by CredAlert" className="mb-5 px-1 w-full max-w-[180px]" data-no-i18n />;
+        })()}
         {tabs.map(({ id, label, icon: I }) => (
           <Button
             key={id}
@@ -618,8 +636,16 @@ export function CrmApp() {
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 mb-4">
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-[9px] uppercase text-muted-foreground font-semibold mb-1 truncate">
-              <img src={logoShield.url} alt="" className="size-4 shrink-0" data-no-i18n />
-              {s.company?.name ?? "CredSmart CRM"}
+              <img
+                src={(() => {
+                  const wl = loadActiveBrandCache();
+                  return wl.isWhiteLabeled ? (wl.brand.favicon_url || wl.brand.logo_light_url || logoShield.url) : logoShield.url;
+                })()}
+                alt=""
+                className="size-4 shrink-0 object-contain"
+                data-no-i18n
+              />
+              {s.company?.name ?? `${loadActiveBrandCache().brand.brand_name} CRM`}
             </p>
             <h1 className="command-title text-xl font-extrabold tracking-normal truncate">
               {tab === "command" ? staff ? "My Workspace" : "Command Center" : tab === "staff" && staff ? "My Profile & Team" : tab === "payroll" && staff ? "My Pay & Udhar" : tab === "profile" ? "My Profile" : selected?.label}

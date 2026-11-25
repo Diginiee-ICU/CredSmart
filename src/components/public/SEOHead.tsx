@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 export interface BreadcrumbItem {
   name: string;
@@ -37,15 +38,32 @@ export function SEOHead({
   modifiedTime,
   author = "CredSmart by CredAlert",
 }: SEOHeadProps) {
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+
   useEffect(() => {
+    const activeBaseUrl = isWhiteLabeled && typeof window !== "undefined" ? window.location.origin : DEFAULT_BASE_URL;
+    const brandName = isWhiteLabeled ? brand.brand_name : "CredSmart";
+    const siteSuffix = isWhiteLabeled
+      ? brand.powered_by_text && !brand.hide_platform_branding
+        ? `${brand.brand_name} by ${brand.powered_by_text}`
+        : brand.brand_name
+      : "CredSmart by CredAlert";
+
     // Resolve absolute canonical URL
     const resolvedCanonical = canonicalUrl
-      ? (canonicalUrl.startsWith("http") ? canonicalUrl : `${DEFAULT_BASE_URL}${canonicalUrl.startsWith("/") ? "" : "/"}${canonicalUrl}`)
-      : `${DEFAULT_BASE_URL}/`;
+      ? (canonicalUrl.startsWith("http") ? canonicalUrl : `${activeBaseUrl}${canonicalUrl.startsWith("/") ? "" : "/"}${canonicalUrl}`)
+      : `${activeBaseUrl}/`;
 
     // Title formatting
-    const formattedTitle = title.includes("CredSmart") ? title : `${title} | CredSmart by CredAlert`;
+    const effectiveTitle = isWhiteLabeled
+      ? brand.meta_title || (title.replace(/CredSmart(\s+by\s+CredAlert)?/gi, brandName))
+      : title;
+    const formattedTitle = effectiveTitle.includes(brandName) ? effectiveTitle : `${effectiveTitle} | ${siteSuffix}`;
     document.title = formattedTitle;
+
+    const effectiveDescription = isWhiteLabeled && brand.meta_description ? brand.meta_description : description;
+    const effectiveOgImage = isWhiteLabeled ? brand.logo_light_url || brand.favicon_url || ogImage : ogImage;
+    const effectiveAuthor = isWhiteLabeled ? siteSuffix : author;
 
     // Helper for meta tags
     const setMetaTag = (attr: "name" | "property", key: string, content: string) => {
@@ -60,10 +78,10 @@ export function SEOHead({
     };
 
     // Primary Meta Tags
-    setMetaTag("name", "description", description);
-    setMetaTag("name", "keywords", keywords);
+    setMetaTag("name", "description", effectiveDescription);
+    setMetaTag("name", "keywords", isWhiteLabeled ? brandName : keywords);
     setMetaTag("name", "robots", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
-    setMetaTag("name", "author", author);
+    setMetaTag("name", "author", effectiveAuthor);
 
     // Canonical Tag
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
@@ -76,24 +94,26 @@ export function SEOHead({
 
     // OpenGraph Meta Tags
     setMetaTag("property", "og:title", formattedTitle);
-    setMetaTag("property", "og:description", description);
+    setMetaTag("property", "og:description", effectiveDescription);
     setMetaTag("property", "og:type", ogType);
     setMetaTag("property", "og:url", resolvedCanonical);
-    setMetaTag("property", "og:image", ogImage);
-    setMetaTag("property", "og:site_name", "CredSmart by CredAlert");
+    setMetaTag("property", "og:image", effectiveOgImage);
+    setMetaTag("property", "og:site_name", siteSuffix);
     setMetaTag("property", "og:locale", "en_IN");
 
     if (publishedTime) setMetaTag("property", "article:published_time", publishedTime);
     if (modifiedTime) setMetaTag("property", "article:modified_time", modifiedTime);
-    if (author) setMetaTag("property", "article:author", author);
+    if (effectiveAuthor) setMetaTag("property", "article:author", effectiveAuthor);
 
     // Twitter Card Meta Tags
     setMetaTag("name", "twitter:card", "summary_large_image");
     setMetaTag("name", "twitter:title", formattedTitle);
-    setMetaTag("name", "twitter:description", description);
-    setMetaTag("name", "twitter:image", ogImage);
-    setMetaTag("name", "twitter:site", "@credalert");
-    setMetaTag("name", "twitter:creator", "@credalert");
+    setMetaTag("name", "twitter:description", effectiveDescription);
+    setMetaTag("name", "twitter:image", effectiveOgImage);
+    if (!isWhiteLabeled) {
+      setMetaTag("name", "twitter:site", "@credalert");
+      setMetaTag("name", "twitter:creator", "@credalert");
+    }
 
     // Build Structured Data Array
     const schemasToInject: Record<string, any>[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -136,7 +156,7 @@ export function SEOHead({
     } else if (scriptEl) {
       scriptEl.remove();
     }
-  }, [title, description, keywords, canonicalUrl, ogType, ogImage, structuredData, breadcrumbs, publishedTime, modifiedTime, author]);
+  }, [title, description, keywords, canonicalUrl, ogType, ogImage, structuredData, breadcrumbs, publishedTime, modifiedTime, author, brand, isWhiteLabeled]);
 
   return null;
 }

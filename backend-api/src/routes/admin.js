@@ -7,15 +7,94 @@ const router = express.Router();
 // All admin and feature routes require authentication
 router.use(authenticate);
 
+const PLATFORM_ADMIN_EMAILS = new Set(
+  (process.env.PLATFORM_ADMIN_EMAILS || 'ashwinbishnoi05@gmail.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+
 const getOrgId = (req) => {
   return (
     req.headers['x-organization-id'] ||
     req.orgId ||
     req.query.organization_id ||
     req.query.org_id ||
-    req.body.organization_id ||
-    req.body.org_id
+    req.body?.organization_id ||
+    req.body?.org_id
   );
+};
+
+const isPlatformAdmin = async (reqUser) => {
+  if (!reqUser || !reqUser.id) return false;
+  if (reqUser.is_platform_admin === true) return true;
+  if (reqUser.email && PLATFORM_ADMIN_EMAILS.has(String(reqUser.email).trim().toLowerCase())) {
+    return true;
+  }
+  try {
+    const res = await pool.query('SELECT email, is_platform_admin FROM users WHERE id = $1', [reqUser.id]);
+    if (res.rows.length > 0) {
+      const row = res.rows[0];
+      if (row.is_platform_admin === true) return true;
+      if (row.email && PLATFORM_ADMIN_EMAILS.has(String(row.email).trim().toLowerCase())) {
+        return true;
+      }
+    }
+  } catch (_err) {
+    // Fallback if column not migrated yet
+  }
+  try {
+    const roleRes = await pool.query(
+      `SELECT 1 FROM org_memberships WHERE user_id = $1 AND LOWER(role) = 'super_admin' LIMIT 1`,
+      [reqUser.id]
+    );
+    if (roleRes.rows.length > 0) return true;
+  } catch (_err) {}
+  return false;
+};
+
+const shouldUsePlatformScope = async (req) => {
+  const requestedScope = String(req.query.scope || '').toLowerCase();
+  if (requestedScope === 'org') return false;
+  return await isPlatformAdmin(req.user);
+};
+
+const resolveTargetOrgForFeatureManagement = async (req, targetUserId) => {
+  const callerOrgId = getOrgId(req);
+  const explicitTargetOrgId = req.query.target_org_id || req.body?.target_org_id;
+  const platformAdmin = await isPlatformAdmin(req.user);
+
+  if (platformAdmin && explicitTargetOrgId && explicitTargetOrgId !== 'undefined' && explicitTargetOrgId !== 'null') {
+    return String(explicitTargetOrgId);
+  }
+
+  if (platformAdmin && targetUserId) {
+    try {
+      const membershipRes = await pool.query(
+        `SELECT org_id FROM (
+           SELECT COALESCE(org_id, organization_id) AS org_id, 1 AS prio, created_at
+           FROM org_memberships WHERE user_id = $1 AND COALESCE(org_id, organization_id) IS NOT NULL
+           UNION ALL
+           SELECT COALESCE(organization_id, org_id) AS org_id, 2 AS prio, created_at
+           FROM organization_memberships WHERE user_id = $1 AND COALESCE(organization_id, org_id) IS NOT NULL
+           UNION ALL
+           SELECT id AS org_id, 3 AS prio, created_at
+           FROM organizations WHERE owner_id = $1
+           UNION ALL
+           SELECT COALESCE(organization_id, org_id) AS org_id, 4 AS prio, last_active_at AS created_at
+           FROM user_presence WHERE user_id = $1 AND COALESCE(organization_id, org_id) IS NOT NULL
+         ) m ORDER BY prio ASC, created_at ASC LIMIT 1`,
+        [targetUserId]
+      );
+      if (membershipRes.rows.length > 0 && membershipRes.rows[0].org_id) {
+        return membershipRes.rows[0].org_id;
+      }
+    } catch (_err) {
+      // Fallback to callerOrgId below
+    }
+  }
+
+  return callerOrgId;
 };
 
 // ============================================================================
@@ -37,7 +116,7 @@ router.post('/presence/heartbeat', async (req, res) => {
       user_role = 'cashier',
       current_path = '',
       platform = 'desktop-web',
-    } = req.body;
+    } = req.body || {};
 
     const query = `
       INSERT INTO user_presence (
@@ -75,16 +154,45 @@ router.post('/presence/heartbeat', async (req, res) => {
 // GET /api/presence/live-users
 router.get('/presence/live-users', async (req, res) => {
   try {
+    const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
-    if (!orgId) {
+
+    if (!usePlatformScope && !orgId) {
       return res.status(400).json({ error: 'Organization ID is required' });
+    }
+
+    if (usePlatformScope) {
+      const query = `
+        SELECT * FROM (
+          SELECT DISTINCT ON (p.user_id)
+            p.*,
+            u.avatar_url,
+            COALESCE(NULLIF(TRIM(p.user_name), ''), NULLIF(TRIM(u.full_name), ''), split_part(COALESCE(NULLIF(p.user_email, ''), u.email, ''), '@', 1), 'User') as display_name,
+            COALESCE(NULLIF(p.user_email, ''), u.email, '') as resolved_email,
+            COALESCE(o.name, 'Business') as organization_name,
+            CASE
+              WHEN p.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 'online'
+              WHEN p.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 'idle'
+              ELSE 'offline'
+            END as status
+          FROM user_presence p
+          LEFT JOIN users u ON u.id = p.user_id
+          LEFT JOIN organizations o ON o.id = COALESCE(p.organization_id, p.org_id)
+          WHERE p.last_active_at >= NOW() - INTERVAL '30 minutes'
+          ORDER BY p.user_id, p.last_active_at DESC
+        ) sub
+        ORDER BY sub.last_active_at DESC;
+      `;
+      const result = await pool.query(query);
+      return res.json(result.rows || []);
     }
 
     const query = `
       SELECT 
         p.*,
         u.avatar_url,
-        COALESCE(NULLIF(p.user_name, ''), u.full_name, split_part(p.user_email, '@', 1)) as display_name,
+        COALESCE(NULLIF(TRIM(p.user_name), ''), NULLIF(TRIM(u.full_name), ''), split_part(COALESCE(NULLIF(p.user_email, ''), u.email, ''), '@', 1), 'User') as display_name,
+        COALESCE(o.name, 'Business') as organization_name,
         CASE
           WHEN p.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 'online'
           WHEN p.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 'idle'
@@ -92,6 +200,7 @@ router.get('/presence/live-users', async (req, res) => {
         END as status
       FROM user_presence p
       LEFT JOIN users u ON u.id = p.user_id
+      LEFT JOIN organizations o ON o.id = COALESCE(p.organization_id, p.org_id)
       WHERE (p.organization_id = $1 OR p.org_id = $1)
         AND p.last_active_at >= NOW() - INTERVAL '30 minutes'
       ORDER BY p.last_active_at DESC;
@@ -112,20 +221,37 @@ router.get('/presence/live-users', async (req, res) => {
 // GET /api/admin/metrics
 router.get('/admin/metrics', async (req, res) => {
   try {
+    const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
-    if (!orgId) {
+
+    if (!usePlatformScope && !orgId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
+    const scopeWhere = usePlatformScope ? '1=1' : '(organization_id = $1 OR org_id = $1)';
+    const salesScopeWhere = usePlatformScope ? '1=1' : '(s.organization_id = $1 OR s.org_id = $1)';
+    const params = usePlatformScope ? [] : [orgId];
+
     // 1. Live Users Count (active in last 3 minutes)
     const liveUsersRes = await pool.query(
-      `SELECT COUNT(*)::int as count 
+      `SELECT COUNT(DISTINCT user_id)::int as count 
        FROM user_presence 
-       WHERE (organization_id = $1 OR org_id = $1) 
-         AND last_active_at >= NOW() - INTERVAL '3 minutes'`,
-      [orgId]
+       WHERE ${scopeWhere} AND last_active_at >= NOW() - INTERVAL '3 minutes'`,
+      params
     );
     const liveUsersCount = liveUsersRes.rows[0]?.count || 0;
+
+    // 1b. Platform user & business counts when in platform scope
+    let totalUsersCount;
+    let totalOrgsCount;
+    if (usePlatformScope) {
+      const [uCountRes, oCountRes] = await Promise.all([
+        pool.query('SELECT COUNT(*)::int as count FROM users'),
+        pool.query('SELECT COUNT(*)::int as count FROM organizations'),
+      ]);
+      totalUsersCount = uCountRes.rows[0]?.count || 0;
+      totalOrgsCount = oCountRes.rows[0]?.count || 0;
+    }
 
     // 2. Today's Billings Count & Amount
     const todaySalesRes = await pool.query(
@@ -133,9 +259,8 @@ router.get('/admin/metrics', async (req, res) => {
          COUNT(*)::int as count,
          COALESCE(SUM(total), 0)::numeric(12,2) as total_amount
        FROM sales 
-       WHERE (organization_id = $1 OR org_id = $1) 
-         AND created_at >= CURRENT_DATE`,
-      [orgId]
+       WHERE ${scopeWhere} AND created_at >= CURRENT_DATE`,
+      params
     );
     const todayBillsCount = todaySalesRes.rows[0]?.count || 0;
     const todaySalesTotal = Number(todaySalesRes.rows[0]?.total_amount || 0);
@@ -146,8 +271,8 @@ router.get('/admin/metrics', async (req, res) => {
          COUNT(*)::int as count,
          COALESCE(SUM(total), 0)::numeric(12,2) as total_amount
        FROM sales 
-       WHERE (organization_id = $1 OR org_id = $1)`,
-      [orgId]
+       WHERE ${scopeWhere}`,
+      params
     );
     const totalBillsCount = totalSalesRes.rows[0]?.count || 0;
     const totalSalesTotal = Number(totalSalesRes.rows[0]?.total_amount || 0);
@@ -158,9 +283,8 @@ router.get('/admin/metrics', async (req, res) => {
       const pendingReqRes = await pool.query(
         `SELECT COUNT(*)::int as count 
          FROM feature_access_requests 
-         WHERE (organization_id = $1 OR org_id = $1) 
-           AND status = 'pending'`,
-        [orgId]
+         WHERE ${scopeWhere} AND status = 'pending'`,
+        params
       );
       pendingRequestsCount = pendingReqRes.rows[0]?.count || 0;
     } catch (_reqErr) {
@@ -174,28 +298,29 @@ router.get('/admin/metrics', async (req, res) => {
          COUNT(*)::int as count,
          COALESCE(SUM(total), 0)::numeric(12,2) as total
        FROM sales 
-       WHERE (organization_id = $1 OR org_id = $1) 
-         AND created_at >= CURRENT_DATE
+       WHERE ${scopeWhere} AND created_at >= CURRENT_DATE
        GROUP BY hour 
        ORDER BY hour ASC`,
-      [orgId]
+      params
     );
 
-    // 6. Billings by Staff / Cashier
+    // 6. Billings by Staff / Business Owner
     const staffSalesRes = await pool.query(
       `SELECT 
-         s.created_by as user_id,
-         COALESCE(u.full_name, split_part(u.email, '@', 1), 'Counter Operator') as user_name,
-         u.email as user_email,
+         COALESCE(s.created_by::text, o.id::text, 'unassigned') as user_id,
+         COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(u.email, '@', 1), o.name, 'Business Operator') as user_name,
+         COALESCE(u.email, o.email, '') as user_email,
+         COALESCE(o.name, 'Business') as organization_name,
          COUNT(s.id)::int as count,
          COALESCE(SUM(s.total), 0)::numeric(12,2) as total
        FROM sales s
        LEFT JOIN users u ON u.id = s.created_by
-       WHERE (s.organization_id = $1 OR s.org_id = $1)
-       GROUP BY s.created_by, u.full_name, u.email
+       LEFT JOIN organizations o ON o.id = COALESCE(s.organization_id, s.org_id)
+       WHERE ${salesScopeWhere}
+       GROUP BY COALESCE(s.created_by::text, o.id::text, 'unassigned'), u.full_name, u.email, o.name, o.email
        ORDER BY count DESC
-       LIMIT 10`,
-      [orgId]
+       LIMIT 15`,
+      params
     );
 
     // 7. Feature Usage Analytics
@@ -207,11 +332,10 @@ router.get('/admin/metrics', async (req, res) => {
            COUNT(*)::int as usage_count,
            COUNT(DISTINCT user_id)::int as unique_users
          FROM feature_usage_logs
-         WHERE (organization_id = $1 OR org_id = $1)
-           AND created_at >= NOW() - INTERVAL '30 days'
+         WHERE ${scopeWhere} AND created_at >= NOW() - INTERVAL '30 days'
          GROUP BY feature_key
          ORDER BY usage_count DESC`,
-        [orgId]
+        params
       );
       featureUsageStats = usageRes.rows || [];
     } catch (_usageErr) {
@@ -219,7 +343,10 @@ router.get('/admin/metrics', async (req, res) => {
     }
 
     return res.json({
+      scope: usePlatformScope ? 'all' : 'org',
       live_users_count: liveUsersCount,
+      total_users_count: totalUsersCount,
+      total_orgs_count: totalOrgsCount,
       today_bills_count: todayBillsCount,
       today_sales_total: todaySalesTotal,
       total_bills_count: totalBillsCount,
@@ -242,54 +369,159 @@ router.get('/admin/metrics', async (req, res) => {
 // GET /api/admin/users
 router.get('/admin/users', async (req, res) => {
   try {
+    const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
-    if (!orgId) {
+
+    if (!usePlatformScope && !orgId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
-    const query = `
-      SELECT DISTINCT ON (u.id)
-        u.id,
-        u.email,
-        u.full_name,
-        u.phone,
-        u.avatar_url,
-        u.created_at,
-        COALESCE(m.role, 'cashier') as role,
-        CASE
-          WHEN p.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 'online'
-          WHEN p.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 'idle'
-          ELSE 'offline'
-        END as presence_status,
-        p.last_active_at,
-        p.current_path,
-        p.platform,
-        COALESCE(sc.bill_count, 0)::int as bill_count,
-        COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
-        COALESCE(fl.locked_count, 0)::int as locked_features_count
-      FROM users u
-      JOIN (
-        SELECT user_id, org_id, organization_id, role FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
-        UNION
-        SELECT user_id, organization_id as org_id, organization_id, role FROM organization_memberships WHERE (organization_id = $1 OR org_id = $1)
-      ) m ON m.user_id = u.id
-      LEFT JOIN user_presence p ON p.user_id = u.id AND (p.organization_id = $1 OR p.org_id = $1)
-      LEFT JOIN (
-        SELECT created_by, COUNT(*)::int as bill_count, SUM(total) as bill_total
-        FROM sales
-        WHERE (organization_id = $1 OR org_id = $1)
-        GROUP BY created_by
-      ) sc ON sc.created_by = u.id
-      LEFT JOIN (
-        SELECT user_id, COUNT(*)::int as locked_count
-        FROM user_feature_locks
-        WHERE (organization_id = $1 OR org_id = $1) AND is_locked = true
-        GROUP BY user_id
-      ) fl ON fl.user_id = u.id
-      ORDER BY u.id, u.created_at ASC;
+    if (usePlatformScope) {
+      // Platform Admin View: returns EVERY registered user, tester, real-time business owner, and staff across all organizations
+      const platformQuery = `
+        SELECT
+          u.id,
+          u.email,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(lp.user_name), ''), split_part(u.email, '@', 1)) as full_name,
+          u.phone,
+          u.avatar_url,
+          u.created_at,
+          COALESCE(u.is_platform_admin, false) as is_platform_admin,
+          COALESCE(m.org_id, lp.last_org_id) as organization_id,
+          COALESCE(o.name, 'Unassigned') as organization_name,
+          COALESCE(NULLIF(TRIM(m.role), ''), NULLIF(TRIM(lp.user_role), ''), CASE WHEN o.id IS NOT NULL THEN 'owner' ELSE 'user' END) as role,
+          CASE
+            WHEN lp.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 'online'
+            WHEN lp.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 'idle'
+            ELSE 'offline'
+          END as presence_status,
+          lp.last_active_at,
+          lp.current_path,
+          lp.platform,
+          COALESCE(sc.bill_count, 0)::int as bill_count,
+          COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
+          COALESCE(fl.locked_count, 0)::int as locked_features_count
+        FROM users u
+        LEFT JOIN LATERAL (
+          SELECT org_id, role FROM (
+            SELECT COALESCE(org_id, organization_id) AS org_id, role, 1 AS prio, created_at
+            FROM org_memberships WHERE user_id = u.id AND COALESCE(org_id, organization_id) IS NOT NULL
+            UNION ALL
+            SELECT COALESCE(organization_id, org_id) AS org_id, role, 2 AS prio, created_at
+            FROM organization_memberships WHERE user_id = u.id AND COALESCE(organization_id, org_id) IS NOT NULL
+            UNION ALL
+            SELECT id AS org_id, 'owner' AS role, 3 AS prio, created_at
+            FROM organizations WHERE owner_id = u.id
+            UNION ALL
+            SELECT COALESCE(org_id, organization_id) AS org_id, COALESCE(role, 'staff') AS role, 4 AS prio, created_at
+            FROM crm_staff_assignments WHERE (user_id = u.id OR staff_id = u.id) AND COALESCE(org_id, organization_id) IS NOT NULL
+          ) all_m
+          ORDER BY prio ASC, created_at ASC
+          LIMIT 1
+        ) m ON true
+        LEFT JOIN LATERAL (
+          SELECT
+            COALESCE(organization_id, org_id) AS last_org_id,
+            user_name,
+            user_role,
+            last_active_at,
+            current_path,
+            platform
+          FROM user_presence
+          WHERE user_id = u.id
+          ORDER BY last_active_at DESC
+          LIMIT 1
+        ) lp ON true
+        LEFT JOIN organizations o ON o.id = COALESCE(m.org_id, lp.last_org_id)
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*)::int as bill_count, COALESCE(SUM(s.total), 0) as bill_total
+          FROM sales s
+          WHERE s.created_by = u.id
+             OR (
+               LOWER(COALESCE(m.role, '')) IN ('owner', 'store_owner', 'super_admin', 'admin')
+               AND s.created_by IS NULL
+               AND COALESCE(m.org_id, lp.last_org_id) IS NOT NULL
+               AND (s.organization_id = COALESCE(m.org_id, lp.last_org_id) OR s.org_id = COALESCE(m.org_id, lp.last_org_id))
+             )
+        ) sc ON true
+        LEFT JOIN LATERAL (
+          SELECT COUNT(*)::int as locked_count
+          FROM user_feature_locks
+          WHERE user_id = u.id AND is_locked = true
+        ) fl ON true
+        ORDER BY
+          CASE
+            WHEN lp.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 0
+            WHEN lp.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 1
+            ELSE 2
+          END ASC,
+          lp.last_active_at DESC NULLS LAST,
+          u.created_at DESC;
+      `;
+
+      const result = await pool.query(platformQuery);
+      return res.json(result.rows || []);
+    }
+
+    // Single-organization View: includes org_memberships, organization_memberships, organizations.owner_id, crm_staff_assignments & user_presence
+    const orgQuery = `
+      SELECT * FROM (
+        SELECT DISTINCT ON (u.id)
+          u.id,
+          u.email,
+          COALESCE(NULLIF(TRIM(u.full_name), ''), NULLIF(TRIM(p.user_name), ''), split_part(u.email, '@', 1)) as full_name,
+          u.phone,
+          u.avatar_url,
+          u.created_at,
+          $1::uuid as organization_id,
+          COALESCE(o.name, 'Business') as organization_name,
+          COALESCE(NULLIF(TRIM(m.role), ''), NULLIF(TRIM(p.user_role), ''), 'cashier') as role,
+          CASE
+            WHEN p.last_active_at >= NOW() - INTERVAL '3 minutes' THEN 'online'
+            WHEN p.last_active_at >= NOW() - INTERVAL '15 minutes' THEN 'idle'
+            ELSE 'offline'
+          END as presence_status,
+          p.last_active_at,
+          p.current_path,
+          p.platform,
+          COALESCE(sc.bill_count, 0)::int as bill_count,
+          COALESCE(sc.bill_total, 0)::numeric(12,2) as bill_total,
+          COALESCE(fl.locked_count, 0)::int as locked_features_count
+        FROM users u
+        JOIN (
+          SELECT user_id, role, 1 AS prio FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
+          UNION ALL
+          SELECT user_id, role, 2 AS prio FROM organization_memberships WHERE (organization_id = $1 OR org_id = $1)
+          UNION ALL
+          SELECT owner_id AS user_id, 'owner' AS role, 3 AS prio FROM organizations WHERE id = $1 AND owner_id IS NOT NULL
+          UNION ALL
+          SELECT COALESCE(user_id, staff_id) AS user_id, COALESCE(role, 'staff') AS role, 4 AS prio FROM crm_staff_assignments WHERE (org_id = $1 OR organization_id = $1)
+          UNION ALL
+          SELECT user_id, COALESCE(NULLIF(user_role, ''), 'cashier') AS role, 5 AS prio FROM user_presence WHERE (organization_id = $1 OR org_id = $1)
+        ) m ON m.user_id = u.id
+        LEFT JOIN organizations o ON o.id = $1
+        LEFT JOIN user_presence p ON p.user_id = u.id AND (p.organization_id = $1 OR p.org_id = $1)
+        LEFT JOIN (
+          SELECT created_by, COUNT(*)::int as bill_count, SUM(total) as bill_total
+          FROM sales
+          WHERE (organization_id = $1 OR org_id = $1)
+          GROUP BY created_by
+        ) sc ON sc.created_by = u.id
+        LEFT JOIN (
+          SELECT user_id, COUNT(*)::int as locked_count
+          FROM user_feature_locks
+          WHERE (organization_id = $1 OR org_id = $1) AND is_locked = true
+          GROUP BY user_id
+        ) fl ON fl.user_id = u.id
+        ORDER BY u.id, m.prio ASC, u.created_at ASC
+      ) users_list
+      ORDER BY
+        CASE WHEN users_list.presence_status = 'online' THEN 0 WHEN users_list.presence_status = 'idle' THEN 1 ELSE 2 END ASC,
+        users_list.last_active_at DESC NULLS LAST,
+        users_list.created_at DESC;
     `;
 
-    const result = await pool.query(query, [orgId]);
+    const result = await pool.query(orgQuery, [orgId]);
     return res.json(result.rows || []);
   } catch (err) {
     console.error('Get admin users error:', err);
@@ -301,12 +533,22 @@ router.get('/admin/users', async (req, res) => {
 router.post('/admin/create-user', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
-    if (!orgId) {
+    const callerOrgId = getOrgId(req);
+    const {
+      email,
+      password,
+      full_name = '',
+      role = 'admin',
+      phone = '',
+      create_own_org = false,
+      organization_name = '',
+      grant_platform_admin = false,
+    } = req.body || {};
+
+    if (!callerOrgId && !create_own_org) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
-    const { email, password, full_name = '', role = 'admin', phone = '' } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -315,6 +557,7 @@ router.post('/admin/create-user', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
+    const callerIsPlatformAdmin = await isPlatformAdmin(req.user);
     const cleanEmail = email.toLowerCase().trim();
     const bcrypt = require('bcryptjs');
     const passwordHash = await bcrypt.hash(password, 10);
@@ -345,26 +588,66 @@ router.post('/admin/create-user', async (req, res) => {
       userId = newUserRes.rows[0].id;
     }
 
-    // 2. Insert/update organization memberships
+    if (callerIsPlatformAdmin && grant_platform_admin) {
+      try {
+        await client.query('SAVEPOINT sp_grant_pa');
+        await client.query('UPDATE users SET is_platform_admin = true WHERE id = $1', [userId]);
+        await client.query('RELEASE SAVEPOINT sp_grant_pa');
+      } catch (_e) {
+        await client.query('ROLLBACK TO SAVEPOINT sp_grant_pa');
+      }
+    }
+
     const userRole = (role || 'admin').toLowerCase();
+    let targetOrgId = callerOrgId;
+
+    if (create_own_org || (userRole === 'owner' && organization_name.trim())) {
+      const newOrgName = organization_name.trim() || (full_name ? `${full_name}'s Business` : `${cleanEmail.split('@')[0]}'s Business`);
+      const orgRes = await client.query(
+        `INSERT INTO organizations (name, email, phone)
+         VALUES ($1, $2, $3)
+         RETURNING id`,
+        [newOrgName, cleanEmail, phone]
+      );
+      targetOrgId = orgRes.rows[0].id;
+
+      try {
+        await client.query('SAVEPOINT sp_owner_set');
+        await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [userId, targetOrgId]);
+        await client.query('RELEASE SAVEPOINT sp_owner_set');
+      } catch (_e) {
+        await client.query('ROLLBACK TO SAVEPOINT sp_owner_set');
+      }
+
+      await client.query(
+        `INSERT INTO invoice_sequences (org_id, organization_id, sales_prefix, sales_counter, purchase_prefix, purchase_counter)
+         VALUES ($1, $1, 'INV', 0, 'PUR', 0)
+         ON CONFLICT (org_id) DO NOTHING`,
+        [targetOrgId]
+      );
+    }
+
+    // 2. Insert/update organization memberships
     await client.query(
       `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
        VALUES ($1, $2, $2, $3)
        ON CONFLICT (user_id, org_id) 
        DO UPDATE SET role = EXCLUDED.role`,
-      [userId, orgId, userRole]
+      [userId, targetOrgId, userRole]
     );
 
     try {
+      await client.query('SAVEPOINT sp_om_sync');
       await client.query(
         `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
          VALUES ($1, $2, $2, $3)
          ON CONFLICT (user_id, organization_id)
          DO UPDATE SET role = EXCLUDED.role`,
-        [userId, orgId, userRole]
+        [userId, targetOrgId, userRole]
       );
+      await client.query('RELEASE SAVEPOINT sp_om_sync');
     } catch (_omErr) {
-      // organization_memberships fallback
+      await client.query('ROLLBACK TO SAVEPOINT sp_om_sync');
     }
 
     await client.query('COMMIT');
@@ -377,7 +660,8 @@ router.post('/admin/create-user', async (req, res) => {
         email: cleanEmail,
         full_name: full_name || cleanEmail,
         role: userRole,
-        org_id: orgId,
+        organization_id: targetOrgId,
+        org_id: targetOrgId,
       },
     });
   } catch (err) {
@@ -392,8 +676,8 @@ router.post('/admin/create-user', async (req, res) => {
 // GET /api/admin/users/:userId/features
 router.get('/admin/users/:userId/features', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
     const { userId } = req.params;
+    const orgId = await resolveTargetOrgForFeatureManagement(req, userId);
     if (!orgId || !userId) {
       return res.status(400).json({ error: 'Organization ID and User ID are required' });
     }
@@ -420,9 +704,9 @@ router.get('/admin/users/:userId/features', async (req, res) => {
 // POST /api/admin/users/:userId/features/toggle
 router.post('/admin/users/:userId/features/toggle', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
     const { userId } = req.params;
     const { feature_key, is_locked } = req.body;
+    const orgId = await resolveTargetOrgForFeatureManagement(req, userId);
 
     if (!orgId || !userId || !feature_key) {
       return res.status(400).json({ error: 'Missing required parameters' });
@@ -461,9 +745,9 @@ router.post('/admin/users/:userId/features/toggle', async (req, res) => {
 router.post('/admin/users/:userId/features/bulk', async (req, res) => {
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
     const { userId } = req.params;
     const { locks = {} } = req.body;
+    const orgId = await resolveTargetOrgForFeatureManagement(req, userId);
 
     if (!orgId || !userId) {
       return res.status(400).json({ error: 'Missing required parameters' });
@@ -503,36 +787,50 @@ router.post('/admin/users/:userId/features/bulk', async (req, res) => {
 // GET /api/admin/access-requests
 router.get('/admin/access-requests', async (req, res) => {
   try {
+    const usePlatformScope = await shouldUsePlatformScope(req);
     const orgId = getOrgId(req);
-    if (!orgId) {
+
+    if (!usePlatformScope && !orgId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
     const { status = 'all' } = req.query;
-    let query = `
+    const params = [];
+    let whereClause = '';
+
+    if (!usePlatformScope) {
+      params.push(orgId);
+      whereClause = ` WHERE (r.organization_id = $1 OR r.org_id = $1)`;
+    } else {
+      whereClause = ` WHERE 1=1`;
+    }
+
+    if (status && status !== 'all') {
+      params.push(status);
+      whereClause += ` AND r.status = $${params.length}`;
+    }
+
+    const query = `
       SELECT 
         r.*,
         u.avatar_url,
-        COALESCE(u.full_name, split_part(u.email, '@', 1), r.user_name) as display_name,
+        COALESCE(NULLIF(TRIM(u.full_name), ''), split_part(COALESCE(u.email, r.user_email, ''), '@', 1), r.user_name) as display_name,
+        COALESCE(o.name, 'Business') as organization_name,
         COALESCE(m.role, 'cashier') as user_role,
         rev.full_name as reviewer_name
       FROM feature_access_requests r
       LEFT JOIN users u ON u.id = r.user_id
-      LEFT JOIN (
-        SELECT user_id, role FROM org_memberships WHERE (org_id = $1 OR organization_id = $1)
-        UNION
-        SELECT user_id, role FROM organization_memberships WHERE (organization_id = $1 OR org_id = $1)
-      ) m ON m.user_id = r.user_id
+      LEFT JOIN organizations o ON o.id = COALESCE(r.organization_id, r.org_id)
+      LEFT JOIN LATERAL (
+        SELECT role FROM org_memberships WHERE user_id = r.user_id AND (org_id = COALESCE(r.organization_id, r.org_id) OR organization_id = COALESCE(r.organization_id, r.org_id))
+        UNION ALL
+        SELECT role FROM organization_memberships WHERE user_id = r.user_id AND (organization_id = COALESCE(r.organization_id, r.org_id) OR org_id = COALESCE(r.organization_id, r.org_id))
+        LIMIT 1
+      ) m ON true
       LEFT JOIN users rev ON rev.id = r.reviewed_by
-      WHERE (r.organization_id = $1 OR r.org_id = $1)
+      ${whereClause}
+      ORDER BY CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END, r.created_at DESC;
     `;
-
-    const params = [orgId];
-    if (status && status !== 'all') {
-      params.push(status);
-      query += ` AND r.status = $2`;
-    }
-    query += ` ORDER BY CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END, r.created_at DESC;`;
 
     const result = await pool.query(query, params);
     return res.json(result.rows || []);
@@ -547,6 +845,7 @@ router.post('/admin/access-requests/:id/review', async (req, res) => {
   const client = await pool.connect();
   try {
     const orgId = getOrgId(req);
+    const platformAdmin = await isPlatformAdmin(req.user);
     const { id } = req.params;
     const { status, admin_notes = '' } = req.body;
 
@@ -556,14 +855,22 @@ router.post('/admin/access-requests/:id/review', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 1. Update the request status
-    const reqRes = await client.query(
-      `UPDATE feature_access_requests
-       SET status = $1, reviewed_by = $2, reviewed_at = NOW(), admin_notes = $3, updated_at = NOW()
-       WHERE id = $4 AND (organization_id = $5 OR org_id = $5)
-       RETURNING *;`,
-      [status, req.user.id, admin_notes, id, orgId]
-    );
+    // 1. Update the request status (platform admin can review across organizations)
+    const reqRes = platformAdmin
+      ? await client.query(
+          `UPDATE feature_access_requests
+           SET status = $1, reviewed_by = $2, reviewed_at = NOW(), admin_notes = $3, updated_at = NOW()
+           WHERE id = $4
+           RETURNING *;`,
+          [status, req.user.id, admin_notes, id]
+        )
+      : await client.query(
+          `UPDATE feature_access_requests
+           SET status = $1, reviewed_by = $2, reviewed_at = NOW(), admin_notes = $3, updated_at = NOW()
+           WHERE id = $4 AND (organization_id = $5 OR org_id = $5)
+           RETURNING *;`,
+          [status, req.user.id, admin_notes, id, orgId]
+        );
 
     if (reqRes.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -571,9 +878,10 @@ router.post('/admin/access-requests/:id/review', async (req, res) => {
     }
 
     const updatedRequest = reqRes.rows[0];
+    const targetOrgId = updatedRequest.organization_id || updatedRequest.org_id || orgId;
 
-    // 2. If approved, immediately unlock the feature for the requester!
-    if (status === 'approved') {
+    // 2. If approved, immediately unlock the feature for the requester in their org!
+    if (status === 'approved' && targetOrgId) {
       await client.query(
         `INSERT INTO user_feature_locks (
            org_id, organization_id, user_id, feature_key, is_locked, locked_by, updated_at
@@ -581,7 +889,7 @@ router.post('/admin/access-requests/:id/review', async (req, res) => {
          VALUES ($1, $1, $2, $3, false, $4, NOW())
          ON CONFLICT (organization_id, user_id, feature_key)
          DO UPDATE SET is_locked = false, updated_at = NOW();`,
-        [orgId, updatedRequest.user_id, updatedRequest.feature_key, req.user.id]
+        [targetOrgId, updatedRequest.user_id, updatedRequest.feature_key, req.user.id]
       );
     }
 
@@ -613,7 +921,6 @@ router.post('/features/request-access', async (req, res) => {
       return res.status(400).json({ error: 'Feature key is required' });
     }
 
-    // Check if an existing pending request already exists
     const existing = await pool.query(
       `SELECT * FROM feature_access_requests
        WHERE (organization_id = $1 OR org_id = $1)
@@ -718,7 +1025,6 @@ router.post('/features/log-usage', async (req, res) => {
 
     return res.json({ success: true });
   } catch (_err) {
-    // Non-blocking telemetry
     return res.json({ success: false });
   }
 });

@@ -145,6 +145,7 @@
         "
       >
         <img
+          id="app-flash-img"
           src="/IMG_9301.GIF"
           alt="CredSmart"
           style="
@@ -167,6 +168,7 @@
           "
         >
           <div
+            id="app-flash-bar"
             style="
               width: 50%;
               height: 100%;
@@ -183,14 +185,43 @@
           }
         </style>
         <script>
-          setTimeout(function() {
-            var loader = document.getElementById('app-flash-loader');
-            if (loader && loader.parentNode) {
-              loader.style.transition = 'opacity 0.4s ease';
-              loader.style.opacity = '0';
-              setTimeout(function() { if (loader && loader.parentNode) loader.remove(); }, 400);
-            }
-          }, 3500);
+          (function() {
+            try {
+              var rawWl = localStorage.getItem('credsmart_wl_active_brand');
+              if (rawWl) {
+                var parsed = JSON.parse(rawWl);
+                if (parsed && parsed.isWhiteLabeled && parsed.brand) {
+                  var b = parsed.brand;
+                  var splashSrc = b.splash_logo_url || b.logo_light_url || b.favicon_url;
+                  var img = document.getElementById('app-flash-img');
+                  if (img && splashSrc) {
+                    img.src = splashSrc;
+                    img.alt = b.brand_name || 'App';
+                    img.style.maxHeight = '160px';
+                  }
+                  var bar = document.getElementById('app-flash-bar');
+                  if (bar && (b.primary_color || b.secondary_color)) {
+                    bar.style.background = 'linear-gradient(90deg, ' + (b.primary_color || '#2563EB') + ', ' + (b.secondary_color || '#F97316') + ')';
+                  }
+                  if (b.meta_title || b.brand_name) {
+                    document.title = b.meta_title || (b.brand_tagline ? (b.brand_name + ' — ' + b.brand_tagline) : b.brand_name);
+                  }
+                  if (b.favicon_url || b.logo_light_url) {
+                    var iconUrl = b.favicon_url || b.logo_light_url;
+                    document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(function(el) { el.href = iconUrl; });
+                  }
+                }
+              }
+            } catch (e) {}
+            setTimeout(function() {
+              var loader = document.getElementById('app-flash-loader');
+              if (loader && loader.parentNode) {
+                loader.style.transition = 'opacity 0.4s ease';
+                loader.style.opacity = '0';
+                setTimeout(function() { if (loader && loader.parentNode) loader.remove(); }, 400);
+              }
+            }, 3500);
+          })();
         </script>
       </div>
     </div>

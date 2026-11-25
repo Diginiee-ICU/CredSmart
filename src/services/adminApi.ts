@@ -8,9 +8,12 @@ import {
 export interface LiveUser {
   user_id: string;
   user_email: string;
+  resolved_email?: string;
   user_name: string;
   display_name: string;
   user_role: string;
+  organization_id?: string;
+  organization_name?: string;
   current_path: string;
   platform: string;
   status: "online" | "idle" | "offline";
@@ -19,7 +22,10 @@ export interface LiveUser {
 }
 
 export interface AdminMetrics {
+  scope?: "all" | "org";
   live_users_count: number;
+  total_users_count?: number;
+  total_orgs_count?: number;
   today_bills_count: number;
   today_sales_total: number;
   total_bills_count: number;
@@ -30,6 +36,7 @@ export interface AdminMetrics {
     user_id: string;
     user_name: string;
     user_email: string;
+    organization_name?: string;
     count: number;
     total: number;
   }>;
@@ -47,6 +54,9 @@ export interface AdminUser {
   phone?: string;
   avatar_url?: string | null;
   role: string;
+  is_platform_admin?: boolean;
+  organization_id?: string | null;
+  organization_name?: string;
   presence_status: "online" | "idle" | "offline";
   last_active_at?: string | null;
   current_path?: string | null;
@@ -59,6 +69,7 @@ export interface AdminUser {
 export interface FeatureAccessRequest {
   id: string;
   organization_id: string;
+  organization_name?: string;
   user_id: string;
   user_email: string;
   user_name: string;
@@ -82,43 +93,67 @@ const LOCAL_REQUESTS_PREFIX = "credsmart_feature_requests_";
 
 export const adminApi = {
   // ── Metrics & Analytics ──────────────────────────────────────────────────
-  getMetrics: async (organizationId?: string): Promise<ApiResponse<AdminMetrics>> => {
-    return apiGet<AdminMetrics>("/admin/metrics", { organizationId });
+  getMetrics: async (organizationId?: string, scope?: "all" | "org"): Promise<ApiResponse<AdminMetrics>> => {
+    return apiGet<AdminMetrics>("/admin/metrics", {
+      organizationId,
+      ...(scope ? { params: { scope } } : {}),
+    });
   },
 
-  getLiveUsers: async (organizationId?: string): Promise<ApiResponse<LiveUser[]>> => {
-    return apiGet<LiveUser[]>("/presence/live-users", { organizationId });
+  getLiveUsers: async (organizationId?: string, scope?: "all" | "org"): Promise<ApiResponse<LiveUser[]>> => {
+    return apiGet<LiveUser[]>("/presence/live-users", {
+      organizationId,
+      ...(scope ? { params: { scope } } : {}),
+    });
   },
 
   // ── User Management ──────────────────────────────────────────────────────
-  getUsers: async (organizationId?: string): Promise<ApiResponse<AdminUser[]>> => {
-    return apiGet<AdminUser[]>("/admin/users", { organizationId });
+  getUsers: async (organizationId?: string, scope?: "all" | "org"): Promise<ApiResponse<AdminUser[]>> => {
+    return apiGet<AdminUser[]>("/admin/users", {
+      organizationId,
+      ...(scope ? { params: { scope } } : {}),
+    });
   },
 
   createUser: async (
-    data: { email: string; password: string; full_name?: string; role?: string; phone?: string },
+    data: {
+      email: string;
+      password: string;
+      full_name?: string;
+      role?: string;
+      phone?: string;
+      create_own_org?: boolean;
+      organization_name?: string;
+      grant_platform_admin?: boolean;
+    },
     organizationId?: string
-  ): Promise<ApiResponse<{ success: boolean; user: AdminUser }>> => {
-    return apiPost<{ success: boolean; user: AdminUser }>("/admin/create-user", data, { organizationId });
+  ): Promise<ApiResponse<{ success: boolean; message?: string; user: AdminUser }>> => {
+    return apiPost<{ success: boolean; message?: string; user: AdminUser }>("/admin/create-user", data, { organizationId });
   },
 
   getUserFeatures: async (
     userId: string,
-    organizationId?: string
+    organizationId?: string,
+    targetOrgId?: string
   ): Promise<ApiResponse<Record<string, boolean>>> => {
-    return apiGet<Record<string, boolean>>(`/admin/users/${userId}/features`, { organizationId });
+    return apiGet<Record<string, boolean>>(`/admin/users/${userId}/features`, {
+      organizationId,
+      ...(targetOrgId ? { params: { target_org_id: targetOrgId } } : {}),
+    });
   },
 
   toggleUserFeature: async (
     userId: string,
     featureKey: string,
     isLocked: boolean,
-    organizationId?: string
+    organizationId?: string,
+    targetOrgId?: string
   ): Promise<ApiResponse<{ success: boolean }>> => {
+    const effectiveOrg = targetOrgId || organizationId;
     // Optimistically store in local storage cache
-    if (typeof localStorage !== "undefined" && organizationId) {
+    if (typeof localStorage !== "undefined" && effectiveOrg) {
       try {
-        const k = `${LOCAL_LOCKS_PREFIX}${organizationId}_${userId}`;
+        const k = `${LOCAL_LOCKS_PREFIX}${effectiveOrg}_${userId}`;
         const raw = localStorage.getItem(k);
         const map = raw ? JSON.parse(raw) : {};
         map[featureKey] = isLocked;
@@ -129,7 +164,7 @@ export const adminApi = {
 
     return apiPost<{ success: boolean }>(
       `/admin/users/${userId}/features/toggle`,
-      { feature_key: featureKey, is_locked: isLocked },
+      { feature_key: featureKey, is_locked: isLocked, ...(targetOrgId ? { target_org_id: targetOrgId } : {}) },
       { organizationId }
     );
   },
@@ -137,11 +172,13 @@ export const adminApi = {
   bulkUpdateUserFeatures: async (
     userId: string,
     locks: Record<string, boolean>,
-    organizationId?: string
+    organizationId?: string,
+    targetOrgId?: string
   ): Promise<ApiResponse<{ success: boolean }>> => {
-    if (typeof localStorage !== "undefined" && organizationId) {
+    const effectiveOrg = targetOrgId || organizationId;
+    if (typeof localStorage !== "undefined" && effectiveOrg) {
       try {
-        const k = `${LOCAL_LOCKS_PREFIX}${organizationId}_${userId}`;
+        const k = `${LOCAL_LOCKS_PREFIX}${effectiveOrg}_${userId}`;
         localStorage.setItem(k, JSON.stringify(locks));
         window.dispatchEvent(new CustomEvent("credsmart:feature_locks_updated", { detail: { userId, locks } }));
       } catch { /* empty */ }
@@ -149,7 +186,7 @@ export const adminApi = {
 
     return apiPost<{ success: boolean }>(
       `/admin/users/${userId}/features/bulk`,
-      { locks },
+      { locks, ...(targetOrgId ? { target_org_id: targetOrgId } : {}) },
       { organizationId }
     );
   },
@@ -157,11 +194,12 @@ export const adminApi = {
   // ── Access Requests & Review Queue ────────────────────────────────────────
   getAccessRequests: async (
     status: string = "all",
-    organizationId?: string
+    organizationId?: string,
+    scope?: "all" | "org"
   ): Promise<ApiResponse<FeatureAccessRequest[]>> => {
     return apiGet<FeatureAccessRequest[]>("/admin/access-requests", {
       organizationId,
-      params: { status },
+      params: { status, ...(scope ? { scope } : {}) },
     });
   },
 

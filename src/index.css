@@ -1215,6 +1215,29 @@ canvas {
   animation: bubbleOut 0.3s ease-in forwards;
 }
 
+/* White-Label Runtime Theme Utilities */
+:root {
+  --wl-primary: #2563EB;
+  --wl-secondary: #F97316;
+}
+
+.wl-brand-bg {
+  background-color: var(--wl-primary, #2563EB);
+}
+
+.wl-brand-text {
+  color: var(--wl-primary, #2563EB);
+}
+
+.wl-brand-border {
+  border-color: var(--wl-primary, #2563EB);
+}
+
+.wl-brand-gradient {
+  background: linear-gradient(135deg, var(--wl-primary, #2563EB) 0%, var(--wl-secondary, #F97316) 100%);
+}
+
+
 
 
 

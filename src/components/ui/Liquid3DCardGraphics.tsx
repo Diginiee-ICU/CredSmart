@@ -1,13 +1,49 @@
 import React from "react";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 /**
- * CREDSMART Shield Logo matching reference UI images
+ * CREDSMART Shield Logo matching reference UI images (respects active white-label brand)
  */
 export const CredsmartLogo: React.FC<{ className?: string; size?: number; showSubtitle?: boolean }> = ({
   className = "",
   size = 38,
   showSubtitle = true,
 }) => {
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+
+  if (isWhiteLabeled) {
+    const customImg = brand.logo_light_url || brand.favicon_url;
+    return (
+      <div className={`flex items-center gap-2.5 select-none ${className}`}>
+        {customImg ? (
+          <img
+            src={customImg}
+            alt={brand.brand_name}
+            style={{ height: size, width: "auto", maxWidth: size * 2.5 }}
+            className="object-contain shrink-0"
+          />
+        ) : (
+          <div
+            className="rounded-xl flex items-center justify-center text-white font-black shrink-0"
+            style={{ width: size, height: size, backgroundColor: brand.primary_color || "#2563EB" }}
+          >
+            {(brand.brand_name || "B").charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="flex flex-col text-left">
+          <span className="text-sm sm:text-base font-black tracking-tight text-slate-900 dark:text-white leading-none font-sans">
+            {brand.brand_name}
+          </span>
+          {showSubtitle && brand.brand_tagline && (
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase font-mono mt-0.5 leading-none">
+              {brand.brand_tagline}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
       <div className="relative shrink-0" style={{ width: size, height: size * 1.15 }}>

@@ -6,8 +6,45 @@ const { authenticate, JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
 
+const PLATFORM_ADMIN_EMAILS = new Set(
+  (process.env.PLATFORM_ADMIN_EMAILS || 'ashwinbishnoi05@gmail.com')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+);
+
+const isPlatformAdminAccount = (user) => {
+  if (!user) return false;
+  if (user.is_platform_admin === true) return true;
+  if (user.email && PLATFORM_ADMIN_EMAILS.has(String(user.email).trim().toLowerCase())) return true;
+  return false;
+};
+
+const recordPresenceSafely = (userId, orgId, email, fullName, role = 'owner') => {
+  if (!userId || !orgId) return;
+  pool
+    .query(
+      `INSERT INTO user_presence (
+         user_id, org_id, organization_id, user_email, user_name, user_role, current_path, platform, last_active_at
+       )
+       VALUES ($1, $2, $2, $3, $4, $5, '/billing', 'web', NOW())
+       ON CONFLICT (user_id, organization_id)
+       DO UPDATE SET
+         user_email = COALESCE(NULLIF(EXCLUDED.user_email, ''), user_presence.user_email),
+         user_name = COALESCE(NULLIF(EXCLUDED.user_name, ''), user_presence.user_name),
+         last_active_at = NOW()`,
+      [userId, orgId, email || '', fullName || '', role]
+    )
+    .catch(() => {});
+};
+
 const generateTokens = (user, orgId) => {
-  const payload = { id: user.id, email: user.email, orgId };
+  const payload = {
+    id: user.id,
+    email: user.email,
+    orgId,
+    is_platform_admin: isPlatformAdminAccount(user),
+  };
   const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
   const refreshToken = jwt.sign({ id: user.id, type: 'refresh' }, JWT_SECRET, { expiresIn: '30d' });
   return { accessToken, refreshToken };
@@ -90,12 +127,32 @@ router.post('/signup', async (req, res) => {
     );
     const newOrg = orgRes.rows[0];
 
+    try {
+      await client.query('SAVEPOINT sp_org_owner_id');
+      await client.query('UPDATE organizations SET owner_id = $1 WHERE id = $2', [newUser.id, newOrg.id]);
+      await client.query('RELEASE SAVEPOINT sp_org_owner_id');
+    } catch (_ignored) {
+      await client.query('ROLLBACK TO SAVEPOINT sp_org_owner_id');
+    }
+
     // Create owner membership
     await client.query(
-      `INSERT INTO org_memberships (user_id, org_id, role)
-       VALUES ($1, $2, 'owner')`,
+      `INSERT INTO org_memberships (user_id, org_id, organization_id, role)
+       VALUES ($1, $2, $2, 'owner')`,
       [newUser.id, newOrg.id]
     );
+
+    try {
+      await client.query('SAVEPOINT sp_org_mem_sync');
+      await client.query(
+        `INSERT INTO organization_memberships (user_id, organization_id, org_id, role)
+         VALUES ($1, $2, $2, 'owner') ON CONFLICT DO NOTHING`,
+        [newUser.id, newOrg.id]
+      );
+      await client.query('RELEASE SAVEPOINT sp_org_mem_sync');
+    } catch (_ignored) {
+      await client.query('ROLLBACK TO SAVEPOINT sp_org_mem_sync');
+    }
 
     // Initialize invoice sequence
     await client.query(
@@ -117,11 +174,14 @@ router.post('/signup', async (req, res) => {
     );
 
     await client.query('COMMIT');
+    recordPresenceSafely(newUser.id, newOrg.id, newUser.email, newUser.full_name, 'owner');
 
+    const isPlatformAdmin = isPlatformAdminAccount(newUser);
     const formattedUser = {
       id: newUser.id,
       email: newUser.email,
-      user_metadata: { full_name: newUser.full_name, phone: newUser.phone, ...data },
+      is_platform_admin: isPlatformAdmin,
+      user_metadata: { full_name: newUser.full_name, phone: newUser.phone, is_platform_admin: isPlatformAdmin, ...data },
       created_at: newUser.created_at,
     };
 
@@ -153,8 +213,7 @@ router.post('/login', async (req, res) => {
     }
 
     const userRes = await pool.query(
-      `SELECT id, email, password_hash, full_name, phone, avatar_url, created_at
-       FROM users WHERE email = $1`,
+      `SELECT * FROM users WHERE email = $1`,
       [email.toLowerCase().trim()]
     );
 
@@ -180,10 +239,13 @@ router.post('/login', async (req, res) => {
       [user.id, refreshToken, expiresAt]
     );
 
+    const isPlatformAdmin = isPlatformAdminAccount(user);
+    recordPresenceSafely(user.id, orgId, user.email, user.full_name, 'owner');
     const formattedUser = {
       id: user.id,
       email: user.email,
-      user_metadata: { full_name: user.full_name, phone: user.phone },
+      is_platform_admin: isPlatformAdmin,
+      user_metadata: { full_name: user.full_name, phone: user.phone, is_platform_admin: isPlatformAdmin },
       created_at: user.created_at,
     };
 
@@ -212,7 +274,7 @@ router.post('/refresh', async (req, res) => {
     }
 
     const tokenRes = await pool.query(
-      `SELECT rt.id, rt.user_id, rt.expires_at, u.email, u.full_name, u.phone, u.avatar_url, u.created_at
+      `SELECT rt.id, rt.user_id, rt.expires_at, u.*
        FROM refresh_tokens rt
        JOIN users u ON u.id = rt.user_id
        WHERE rt.token = $1`,
@@ -230,6 +292,7 @@ router.post('/refresh', async (req, res) => {
       full_name: row.full_name,
       phone: row.phone,
       avatar_url: row.avatar_url,
+      is_platform_admin: row.is_platform_admin,
       created_at: row.created_at,
     };
 
@@ -246,10 +309,13 @@ router.post('/refresh', async (req, res) => {
       [user.id, newRefreshToken, newExpiresAt]
     );
 
+    const isPlatformAdmin = isPlatformAdminAccount(user);
+    recordPresenceSafely(user.id, orgId, user.email, user.full_name, 'owner');
     const formattedUser = {
       id: user.id,
       email: user.email,
-      user_metadata: { full_name: user.full_name, phone: user.phone },
+      is_platform_admin: isPlatformAdmin,
+      user_metadata: { full_name: user.full_name, phone: user.phone, is_platform_admin: isPlatformAdmin },
       created_at: user.created_at,
     };
 
@@ -273,13 +339,17 @@ router.post('/refresh', async (req, res) => {
 router.get('/user', authenticate, async (req, res) => {
   try {
     const userRes = await pool.query(
-      `SELECT id, email, full_name, phone, avatar_url, created_at FROM users WHERE id = $1`,
+      `SELECT * FROM users WHERE id = $1`,
       [req.user.id]
     );
     if (userRes.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
     const user = userRes.rows[0];
+    const isPlatformAdmin = isPlatformAdminAccount(user);
+    if (req.orgId) {
+      recordPresenceSafely(user.id, req.orgId, user.email, user.full_name, 'owner');
+    }
     return res.json({
       user: {
         id: user.id,
@@ -287,7 +357,8 @@ router.get('/user', authenticate, async (req, res) => {
         full_name: user.full_name,
         phone: user.phone,
         avatar_url: user.avatar_url,
-        user_metadata: { full_name: user.full_name, phone: user.phone },
+        is_platform_admin: isPlatformAdmin,
+        user_metadata: { full_name: user.full_name, phone: user.phone, is_platform_admin: isPlatformAdmin },
         created_at: user.created_at,
       },
     });

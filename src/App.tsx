@@ -3,9 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { OrgProvider, useOrganization } from "@/hooks/useOrganization";
+import { WhiteLabelProvider, useWhiteLabel } from "@/context/WhiteLabelContext";
 import { FeatureAccessProvider } from "@/hooks/useFeatureAccess";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import AppLayout from "@/components/AppLayout";
@@ -40,6 +41,7 @@ const Customers = React.lazy(() => import("@/pages/Customers"));
 const BusinessSettings = React.lazy(() => import("@/pages/BusinessSettings"));
 const InvoiceSettings = React.lazy(() => import("@/pages/InvoiceSettings"));
 const PrintSettings = React.lazy(() => import("@/pages/PrintSettings"));
+const WhiteLabelSettings = React.lazy(() => import("@/pages/WhiteLabelSettings"));
 const Reports = React.lazy(() => import("@/pages/Reports"));
 const VendorDiscovery = React.lazy(() => import("@/pages/VendorDiscovery"));
 const Inventory = React.lazy(() => import("@/pages/Inventory"));
@@ -84,6 +86,11 @@ const queryClient = new QueryClient({
 });
 
 export function SleekRouteLoader() {
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+  const logoSrc = isWhiteLabeled
+    ? brand.splash_logo_url || brand.logo_dark_url || brand.favicon_url || "/logo-icon.png"
+    : "/logo-icon.png";
+
   return (
     <div
       className="min-h-[100dvh] w-full flex flex-col items-center justify-center select-none animate-in fade-in duration-300"
@@ -91,17 +98,24 @@ export function SleekRouteLoader() {
     >
       <div className="flex flex-col items-center justify-center gap-6">
         <img
-          src="/logo-icon.png"
-          alt="CredSmart"
+          src={logoSrc}
+          alt={brand.brand_name}
           className="w-32 h-32 sm:w-40 sm:h-40 object-contain select-none drop-shadow-2xl"
           loading="eager"
         />
         <div className="flex flex-col items-center gap-3">
           <div className="w-40 h-0.5 bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full w-1/2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-400 animate-[shimmer_1.8s_ease-in-out_infinite]" />
+            <div
+              className="h-full w-1/2 rounded-full animate-[shimmer_1.8s_ease-in-out_infinite]"
+              style={{
+                background: isWhiteLabeled
+                  ? `linear-gradient(90deg, ${brand.primary_color}, ${brand.secondary_color})`
+                  : "linear-gradient(90deg, #3b82f6, #6366f1, #60a5fa)",
+              }}
+            />
           </div>
           <p className="text-[11px] font-mono font-medium text-slate-500 tracking-widest uppercase">
-            Starting CredSmart…
+            Starting {brand.brand_name}…
           </p>
         </div>
       </div>
@@ -166,6 +180,12 @@ function AppEntryRoute() {
 
   const dest = resolvePostLoginRoute(userRole);
   return <Navigate to={dest} replace />;
+}
+
+function BrandSlugEntry() {
+  const { brandSlug } = useParams<{ brandSlug: string }>();
+  const slug = encodeURIComponent(String(brandSlug || "").trim().toLowerCase());
+  return <Navigate to={slug ? `/auth?brand=${slug}` : ROUTE_PATHS.auth} replace />;
 }
 
 function AuthRoute() {
@@ -240,7 +260,8 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <OrgProvider>
-            <FeatureAccessProvider>
+            <WhiteLabelProvider>
+              <FeatureAccessProvider>
               <NetworkInvoicesProvider>
                 <ProductsProvider>
                 <Toaster />
@@ -254,6 +275,7 @@ const App = () => (
                     <Route path={ROUTE_PATHS.landing} element={<HomeRoute />} />
                     <Route path="/onboarding" element={<MobileAppStartingCards />} />
                     <Route path="/app" element={<AppEntryRoute />} />
+                    <Route path="/b/:brandSlug" element={<BrandSlugEntry />} />
                     <Route path={ROUTE_PATHS.auth} element={<AuthRoute />} />
                     <Route path={ROUTE_PATHS.features} element={<PublicMarketingRoute element={<Features />} />} />
                     <Route path={ROUTE_PATHS.pricing} element={<PublicMarketingRoute element={<Pricing />} />} />
@@ -313,6 +335,7 @@ const App = () => (
                             <Route path={ROUTE_PATHS.businessSettings} element={<BusinessSettings />} />
                             <Route path={ROUTE_PATHS.invoiceSettings} element={<InvoiceSettings />} />
                             <Route path={ROUTE_PATHS.printSettings} element={<PrintSettings />} />
+                            <Route path={ROUTE_PATHS.whiteLabelSettings} element={<WhiteLabelSettings />} />
                             <Route path={ROUTE_PATHS.settingsReminders} element={<Navigate to={ROUTE_PATHS.settings} replace />} />
                             <Route path={ROUTE_PATHS.settingsCaSharing} element={<Navigate to={ROUTE_PATHS.reports} replace />} />
                             <Route path={ROUTE_PATHS.settingsPricing} element={<Navigate to={ROUTE_PATHS.pricing} replace />} />
@@ -358,6 +381,7 @@ const App = () => (
                       <Route path="/settings/business" element={<LegacyRedirect to="/billing/settings/business" />} />
                       <Route path="/settings/invoice" element={<LegacyRedirect to="/billing/settings/invoice" />} />
                       <Route path="/settings/print" element={<LegacyRedirect to="/billing/settings/print" />} />
+                      <Route path="/settings/white-label" element={<LegacyRedirect to="/billing/settings/white-label" />} />
                       <Route path="/settings/reminders" element={<LegacyRedirect to="/billing/settings" />} />
                       <Route path="/settings/ca-sharing" element={<LegacyRedirect to="/billing/reports" />} />
                       <Route path="/settings/pricing" element={<LegacyRedirect to="/pricing" />} />
@@ -375,6 +399,7 @@ const App = () => (
               </ProductsProvider>
             </NetworkInvoicesProvider>
           </FeatureAccessProvider>
+          </WhiteLabelProvider>
         </OrgProvider>
         </AuthProvider>
       </TooltipProvider>

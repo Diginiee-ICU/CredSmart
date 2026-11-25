@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useFeatureAccess, getFeatureKeyFromUrl } from "@/hooks/useFeatureAccess";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   BILLING_NAV_ROUTES,
@@ -87,6 +88,7 @@ export function AppSidebar({
   const isMobile = useIsMobile();
   const { userRole, userPermissions } = useOrganization();
   const { isFeatureLocked, isRouteLocked, getFeatureRequestStatus, openRequestModal } = useFeatureAccess();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const location = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -782,11 +784,19 @@ export function AppSidebar({
                 <span>256-Bit SSL • Enterprise Secure • {isCrmSuite ? "RBAC Enforced" : "GST Compliant"}</span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-mono text-slate-500">
-                <span>Cred</span>
-                {isCrmSuite ? (
-                  <span className="text-blue-600 font-bold">Smart CRM</span>
+                {isWhiteLabeled ? (
+                  <span className="font-bold text-slate-700">
+                    {brand.brand_name} {isCrmSuite ? "CRM" : "POS"}
+                  </span>
                 ) : (
-                  <span className="text-amber-500 font-bold">Smart POS</span>
+                  <>
+                    <span>Cred</span>
+                    {isCrmSuite ? (
+                      <span className="text-blue-600 font-bold">Smart CRM</span>
+                    ) : (
+                      <span className="text-amber-500 font-bold">Smart POS</span>
+                    )}
+                  </>
                 )}
               </div>
             </div>

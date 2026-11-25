@@ -401,5 +401,177 @@ describe("CredSmart Admin Portal & Granular Feature Gating Suite", () => {
         expect(screen.getByRole("button", { name: /Approve & Unlock/i })).toBeDefined();
       });
     });
+
+    it("renders DB 'owner' users with organization names and matches them under owner_group filter", async () => {
+      mockRole = "store_owner";
+
+      vi.spyOn(global, "fetch").mockImplementation((url: any) => {
+        const s = String(url);
+        if (s.includes("/admin/metrics")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                live_users_count: 3,
+                total_users_count: 3,
+                total_orgs_count: 2,
+                today_bills_count: 5,
+                today_sales_total: 12000,
+                total_bills_count: 50,
+                total_sales_total: 90000,
+                pending_requests_count: 0,
+                hourly_velocity: [],
+                billings_by_staff: [],
+                feature_usage_stats: [],
+              }),
+              { status: 200 }
+            )
+          );
+        }
+        if (s.includes("/admin/users")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify([
+                {
+                  id: "u-owner-1",
+                  email: "rajesh@sharmakirana.in",
+                  full_name: "Rajesh Sharma",
+                  role: "owner",
+                  organization_id: "org-kirana-1",
+                  organization_name: "Sharma Kirana Mart",
+                  presence_status: "online",
+                  bill_count: 42,
+                  bill_total: 85000,
+                  locked_features_count: 0,
+                },
+                {
+                  id: "u-cashier-1",
+                  email: "cashier@sharmakirana.in",
+                  full_name: "Neha Cashier",
+                  role: "cashier",
+                  organization_id: "org-kirana-1",
+                  organization_name: "Sharma Kirana Mart",
+                  presence_status: "offline",
+                  bill_count: 8,
+                  bill_total: 5000,
+                  locked_features_count: 1,
+                },
+              ]),
+              { status: 200 }
+            )
+          );
+        }
+        if (s.includes("/features/my-locks")) {
+          return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      });
+
+      render(
+        <MemoryRouter>
+          <FeatureAccessProvider>
+            <AdminPortal />
+          </FeatureAccessProvider>
+        </MemoryRouter>
+      );
+
+      // Verify Users tab shows both owner & cashier + store name
+      const usersTabBtn = await screen.findByRole("button", { name: /^Users$/i });
+      fireEvent.click(usersTabBtn);
+
+      await waitFor(() => {
+        expect(screen.getByText("Rajesh Sharma")).toBeDefined();
+        expect(screen.getByText("Neha Cashier")).toBeDefined();
+        expect(screen.getAllByText(/Sharma Kirana Mart/i).length).toBeGreaterThan(0);
+      });
+
+      // Apply Business Owners filter (owner_group must match DB role 'owner')
+      const selects = screen.getAllByRole("combobox");
+      const roleSelect = selects.find((el) => el.querySelector('option[value="owner_group"]'));
+      expect(roleSelect).toBeDefined();
+      fireEvent.change(roleSelect!, { target: { value: "owner_group" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Rajesh Sharma")).toBeDefined();
+        expect(screen.queryByText("Neha Cashier")).toBeNull();
+      });
+    });
+
+    it("passes target_org_id when toggling a feature lock for a cross-org business owner", async () => {
+      mockRole = "store_owner";
+      let capturedToggleBody: any = null;
+
+      vi.spyOn(global, "fetch").mockImplementation((url: any, options?: any) => {
+        const s = String(url);
+        if (s.includes("/admin/metrics")) {
+          return Promise.resolve(new Response(JSON.stringify({ live_users_count: 1 }), { status: 200 }));
+        }
+        if (s.includes("/admin/users/u-owner-2/features") && options?.method === "POST") {
+          capturedToggleBody = JSON.parse(options.body);
+          return Promise.resolve(
+            new Response(JSON.stringify({ success: true, feature_key: capturedToggleBody.feature_key, is_locked: true }), {
+              status: 200,
+            })
+          );
+        }
+        if (s.includes("/admin/users/u-owner-2/features")) {
+          return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+        }
+        if (s.includes("/admin/users")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify([
+                {
+                  id: "u-owner-2",
+                  email: "owner2@metropos.in",
+                  full_name: "Vikram Verma",
+                  role: "owner",
+                  organization_id: "org-biz-2",
+                  organization_name: "Metro Mart",
+                  presence_status: "online",
+                  bill_count: 15,
+                  bill_total: 24000,
+                  locked_features_count: 0,
+                },
+              ]),
+              { status: 200 }
+            )
+          );
+        }
+        if (s.includes("/features/my-locks")) {
+          return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+        }
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200 }));
+      });
+
+      render(
+        <MemoryRouter>
+          <FeatureAccessProvider>
+            <AdminPortal />
+          </FeatureAccessProvider>
+        </MemoryRouter>
+      );
+
+      const featuresTabBtn = await screen.findByRole("button", { name: /Feature Gating/i });
+      fireEvent.click(featuresTabBtn);
+
+      await waitFor(() => {
+        const selects = screen.getAllByRole("combobox");
+        const targetSelect = selects.find((el) => el.querySelector('option[value="u-owner-2"]'));
+        expect(targetSelect).toBeDefined();
+      });
+
+      const selects = screen.getAllByRole("combobox");
+      const targetSelect = selects.find((el) => el.querySelector('option[value="u-owner-2"]'))!;
+      fireEvent.change(targetSelect, { target: { value: "u-owner-2" } });
+
+      const lockButtons = await screen.findAllByRole("button", { name: /^Lock$/i });
+      fireEvent.click(lockButtons[0]);
+
+      await waitFor(() => {
+        expect(capturedToggleBody).toBeTruthy();
+        expect(capturedToggleBody.target_org_id).toBe("org-biz-2");
+        expect(capturedToggleBody.is_locked).toBe(true);
+      });
+    });
   });
 });

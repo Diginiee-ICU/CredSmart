@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
+import {
+  whiteLabelApi,
+  type AdminWhiteLabelRequestItem,
+} from "@/services/whiteLabelApi";
 import {
   adminApi,
   type AdminMetrics,
@@ -37,6 +42,9 @@ import {
   UserPlus,
   Eye,
   EyeOff,
+  Palette,
+  KeyRound,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -49,11 +57,44 @@ function formatCurrency(amount: number): string {
   }).format(amount || 0);
 }
 
-type AdminTab = "analytics" | "users" | "features" | "requests";
+function formatRoleLabel(role?: string): string {
+  const r = String(role || "user").toLowerCase();
+  const labels: Record<string, string> = {
+    owner: "Business Owner",
+    store_owner: "Store Owner",
+    super_admin: "Super Admin",
+    admin: "Admin",
+    partner: "Partner",
+    manager: "Manager",
+    cashier: "Cashier",
+    salesman: "Salesman",
+    stock_manager: "Stock Manager",
+    accountant: "Accountant",
+    delivery_boy: "Delivery",
+    staff: "Staff",
+    user: "User",
+  };
+  return labels[r] || role || "User";
+}
+
+function matchesRoleFilter(userRoleValue: string | undefined, filterValue: string): boolean {
+  if (filterValue === "all") return true;
+  const r = String(userRoleValue || "").toLowerCase();
+  if (filterValue === "store_owner" || filterValue === "owner_group") {
+    return r === "owner" || r === "store_owner" || r === "partner";
+  }
+  if (filterValue === "admin_group") {
+    return r === "admin" || r === "super_admin";
+  }
+  return r === filterValue;
+}
+
+type AdminTab = "analytics" | "users" | "features" | "requests" | "whitelabel";
 
 export default function AdminPortal() {
   const { orgId, userRole } = useOrganization();
   const { user } = useAuth();
+  const { isPlatformAdmin } = useWhiteLabel();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("analytics");
   const [loading, setLoading] = useState(true);
@@ -71,7 +112,8 @@ export default function AdminPortal() {
   const [userFeatureLocks, setUserFeatureLocks] = useState<Record<string, boolean>>({});
   const [savingLocks, setSavingLocks] = useState(false);
 
-  // User search/filter
+  // User search/filter & scope
+  const [adminScope, setAdminScope] = useState<"all" | "org">(isPlatformAdmin ? "all" : "org");
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
 
@@ -82,26 +124,48 @@ export default function AdminPortal() {
     email: "",
     password: "",
     role: "admin",
+    organization_name: "",
+    create_own_org: false,
+    grant_platform_admin: false,
   });
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // White-Label Platform Governance State
+  const [wlRequests, setWlRequests] = useState<AdminWhiteLabelRequestItem[]>([]);
+  const [wlFilter, setWlFilter] = useState<"all" | "pending" | "approved" | "rejected" | "revoked">("all");
+  const [wlApproveTarget, setWlApproveTarget] = useState<AdminWhiteLabelRequestItem | null>(null);
+  const [wlCustomKey, setWlCustomKey] = useState("");
+  const [wlAdminNotes, setWlAdminNotes] = useState("");
+  const [wlIssuedKeyModal, setWlIssuedKeyModal] = useState<{ brandName: string; key: string; email: string } | null>(null);
+  const [wlProcessing, setWlProcessing] = useState(false);
 
   const isPrivileged = useMemo(() => {
     return FULL_ACCESS_ROLES.includes((userRole || "") as any);
   }, [userRole]);
 
+  const effectiveScope: "all" | "org" = isPlatformAdmin ? adminScope : "org";
+
+  // Automatically switch to platform-wide scope if isPlatformAdmin resolves true
+  useEffect(() => {
+    if (isPlatformAdmin) {
+      setAdminScope("all");
+    }
+  }, [isPlatformAdmin]);
+
   // Load all admin data
   const loadData = useCallback(async (isSilent = false) => {
-    if (!orgId) return;
+    if (!orgId && !isPlatformAdmin) return;
     if (!isSilent) setLoading(true);
     setRefreshing(true);
 
     try {
-      const [metricsRes, liveRes, usersRes, reqRes] = await Promise.all([
-        adminApi.getMetrics(orgId),
-        adminApi.getLiveUsers(orgId),
-        adminApi.getUsers(orgId),
-        adminApi.getAccessRequests("all", orgId),
+      const [metricsRes, liveRes, usersRes, reqRes, wlRes] = await Promise.all([
+        adminApi.getMetrics(orgId || undefined, effectiveScope),
+        adminApi.getLiveUsers(orgId || undefined, effectiveScope),
+        adminApi.getUsers(orgId || undefined, effectiveScope),
+        adminApi.getAccessRequests("all", orgId || undefined, effectiveScope),
+        isPlatformAdmin ? whiteLabelApi.adminListRequests("all") : Promise.resolve({ data: null, error: null }),
       ]);
 
       if (metricsRes.data) setMetrics(metricsRes.data);
@@ -113,13 +177,14 @@ export default function AdminPortal() {
         }
       }
       if (reqRes.data) setRequests(reqRes.data);
+      if (wlRes?.data && Array.isArray(wlRes.data)) setWlRequests(wlRes.data);
     } catch {
       toast.error("Could not load latest admin data.");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [orgId, selectedUserId]);
+  }, [orgId, selectedUserId, isPlatformAdmin, effectiveScope]);
 
   useEffect(() => {
     loadData();
@@ -133,24 +198,36 @@ export default function AdminPortal() {
     return () => clearInterval(timer);
   }, [loadData]);
 
+  const selectedUser = useMemo(() => {
+    return users.find((u) => u.id === selectedUserId);
+  }, [users, selectedUserId]);
+
+  const targetUserOrgId = selectedUser?.organization_id || orgId || undefined;
+
   // Load feature locks when selected user changes
   useEffect(() => {
-    if (!orgId || !selectedUserId) return;
-    adminApi.getUserFeatures(selectedUserId, orgId).then((res) => {
+    if ((!orgId && !targetUserOrgId) || !selectedUserId) return;
+    adminApi.getUserFeatures(selectedUserId, orgId || undefined, targetUserOrgId).then((res) => {
       if (res.data) {
         setUserFeatureLocks(res.data);
       } else {
         setUserFeatureLocks({});
       }
     });
-  }, [orgId, selectedUserId]);
+  }, [orgId, selectedUserId, targetUserOrgId]);
 
   // Toggle single feature lock
   const handleToggleLock = async (featureKey: FeatureKey, nextLocked: boolean) => {
-    if (!orgId || !selectedUserId) return;
+    if ((!orgId && !targetUserOrgId) || !selectedUserId) return;
 
     setUserFeatureLocks((prev) => ({ ...prev, [featureKey]: nextLocked }));
-    const { error } = await adminApi.toggleUserFeature(selectedUserId, featureKey, nextLocked, orgId);
+    const { error } = await adminApi.toggleUserFeature(
+      selectedUserId,
+      featureKey,
+      nextLocked,
+      orgId || undefined,
+      targetUserOrgId
+    );
     if (error) {
       toast.error(error.message || "Failed to update lock.");
       setUserFeatureLocks((prev) => ({ ...prev, [featureKey]: !nextLocked }));
@@ -165,7 +242,7 @@ export default function AdminPortal() {
 
   // Bulk set locks
   const handleBulkLocks = async (lockAll: boolean) => {
-    if (!orgId || !selectedUserId) return;
+    if ((!orgId && !targetUserOrgId) || !selectedUserId) return;
     setSavingLocks(true);
 
     const nextLocks: Record<string, boolean> = {};
@@ -174,7 +251,12 @@ export default function AdminPortal() {
     });
 
     setUserFeatureLocks(nextLocks);
-    const { error } = await adminApi.bulkUpdateUserFeatures(selectedUserId, nextLocks, orgId);
+    const { error } = await adminApi.bulkUpdateUserFeatures(
+      selectedUserId,
+      nextLocks,
+      orgId || undefined,
+      targetUserOrgId
+    );
     setSavingLocks(false);
 
     if (error) {
@@ -224,7 +306,15 @@ export default function AdminPortal() {
       } else {
         toast.success(res.data?.message || `User ${newUserData.email} created as ${newUserData.role}!`);
         setShowAddUserModal(false);
-        setNewUserData({ full_name: "", email: "", password: "", role: "admin" });
+        setNewUserData({
+          full_name: "",
+          email: "",
+          password: "",
+          role: "admin",
+          organization_name: "",
+          create_own_org: false,
+          grant_platform_admin: false,
+        });
         loadData(false);
       }
     } catch (err: any) {
@@ -234,7 +324,79 @@ export default function AdminPortal() {
     }
   };
 
+  const handleApproveWhiteLabel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wlApproveTarget) return;
+    setWlProcessing(true);
+    const res = await whiteLabelApi.adminApproveRequest(wlApproveTarget.id, {
+      custom_key: wlCustomKey.trim().toUpperCase() || undefined,
+      admin_notes: wlAdminNotes.trim(),
+    });
+    setWlProcessing(false);
+
+    if (res.error || !res.data?.activation_key) {
+      toast.error(res.error?.message || "Failed to approve white-label request.");
+      return;
+    }
+
+    const issuedKey = res.data.activation_key;
+    setWlIssuedKeyModal({
+      brandName: wlApproveTarget.requested_brand_name,
+      key: issuedKey,
+      email: wlApproveTarget.requester_email,
+    });
+    setWlApproveTarget(null);
+    setWlCustomKey("");
+    setWlAdminNotes("");
+    toast.success("White-Label request approved & activation key issued!");
+    loadData(true);
+  };
+
+  const handleRejectWhiteLabel = async (reqItem: AdminWhiteLabelRequestItem) => {
+    const res = await whiteLabelApi.adminRejectRequest(reqItem.id, "Declined by Platform Admin");
+    if (res.error) {
+      toast.error(res.error.message || "Failed to reject request.");
+    } else {
+      toast.success("White-Label request rejected.");
+      loadData(true);
+    }
+  };
+
+  const handleRegenerateWlKey = async (reqItem: AdminWhiteLabelRequestItem) => {
+    const res = await whiteLabelApi.adminRegenerateKey(reqItem.id);
+    if (res.error || !res.data?.activation_key) {
+      toast.error(res.error?.message || "Failed to regenerate key.");
+      return;
+    }
+    setWlIssuedKeyModal({
+      brandName: reqItem.requested_brand_name,
+      key: res.data.activation_key,
+      email: reqItem.requester_email,
+    });
+    toast.success("New activation key generated!");
+    loadData(true);
+  };
+
+  const handleRevokeWhiteLabel = async (reqItem: AdminWhiteLabelRequestItem) => {
+    const res = await whiteLabelApi.adminRevokeRequest(reqItem.id, "Revoked by Platform Admin");
+    if (res.error) {
+      toast.error(res.error.message || "Failed to revoke white-label license.");
+    } else {
+      toast.success(`Revoked white-label access for ${reqItem.requested_brand_name}`);
+      loadData(true);
+    }
+  };
+
   // Filtered lists
+  const pendingWlCount = useMemo(() => {
+    return wlRequests.filter((r) => r.status === "pending").length;
+  }, [wlRequests]);
+
+  const filteredWlRequests = useMemo(() => {
+    if (wlFilter === "all") return wlRequests;
+    return wlRequests.filter((r) => r.status === wlFilter);
+  }, [wlRequests, wlFilter]);
+
   const pendingRequestsCount = useMemo(() => {
     return requests.filter((r) => r.status === "pending").length;
   }, [requests]);
@@ -251,15 +413,12 @@ export default function AdminPortal() {
         !q ||
         u.full_name?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
+        u.organization_name?.toLowerCase().includes(q) ||
         u.phone?.includes(q);
-      const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
+      const matchesRole = matchesRoleFilter(u.role, userRoleFilter);
       return matchesQuery && matchesRole;
     });
   }, [users, userSearch, userRoleFilter]);
-
-  const selectedUser = useMemo(() => {
-    return users.find((u) => u.id === selectedUserId);
-  }, [users, selectedUserId]);
 
   return (
     <div className="h-full flex-1 flex flex-col min-h-0 bg-slate-50 dark:bg-slate-950 overflow-hidden select-none">
@@ -276,8 +435,19 @@ export default function AdminPortal() {
               </h1>
               <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{metrics?.live_users_count || 1} Live</span>
+                <span>{metrics?.live_users_count ?? liveUsers.length} Live</span>
               </span>
+              {isPlatformAdmin && (
+                <select
+                  value={adminScope}
+                  onChange={(e) => setAdminScope(e.target.value as "all" | "org")}
+                  className="hidden md:inline-block h-6 px-2 rounded border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 text-[11px] font-mono font-semibold text-blue-700 dark:text-blue-300 cursor-pointer"
+                  title="Switch between all platform users & businesses or active store only"
+                >
+                  <option value="all">All Businesses ({users.length} users)</option>
+                  <option value="org">Active Store Only</option>
+                </select>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
               Live Operations, Billings Count &amp; Granular Feature Gating
@@ -349,6 +519,27 @@ export default function AdminPortal() {
                 </span>
               )}
             </button>
+
+            {isPlatformAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("whitelabel")}
+                className={cn(
+                  "h-7 px-2.5 sm:px-3 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 relative",
+                  activeTab === "whitelabel"
+                    ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-2xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                )}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">White-Label</span>
+                {pendingWlCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-blue-600 text-white">
+                    {pendingWlCount}
+                  </span>
+                )}
+              </button>
+            )}
           </nav>
 
           {/* Refresh Button */}
@@ -378,10 +569,14 @@ export default function AdminPortal() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <div className="text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white flex items-baseline gap-1.5">
-                  <span>{metrics?.live_users_count || 1}</span>
+                  <span>{metrics?.live_users_count ?? 0}</span>
                   <span className="text-xs font-normal text-emerald-600">Active</span>
                 </div>
-                <p className="text-[11px] font-mono text-slate-400">Heartbeat past 3 mins</p>
+                <p className="text-[11px] font-mono text-slate-400 truncate">
+                  {metrics?.total_users_count !== undefined
+                    ? `${metrics.total_users_count} registered · ${metrics.total_orgs_count ?? 1} ${(metrics.total_orgs_count ?? 1) === 1 ? "store" : "stores"}`
+                    : "Heartbeat past 3 mins"}
+                </p>
               </div>
 
               {/* Card 2: Today's Billings */}
@@ -461,16 +656,21 @@ export default function AdminPortal() {
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900 dark:text-white truncate">
                               {op.display_name}
+                              {op.organization_name && (
+                                <span className="ml-1.5 text-[10px] font-mono font-normal text-slate-400">
+                                  ({op.organization_name})
+                                </span>
+                              )}
                             </p>
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
-                              {op.current_path || "/billing"}
+                              {op.resolved_email || op.user_email} • {op.current_path || "/billing"}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                            {op.user_role}
+                            {formatRoleLabel(op.user_role)}
                           </span>
                           <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="Online" />
                         </div>
@@ -576,12 +776,15 @@ export default function AdminPortal() {
                   type="text"
                   value={userSearch}
                   onChange={(e) => setUserSearch(e.target.value)}
-                  placeholder="Search staff by name or email…"
+                  placeholder="Search by name, email or business…"
                   className="w-full h-8.5 pl-9 pr-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <span className="text-[11px] font-mono text-slate-500 px-1.5">
+                  Showing {filteredUsers.length} of {users.length}
+                </span>
                 <Filter className="w-3.5 h-3.5 text-slate-400" />
                 <select
                   value={userRoleFilter}
@@ -589,7 +792,8 @@ export default function AdminPortal() {
                   className="h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   <option value="all">All Roles</option>
-                  <option value="store_owner">Store Owner</option>
+                  <option value="owner_group">Business Owners</option>
+                  <option value="admin_group">Admins &amp; Super Admins</option>
                   <option value="manager">Manager</option>
                   <option value="cashier">Cashier</option>
                   <option value="salesman">Salesman</option>
@@ -635,20 +839,30 @@ export default function AdminPortal() {
                           <td className="py-2.5 px-3">
                             <div className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0">
-                                {u.full_name?.charAt(0).toUpperCase() || "U"}
+                                {(u.full_name || u.email || "U").charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 dark:text-white truncate">
-                                  {u.full_name || "Staff Member"}
+                                  {u.full_name || u.email?.split("@")[0] || "Staff Member"}
+                                  {u.is_platform_admin && (
+                                    <span className="ml-1.5 px-1.5 py-0.2 rounded text-[9px] font-mono bg-blue-600 text-white uppercase">
+                                      Platform Admin
+                                    </span>
+                                  )}
                                 </p>
-                                <p className="text-[11px] font-mono text-slate-400 truncate">{u.email}</p>
+                                <p className="text-[11px] font-mono text-slate-400 truncate">
+                                  {u.email}
+                                  {u.organization_name && (
+                                    <span className="text-slate-500 dark:text-slate-300"> • {u.organization_name}</span>
+                                  )}
+                                </p>
                               </div>
                             </div>
                           </td>
 
                           <td className="py-2.5 px-3">
                             <span className="px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                              {u.role}
+                              {formatRoleLabel(u.role)}
                             </span>
                           </td>
 
@@ -657,6 +871,11 @@ export default function AdminPortal() {
                               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 <span>Online</span>
+                              </span>
+                            ) : u.presence_status === "idle" ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                <span>Idle</span>
                               </span>
                             ) : (
                               <span className="text-[11px] font-mono text-slate-400">Offline</span>
@@ -713,7 +932,7 @@ export default function AdminPortal() {
                 >
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.full_name || u.email} ({u.role})
+                      {u.full_name || u.email} ({formatRoleLabel(u.role)}{u.organization_name ? ` — ${u.organization_name}` : ""})
                     </option>
                   ))}
                 </select>
@@ -885,17 +1104,22 @@ export default function AdminPortal() {
                     >
                       <div className="flex items-start gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
-                          {req.display_name?.charAt(0).toUpperCase() || "U"}
+                          {(req.display_name || req.user_name || req.user_email || "U").charAt(0).toUpperCase()}
                         </div>
 
                         <div className="min-w-0 space-y-0.5">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-bold text-xs text-slate-900 dark:text-white">
-                              {req.display_name || req.user_email}
+                              {req.display_name || req.user_name || req.user_email}
                             </span>
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                              {req.user_role || "cashier"}
+                            <span className="px-1.5 py-0.2 rounded text-[11px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              {formatRoleLabel(req.user_role || "cashier")}
                             </span>
+                            {req.organization_name && (
+                              <span className="px-1.5 py-0.2 rounded text-[11px] font-mono font-medium bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/60">
+                                {req.organization_name}
+                              </span>
+                            )}
                             <span className="text-slate-400 text-xs">requests access to</span>
                             <span className="font-bold text-xs text-blue-600 dark:text-blue-400">
                               {feat?.label || req.feature_key}
@@ -956,7 +1180,310 @@ export default function AdminPortal() {
             )}
           </div>
         )}
+
+        {/* TAB 5: PLATFORM ADMIN WHITE-LABEL GOVERNANCE & KEY ISSUANCE */}
+        {activeTab === "whitelabel" && isPlatformAdmin && (
+          <div className="space-y-4 max-w-5xl mx-auto">
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4 text-blue-600" />
+                  <span>White-Label License Requests &amp; Activation Keys</span>
+                </h2>
+                <p className="text-[11px] text-slate-500 font-mono">
+                  Approve requests to generate activation keys, then provide the key directly to the user
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+                {(["all", "pending", "approved", "rejected", "revoked"] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setWlFilter(st)}
+                    className={cn(
+                      "h-6.5 px-2.5 rounded-md text-[11px] font-semibold capitalize transition-all cursor-pointer",
+                      wlFilter === st
+                        ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                    )}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filteredWlRequests.length === 0 ? (
+              <div className="p-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-center space-y-2">
+                <Palette className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  No white-label requests in this queue
+                </p>
+                <p className="text-xs text-slate-400">
+                  Tenant requests submitted from Settings → White-Label Branding will appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredWlRequests.map((item) => {
+                  const isPending = item.status === "pending";
+                  const isApproved = item.status === "approved";
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        "p-4 rounded-xl bg-white dark:bg-slate-900 border transition-all shadow-2xs space-y-3",
+                        isPending
+                          ? "border-blue-300 dark:border-blue-800"
+                          : "border-slate-200/80 dark:border-slate-800"
+                      )}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-bold text-slate-900 dark:text-white">
+                              {item.requested_brand_name}
+                            </span>
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              Org: {item.organization_name || item.organization_id}
+                            </span>
+                            {item.is_activated && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300">
+                                {item.is_enabled ? "LIVE SITE ACTIVE" : "ACTIVATED (PAUSED)"}
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-xs text-slate-500 font-mono truncate">
+                            Requester: {item.requester_name || item.requester_email} ({item.requester_email})
+                            {item.requested_domain ? ` • Domain: ${item.requested_domain}` : ""}
+                          </p>
+
+                          {item.notes && (
+                            <p className="text-xs text-slate-600 dark:text-slate-300 italic">
+                              "{item.notes}"
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          {isPending && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setWlApproveTarget(item);
+                                  setWlCustomKey("");
+                                  setWlAdminNotes("");
+                                }}
+                                className="h-7 px-3 rounded-md text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <KeyRound className="w-3.5 h-3.5" />
+                                <span>Approve &amp; Generate Key</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRejectWhiteLabel(item)}
+                                className="h-7 px-2.5 rounded-md text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800 cursor-pointer"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+
+                          {isApproved && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleRegenerateWlKey(item)}
+                                className="h-7 px-2.5 rounded-md text-[11px] font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                              >
+                                Regenerate Key
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRevokeWhiteLabel(item)}
+                                className="h-7 px-2.5 rounded-md text-[11px] font-medium text-rose-600 border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                              >
+                                Revoke
+                              </button>
+                            </>
+                          )}
+
+                          {!isPending && !isApproved && (
+                            <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold uppercase bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300">
+                              {item.status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {isApproved && item.activation_key && (
+                        <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-slate-500 font-medium">Issued Key:</span>
+                            <code className="px-2 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-blue-600 dark:text-blue-400 tracking-wider">
+                              {item.activation_key}
+                            </code>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {item.active_brand_name && item.primary_color && (
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+                                <span
+                                  className="w-3 h-3 rounded-full border border-slate-300"
+                                  style={{ backgroundColor: item.primary_color }}
+                                />
+                                <span>{item.active_brand_name}</span>
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(item.activation_key || "");
+                                toast.success("Activation key copied!");
+                              }}
+                              className="h-7 px-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 flex items-center gap-1 cursor-pointer"
+                            >
+                              <Copy className="w-3 h-3" />
+                              <span>Copy Key</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Modal: Approve White-Label & Issue Key */}
+      {wlApproveTarget && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Approve White-Label Access
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Brand: {wlApproveTarget.requested_brand_name} ({wlApproveTarget.requester_email})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setWlApproveTarget(null)}
+                className="w-7 h-7 rounded-md text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleApproveWhiteLabel} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Custom Key Override (Leave blank to auto-generate CSWL-XXXX-XXXX-XXXX)
+                </label>
+                <input
+                  type="text"
+                  value={wlCustomKey}
+                  onChange={(e) => setWlCustomKey(e.target.value.toUpperCase())}
+                  placeholder="Auto-generated secure key"
+                  className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs font-mono uppercase text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Admin Notes for User (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={wlAdminNotes}
+                  onChange={(e) => setWlAdminNotes(e.target.value)}
+                  placeholder="e.g. Approved for annual partner plan"
+                  className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setWlApproveTarget(null)}
+                  className="h-8.5 px-3 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={wlProcessing}
+                  className="h-8.5 px-4 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer disabled:opacity-50"
+                >
+                  {wlProcessing ? "Generating..." : "Approve & Generate Key"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Display Newly Issued Key for Handover */}
+      {wlIssuedKeyModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Activation Key Generated
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Share this key with {wlIssuedKeyModal.email || wlIssuedKeyModal.brandName}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-center space-y-2">
+              <p className="text-[11px] font-mono uppercase text-slate-500">
+                White-Label License Key for {wlIssuedKeyModal.brandName}
+              </p>
+              <p className="text-base font-mono font-bold tracking-widest text-blue-600 dark:text-blue-400 select-all">
+                {wlIssuedKeyModal.key}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(wlIssuedKeyModal.key);
+                  toast.success("Activation key copied to clipboard!");
+                }}
+                className="h-8.5 px-3.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Key</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setWlIssuedKeyModal(null)}
+                className="h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal: Create Admin / User */}
       {showAddUserModal && (
@@ -1042,13 +1569,46 @@ export default function AdminPortal() {
                   className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer"
                 >
                   <option value="admin">Administrator (Full Access &amp; Feature Control)</option>
-                  <option value="owner">Store Owner (Supreme Authority)</option>
+                  <option value="owner">Business Owner (New or Linked Business)</option>
                   <option value="manager">Manager</option>
                   <option value="cashier">Counter Cashier</option>
                   <option value="accountant">Accountant</option>
                   <option value="salesman">Salesman</option>
                 </select>
               </div>
+
+              {newUserData.role === "owner" && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Separate Business Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newUserData.organization_name}
+                    onChange={(e) =>
+                      setNewUserData((p) => ({
+                        ...p,
+                        organization_name: e.target.value,
+                        create_own_org: Boolean(e.target.value.trim()),
+                      }))
+                    }
+                    placeholder="Leave blank to add to active business"
+                    className="w-full h-8.5 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-white"
+                  />
+                </div>
+              )}
+
+              {isPlatformAdmin && (newUserData.role === "admin" || newUserData.role === "owner") && (
+                <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newUserData.grant_platform_admin}
+                    onChange={(e) => setNewUserData((p) => ({ ...p, grant_platform_admin: e.target.checked }))}
+                    className="w-4 h-4 accent-blue-600"
+                  />
+                  <span>Grant Platform Admin (Can view all businesses &amp; issue white-label keys)</span>
+                </label>
+              )}
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button

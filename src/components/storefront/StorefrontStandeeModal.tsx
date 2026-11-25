@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Printer, Download, Store, QrCode, Sparkles, Check } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 interface StorefrontStandeeModalProps {
   isOpen: boolean;
@@ -17,10 +18,14 @@ export function StorefrontStandeeModal({
   store,
 }: StorefrontStandeeModalProps) {
   const standeeRef = useRef<HTMLDivElement>(null);
+  const { brand, isWhiteLabeled } = useWhiteLabel();
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://pos.credalert.bussiness";
   const shortUrl = `${baseUrl}/c/${store.slug}`;
-  const displayUrl = `pos.credalert.bussiness/c/${store.slug}`;
+  const displayUrl =
+    isWhiteLabeled && (brand.custom_domain || typeof window !== "undefined")
+      ? `${brand.custom_domain || window.location.host}/c/${store.slug}`
+      : `pos.credalert.bussiness/c/${store.slug}`;
   const accentColor = store.theme_color || "#FF6A00";
 
   const handlePrint = () => {
@@ -132,7 +137,13 @@ export function StorefrontStandeeModal({
 
             {/* Footer Watermark */}
             <div className="mt-4 pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1">
-              <span>Powered by CredSmart</span>
+              <span>
+                {isWhiteLabeled
+                  ? brand.powered_by_text
+                    ? `Powered by ${brand.powered_by_text}`
+                    : `Powered by ${brand.brand_name}`
+                  : "Powered by CredSmart"}
+              </span>
             </div>
           </div>
         </div>

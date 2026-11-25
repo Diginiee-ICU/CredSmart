@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isNativePlatform } from "@/services/nativeCapacitor";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import {
   ShoppingCart,
   Users,
@@ -31,6 +32,7 @@ export function isColdLaunchActive(): boolean {
 
 export function ColdLaunchHub(): React.ReactElement {
   const navigate = useNavigate();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -96,17 +98,23 @@ export function ColdLaunchHub(): React.ReactElement {
       <header className="w-full max-w-4xl mx-auto flex items-center justify-between py-2 border-b border-slate-200/80 dark:border-slate-800 pb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-2xs flex items-center justify-center">
-            <img src="/favicon.png" alt="CredSmart Shield" className="w-6 h-6 object-contain" />
+            <img
+              src={isWhiteLabeled ? brand.favicon_url || brand.logo_light_url || "/favicon.png" : "/favicon.png"}
+              alt={brand.brand_name}
+              className="w-6 h-6 object-contain"
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">CredSmart</span>
+              <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">
+                {brand.brand_name}
+              </span>
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 v1.2.2
               </span>
             </div>
             <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
-              Enterprise Hybrid Platform
+              {isWhiteLabeled && brand.brand_tagline ? brand.brand_tagline : "Enterprise Hybrid Platform"}
             </p>
           </div>
         </div>
@@ -265,7 +273,7 @@ export function ColdLaunchHub(): React.ReactElement {
 
               {/* Title & Tagline */}
               <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-2">
-                CredSmart CRM by CredAlert
+                {isWhiteLabeled ? `${brand.brand_name} CRM` : "CredSmart CRM by CredAlert"}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
                 Geofenced GPS attendance, task delegation with proof reviews, staff permissions, Voice Copilot, and automated payroll.

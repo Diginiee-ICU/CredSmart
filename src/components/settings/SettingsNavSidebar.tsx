@@ -22,8 +22,10 @@ import {
   MessageSquare,
   PlusCircle,
   ExternalLink,
+  Palette,
 } from "lucide-react";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { ROUTE_PATHS } from "@/config/routes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -38,13 +40,14 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 interface SettingsNavSidebarProps {
-  activeItem: "business" | "invoice" | "print" | "account" | "users" | "import_data";
+  activeItem: "business" | "invoice" | "print" | "white_label" | "account" | "users" | "import_data";
 }
 
 export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { org } = useOrganization();
+  const { brand, isWhiteLabeled, isActivated, request } = useWhiteLabel();
 
   // Modals state
   const [accountModal, setAccountModal] = useState(false);
@@ -116,6 +119,14 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
       active: activeItem === "print",
       badge: "New",
       url: ROUTE_PATHS.printSettings,
+    },
+    {
+      id: "white_label",
+      label: "White-Label Branding",
+      icon: Palette,
+      active: activeItem === "white_label" || location.pathname === ROUTE_PATHS.whiteLabelSettings,
+      badge: isActivated ? "Active" : request?.status === "approved" ? "Key" : request?.status === "pending" ? "Pending" : undefined,
+      url: ROUTE_PATHS.whiteLabelSettings,
     },
     {
       id: "import_data",
@@ -306,9 +317,13 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
 
           <div className="pt-2 flex items-center justify-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity">
             <span className="text-xs font-extrabold text-foreground tracking-tight">
-              CredSmart<span className="text-[#6366F1] font-bold">POS</span>
+              {isWhiteLabeled ? brand.brand_name : (
+                <>CredSmart<span className="text-[#6366F1] font-bold">POS</span></>
+              )}
             </span>
-            <span className="text-[11px] text-muted-foreground">by flobiz</span>
+            {(!isWhiteLabeled || !brand.hide_platform_branding) && (
+              <span className="text-[11px] text-muted-foreground">by {brand.powered_by_text || "flobiz"}</span>
+            )}
           </div>
         </div>
       </aside>
@@ -504,15 +519,15 @@ export function SettingsNavSidebar({ activeItem }: SettingsNavSidebarProps) {
             <div className="p-3 bg-muted/40 rounded-xl border space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Toll-Free Helpline:</span>
-                <span className="font-mono font-bold text-foreground">+91 80 6902 9999</span>
+                <span className="font-mono font-bold text-foreground">{brand.support_phone || "+91 80 6902 9999"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Support Email:</span>
-                <span className="font-mono text-foreground">support@credsmart.in</span>
+                <span className="font-mono text-foreground">{brand.support_email || "support@credsmart.in"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">WhatsApp Desk:</span>
-                <span className="font-bold text-emerald-600">+91 74092 00341</span>
+                <span className="font-bold text-emerald-600">{brand.support_phone || "+91 74092 00341"}</span>
               </div>
             </div>
             <Button

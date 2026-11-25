@@ -8,12 +8,14 @@ import { StoreProductModal } from "@/components/public-store/StoreProductModal";
 import { StoreCartDrawer } from "@/components/public-store/StoreCartDrawer";
 import { StoreOrderSuccessModal } from "@/components/public-store/StoreOrderSuccessModal";
 import { SEOHead } from "@/components/public/SEOHead";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { StorefrontProduct } from "@/types/storefront";
 import { ShoppingBag, ArrowRight, Store, Search, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PublicStorefront() {
   const { slug } = useParams<{ slug: string }>();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeModalProduct, setActiveModalProduct] = useState<StorefrontProduct | null>(null);
 
@@ -77,7 +79,7 @@ export default function PublicStorefront() {
         </p>
         <Link to="/">
           <Button className="rounded-xl bg-[#FF6A00] hover:bg-[#E65F00] text-white font-semibold text-xs px-5 h-10 shadow-md">
-            Go to CredSmart Homepage
+            Go to {isWhiteLabeled ? brand.brand_name : "CredSmart"} Homepage
           </Button>
         </Link>
       </div>

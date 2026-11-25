@@ -62,11 +62,21 @@ export function FeatureAccessProvider({ children }: { children: ReactNode }) {
   const [activeModalFeature, setActiveModalFeature] = useState<FeatureKey | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Owners and super admins are never locked out of features
+  // Platform admins & privileged owners check
+  const isPlatformAdmin = useMemo(() => {
+    const u = user as any;
+    const email = String(u?.email || "").trim().toLowerCase();
+    return Boolean(
+      u?.is_platform_admin === true ||
+      u?.user_metadata?.is_platform_admin === true ||
+      email === "ashwinbishnoi05@gmail.com"
+    );
+  }, [user]);
+
   const isPrivilegedAdmin = useMemo(() => {
     const role = userRole || "";
-    return FULL_ACCESS_ROLES.includes(role as any);
-  }, [userRole]);
+    return isPlatformAdmin || FULL_ACCESS_ROLES.includes(role as any);
+  }, [userRole, isPlatformAdmin]);
 
   const fetchLocksAndRequests = useCallback(async () => {
     if (!orgId || !user) {
@@ -158,11 +168,12 @@ export function FeatureAccessProvider({ children }: { children: ReactNode }) {
 
   const isFeatureLocked = useCallback(
     (featureKey: FeatureKey | string): boolean => {
-      if (isPrivilegedAdmin) return false;
+      if (isPlatformAdmin) return false;
       const key = featureKey as FeatureKey;
 
-      // 1. Explicit database / server feature lock takes absolute precedence
+      // 1. Explicit database / server feature lock takes precedence even on store owners/testers
       if (featureLocks[key] === true) return true;
+      if (isPrivilegedAdmin) return false;
       if (featureLocks[key] === false) return false;
 
       // 2. Custom permissions map override
@@ -172,17 +183,17 @@ export function FeatureAccessProvider({ children }: { children: ReactNode }) {
 
       return false;
     },
-    [isPrivilegedAdmin, featureLocks, userPermissions]
+    [isPlatformAdmin, isPrivilegedAdmin, featureLocks, userPermissions]
   );
 
   const isRouteLocked = useCallback(
     (routeUrl: string): boolean => {
-      if (isPrivilegedAdmin) return false;
+      if (isPlatformAdmin) return false;
       const featKey = getFeatureKeyFromUrl(routeUrl);
       if (!featKey) return false;
       return isFeatureLocked(featKey);
     },
-    [isPrivilegedAdmin, isFeatureLocked]
+    [isPlatformAdmin, isFeatureLocked]
   );
 
   const getFeatureRequestStatus = useCallback(

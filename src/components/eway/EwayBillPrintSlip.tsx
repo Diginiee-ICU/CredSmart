@@ -13,6 +13,7 @@ import Barcode from "react-barcode";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 interface EwayBillPrintSlipProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
   ewayBill,
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const { brand, isWhiteLabeled } = useWhiteLabel();
 
   if (!ewayBill) return null;
 
@@ -612,7 +614,13 @@ export const EwayBillPrintSlip: React.FC<EwayBillPrintSlipProps> = ({
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="font-mono text-slate-400">Powered by CredSmart ERP</p>
+                <p className="font-mono text-slate-400">
+                  {isWhiteLabeled
+                    ? brand.powered_by_text
+                      ? `Powered by ${brand.powered_by_text}`
+                      : `Powered by ${brand.brand_name}`
+                    : "Powered by CredSmart ERP"}
+                </p>
                 <p className="font-bold text-slate-800">GST E-Way Bill System</p>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { CartItem } from "@/types/pos";
 import { Printer, X, CheckCircle2, FileText, FileCheck, ScrollText, Smartphone, Copy, Check, Zap, Download, Bluetooth, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { buildReceiptEscPos, printViaWebUSB, printViaWebBluetooth } from "@/utils/escpos";
 import { UnifiedInvoiceRenderer, UniversalDocType, InvoiceItemData } from "@/components/invoices/UnifiedInvoiceRenderer";
 import { loadInvoiceSettings } from "@/utils/invoiceThemeLoader";
@@ -63,6 +64,7 @@ interface ReceiptModalProps {
 
 export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const { org } = useOrganization();
+  const { brand } = useWhiteLabel();
   const receiptRef = useRef<HTMLDivElement>(null);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<"80mm" | "58mm" | "a4" | "a4_detailed">(() => {
@@ -118,10 +120,10 @@ export function ReceiptModal({ data, onClose, onNewSale }: ReceiptModalProps) {
   const sgst = data.tax / 2;
 
   // Complete Store Metadata with live organization fallback
-  const storeName = data.storeName || org?.name || "CredSmart Retail Store";
+  const storeName = data.storeName || org?.name || `${brand.brand_name} Retail Store`;
   const storeAddress = data.storeAddress || org?.address || "";
   const storePhone = data.storePhone || org?.phone || "";
-  const storeEmail = data.storeEmail || org?.email || "billing@credsmart.in";
+  const storeEmail = data.storeEmail || org?.email || brand.support_email || "billing@credsmart.in";
   const storeLogoUrl = data.storeLogoUrl || org?.logo_url || "";
   const gstin = data.gstin || org?.gstin || "";
   const pan = data.pan || org?.pan || "";

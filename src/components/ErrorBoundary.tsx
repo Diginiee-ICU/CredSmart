@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Home, Copy, Check, Terminal } from "lucide-react";
+import { loadActiveBrandCache } from "@/services/whiteLabelApi";
 
 interface Props {
   children?: ReactNode;
@@ -55,7 +56,8 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   private handleCopyError = () => {
-    const errorDetails = `CredSmart POS Error Report
+    const { brand } = loadActiveBrandCache();
+    const errorDetails = `${brand.brand_name} POS Error Report
 Date: ${new Date().toISOString()}
 URL: ${window.location.href}
 User Agent: ${navigator.userAgent}
@@ -112,8 +114,8 @@ ${this.state.errorInfo?.componentStack || "No component stack available"}`;
             {/* Description */}
             <p className="text-sm text-slate-300 leading-relaxed mb-6">
               {isChunkLoadError
-                ? "A new version of CredSmart POS was deployed. Please reload the application to receive the latest updates and keep your session synchronized."
-                : "CredSmart POS encountered an unexpected runtime issue in this view. Your database and records remain secure."}
+                ? `A new version of ${loadActiveBrandCache().brand.brand_name} POS was deployed. Please reload the application to receive the latest updates and keep your session synchronized.`
+                : `${loadActiveBrandCache().brand.brand_name} POS encountered an unexpected runtime issue in this view. Your database and records remain secure.`}
             </p>
 
             {/* Error Message Box */}

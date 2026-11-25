@@ -2,25 +2,38 @@ import React, { useEffect, useRef } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/hooks/useOrganization";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { ROUTE_PATHS } from "@/config/routes";
 import { toast } from "@/hooks/use-toast";
 
 export function SleekRouteLoader() {
+  const { brand, isWhiteLabeled } = useWhiteLabel();
+  const splashSrc = isWhiteLabeled
+    ? brand.splash_logo_url || brand.logo_light_url || brand.favicon_url || "/IMG_9301.GIF"
+    : "/IMG_9301.GIF";
+
   return (
     <div className="min-h-[100dvh] w-full bg-white flex flex-col items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
       <div className="relative flex flex-col items-center justify-center max-w-sm w-full">
         <img
-          src="/IMG_9301.GIF"
-          alt="CredSmart"
-          className="w-72 sm:w-80 max-w-[85vw] h-auto object-contain select-none"
+          src={splashSrc}
+          alt={brand.brand_name}
+          className="w-72 sm:w-80 max-w-[85vw] max-h-48 h-auto object-contain select-none"
           loading="eager"
         />
         <div className="mt-4 flex flex-col items-center gap-2">
           <div className="w-32 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-600 to-amber-500 w-1/2 rounded-full animate-[ping_1.5s_infinite]" />
+            <div
+              className="h-full w-1/2 rounded-full animate-[ping_1.5s_infinite]"
+              style={{
+                background: isWhiteLabeled
+                  ? `linear-gradient(90deg, ${brand.primary_color}, ${brand.secondary_color})`
+                  : "linear-gradient(90deg, #2563eb, #f59e0b)",
+              }}
+            />
           </div>
           <p className="text-[11px] font-mono font-semibold text-slate-500 tracking-wider uppercase">
-            Loading CredSmart...
+            Loading {brand.brand_name}...
           </p>
         </div>
       </div>

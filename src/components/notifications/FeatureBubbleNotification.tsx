@@ -5,11 +5,13 @@ import {
   CredAlertNotificationItem,
 } from "@/data/notificationMessages";
 import { cn } from "@/lib/utils";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 
 const AUTO_CLOSE_DURATION_MS = 60000; // 1 minute auto-close
 const RECURRING_INTERVAL_MS = 180000;  // 3 minutes next bubble interval
 
 export function FeatureBubbleNotification() {
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -172,7 +174,7 @@ export function FeatureBubbleNotification() {
             />
           </div>
           <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 shrink-0">
-            {isPaused ? "Paused" : "CredAlert"}
+            {isPaused ? "Paused" : isWhiteLabeled ? brand.brand_name : "CredAlert"}
           </span>
         </div>
       </div>

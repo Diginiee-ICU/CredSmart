@@ -4,6 +4,7 @@ import { NavLink } from "@/components/NavLink";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOrganization } from "@/hooks/useOrganization";
 import { useAuth } from "@/hooks/useAuth";
+import { useWhiteLabel } from "@/context/WhiteLabelContext";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import {
@@ -40,6 +41,7 @@ import {
   Bot,
   LifeBuoy,
   Shield,
+  Palette,
 } from "lucide-react";
 import { SuiteSwitcher } from "@/components/SuiteSwitcher";
 import { WorkspaceSwitcher } from "@/components/portal/WorkspaceSwitcher";
@@ -94,7 +96,7 @@ interface PageMeta {
   subtitle: string;
 }
 
-function getPageMeta(pathname: string): PageMeta {
+function getPageMeta(pathname: string, brandName: string = "CredSmart"): PageMeta {
   // CRM Portal Routes
   if (pathname === ROUTE_PATHS.crm || pathname === "/crm" || pathname === "/crm/dashboard") {
     return {
@@ -128,7 +130,7 @@ function getPageMeta(pathname: string): PageMeta {
   }
   if (pathname === ROUTE_PATHS.crmMeet || pathname === "/crm/meet") {
     return {
-      title: "CredSmart Video Meet",
+      title: `${brandName} Video Meet`,
       subtitle: "Video Conferencing",
     };
   }
@@ -327,16 +329,22 @@ function getPageMeta(pathname: string): PageMeta {
       subtitle: "Live Users, Billings Analytics, and Granular Feature Access",
     };
   }
+  if (pathname === ROUTE_PATHS.whiteLabelSettings) {
+    return {
+      title: "White-Label Branding",
+      subtitle: "Customize logos, theme colors, domain & SEO across your portal",
+    };
+  }
 
   if (pathname.startsWith("/crm")) {
     return {
-      title: "CredSmart CRM",
+      title: `${brandName} CRM`,
       subtitle: "Enterprise Workforce & Operations Platform",
     };
   }
 
   return {
-    title: "CredSmart POS & Billing",
+    title: `${brandName} POS & Billing`,
     subtitle: "Enterprise Retail Management System",
   };
 }
@@ -347,6 +355,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { org, orgId, organizations, switchOrganization, userRole, userPermissions } = useOrganization();
+  const { brand, isWhiteLabeled } = useWhiteLabel();
   const { pendingCount, unreadCount } = useNetworkInvoices();
 
   const [openCommand, setOpenCommand] = useState(false);
@@ -422,7 +431,16 @@ export default function AppLayout() {
     location.pathname === "/crm" ||
     location.pathname === "/crm/dashboard";
 
-  const { title, subtitle } = getPageMeta(location.pathname);
+  const { title, subtitle } = getPageMeta(location.pathname, brand.brand_name);
+  const activeBrandLogo = isWhiteLabeled
+    ? brand.favicon_url || brand.logo_light_url
+    : "/favicon.png";
+
+  useEffect(() => {
+    if (typeof document !== "undefined" && title) {
+      document.title = title.includes(brand.brand_name) ? title : `${title} | ${brand.brand_name}`;
+    }
+  }, [title, brand.brand_name]);
   const isPosRoute =
     location.pathname === ROUTE_PATHS.checkout ||
     location.pathname === ROUTE_PATHS.pos ||
@@ -531,22 +549,31 @@ export default function AppLayout() {
                 <Menu className="w-4.5 h-4.5 stroke-[2]" />
               </button>
 
-              {/* Permanent CredSmart Platform Brand Mark */}
+              {/* Permanent Platform Brand Mark (Respects Active White-Label) */}
               <NavLink
                 to={isCrmSuite ? ROUTE_PATHS.crm : (userRole === "cashier" ? ROUTE_PATHS.checkout : ROUTE_PATHS.dashboard)}
-                title={isCrmSuite ? "CredSmart CRM Command Center" : "CredSmart POS & Billing"}
+                title={isCrmSuite ? `${brand.brand_name} CRM Command Center` : `${brand.brand_name} POS & Billing`}
                 className="flex items-center gap-1.5 sm:gap-2 rounded-lg py-1 shrink-0 select-none cursor-pointer group"
               >
-                <div className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
-                  <img
-                    src="/favicon.png"
-                    alt="CredSmart Shield"
-                    className="w-full h-full object-contain select-none"
-                    loading="eager"
-                  />
-                </div>
+                {activeBrandLogo ? (
+                  <div className="w-8 h-8 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-950 p-1 shadow-2xs overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105">
+                    <img
+                      src={activeBrandLogo}
+                      alt={brand.brand_name}
+                      className="w-full h-full object-contain select-none"
+                      loading="eager"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-lg text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs"
+                    style={{ backgroundColor: brand.primary_color || "#2563EB" }}
+                  >
+                    {(brand.brand_name || "B").charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className="hidden sm:inline font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white font-sans shrink-0">
-                  CredSmart
+                  {brand.brand_name}
                 </span>
               </NavLink>
 
@@ -815,7 +842,7 @@ export default function AppLayout() {
                 <DropdownMenuContent align="end" sideOffset={8} className="w-64 bg-white dark:bg-[#0F0E38] border border-slate-200 dark:border-[#2B277A] text-slate-700 dark:text-slate-200 p-2 shadow-2xl rounded-2xl z-dropdown animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-2 border-b border-slate-100 dark:border-[#1F1C5C]">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || "CredSmart Business"}</h4>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">{org?.name || `${brand.brand_name} Business`}</h4>
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse shrink-0" />
                     </div>
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 mt-0.5 truncate">
@@ -861,16 +888,28 @@ export default function AppLayout() {
                   </div>
                   <DropdownMenuSeparator className="bg-slate-100 dark:bg-[#1F1C5C] my-1" />
                   {FULL_ACCESS_ROLES.includes((userRole || "") as any) && (
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setProfileMenuOpen(false);
-                        navigate((ROUTE_PATHS as any).admin || "/billing/admin");
-                      }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"
-                    >
-                      <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span>Admin &amp; Feature Control Center</span>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setProfileMenuOpen(false);
+                          navigate((ROUTE_PATHS as any).admin || "/billing/admin");
+                        }}
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"
+                      >
+                        <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span>Admin &amp; Feature Control Center</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setProfileMenuOpen(false);
+                          navigate(ROUTE_PATHS.whiteLabelSettings);
+                        }}
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1C1A54] rounded-xl cursor-pointer font-medium hover-3d-glow"
+                      >
+                        <Palette className="w-4 h-4 text-slate-400" />
+                        <span>White-Label Branding</span>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuItem
                     onSelect={() => {
@@ -888,7 +927,7 @@ export default function AppLayout() {
                     }}
                     className="flex items-center gap-2 px-2.5 py-1.5 text-xs text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl cursor-pointer font-semibold hover-3d-glow"
                   >
-                    <LogOut className="w-4 h-4 text-rose-500 dark:text-rose-400" /><span>Sign Out of CredSmart</span>
+                    <LogOut className="w-4 h-4 text-rose-500 dark:text-rose-400" /><span>Sign Out of {brand.brand_name}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -955,7 +994,7 @@ export default function AppLayout() {
                 <span>Help &amp; Quick Guide</span>
               </DialogTitle>
               <DialogDescription>
-                CredSmart POS User Guide and Keyboard Shortcuts
+                {brand.brand_name} POS User Guide and Keyboard Shortcuts
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 text-sm py-2">
@@ -973,7 +1012,7 @@ export default function AppLayout() {
               <div className="p-3 bg-muted/50 rounded-xl space-y-1 border border-border">
                 <p className="font-semibold text-foreground text-xs uppercase tracking-wide">Need Assistance?</p>
                 <p className="text-xs text-muted-foreground">
-                  For questions or custom integrations, email <a href="mailto:support@credsmart.in" className="text-primary underline">support@credsmart.in</a>.
+                  For questions or custom integrations, email <a href={`mailto:${brand.support_email || "support@credsmart.in"}`} className="text-primary underline">{brand.support_email || "support@credsmart.in"}</a>.
                 </p>
               </div>
             </div>
